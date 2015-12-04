@@ -38,9 +38,9 @@ our @code;      # alias to array of the current file's source code lines
 sub DB {
 	init();
 
-	btrap();
+	bbreak();
 	process();
-	atrap();
+	abreak();
 }
 
 
@@ -61,7 +61,7 @@ sub init {
 
 
 
-sub btrap {
+sub bbreak {
 	print "\n" .'- ' x30 ."\n";
 
 	watch();
@@ -76,7 +76,7 @@ sub process {
 
 
 
-sub atrap {
+sub abreak {
 }
 
 
