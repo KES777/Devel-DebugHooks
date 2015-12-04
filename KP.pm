@@ -116,4 +116,12 @@ sub watch {
 
 
 
+sub postponed {
+	my( $file ) =  @_;
+
+	warn "Loaded '$file'\n";
+}
+
+
+
 1;
