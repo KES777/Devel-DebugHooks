@@ -35,6 +35,17 @@ our @code;      # alias to array of the current file's source code lines
 
 
 
+sub can_break {
+	my( $line, $file ) =  @_;
+
+	$file //=  $DB::file;
+	$line //=  $DB::line;
+
+	no strict qw/ refs /;
+	return ${ "::_<$file" }[ $line ] != 0;
+}
+
+
 sub DB {
 	init();
 
