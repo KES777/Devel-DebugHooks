@@ -42,6 +42,7 @@ sub can_break {
 	$line //=  $DB::line;
 
 	no strict qw/ refs /;
+	no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
 	return ${ "::_<$file" }[ $line ] != 0;
 }
 
