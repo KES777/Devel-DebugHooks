@@ -123,5 +123,18 @@ sub postponed {
 }
 
 
+sub log_calls {
+	local $" = ' - ';
+	print "SUB: $DB::sub - @_\n";
+	print "FROM: @{[ (caller(0))[0..2] ]}\n";
+}
+
+
+sub sub {
+	log_calls;         # if $log_calls
+	goto &$DB::sub;    # if return result not required
+}
+
+
 
 1;
