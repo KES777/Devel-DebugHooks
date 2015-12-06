@@ -137,23 +137,13 @@ sub sub {
 	# goto &$DB::sub;    # if return result not required
 
 	my( $ret, @ret );
-	if( wantarray ) {
-		no strict 'refs';
-		@ret =  &$DB::sub;
-		@ret;
-	}
-	else {
-		if( defined wantarray ) {
-			no strict 'refs';
-			$ret =  &$DB::sub;
-		}
-		else {
-			no strict 'refs';
+	{
+	no strict 'refs';
+	wantarray ?
+		@ret =  &$DB::sub :
+		defined wantarray ?
+			$ret =  &$DB::sub :
 			&$DB::sub;
-			$ret =  undef;
-		}
-
-		$ret;
 	}
 };
 
