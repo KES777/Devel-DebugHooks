@@ -205,6 +205,16 @@ sub float {
 no warnings 'redefine';
 *sub =  $sub;
 
+# sub lsub : lvalue {
+my $lsub =  sub : lvalue {
+	log_calls();         # if $log_calls
+
+	no strict 'refs';
+	&$DB::sub;
+};
+
+*lsub =  $lsub;
+
 1;
 
 __END__
