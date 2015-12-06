@@ -12,7 +12,7 @@ package    # hide the package from the PAUSE indexer
 sub postponed {
 	my( $file ) =  @_;
 
-	warn "Loaded '$file'\n";
+	print "Loaded '$file'\n";
 }
 
 
