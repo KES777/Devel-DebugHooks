@@ -172,3 +172,11 @@ sub float {
 *sub =  $sub;
 
 1;
+
+__END__
+
+Describe what is used by perl internals from DB:: at compile time
+
+goto implicitly changes the value of $DB::sub
+
+At compile time $DB::single is 0
