@@ -124,13 +124,6 @@ sub postponed {
 
 
 
-sub log_calls {
-	local $" =  ' - ';
-	print "SUB: $DB::sub - @_\n";
-	print "FROM: @{[ (caller(0))[0..2] ]}\n";
-}
-
-
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
 # sub sub {
@@ -147,6 +140,15 @@ my $sub =  sub {
 			&$DB::sub;
 	}
 };
+
+
+
+sub log_calls {
+	local $" =  ' - ';
+	print "SUB: $DB::sub - @_\n";
+	print "FROM: @{[ (caller(0))[0..2] ]}\n";
+}
+
 
 
 # We delay installation until the file's runtime
