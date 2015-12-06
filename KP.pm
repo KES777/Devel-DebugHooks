@@ -27,12 +27,12 @@ use PadWalker qw/ peek_my peek_our /;
 
 
 
-our $package;   # current package
-our $file;      # current file
-our $line;      # current line number
-our $next;      # the code at the current line
-our @code;      # alias to array of the current file's source code lines
-
+our $package;    # current package
+our $file;       # current file
+our $line;       # current line number
+our $next;       # the code at the current line
+our @code;       # the code at the current file
+our $deep =  0;  # watch the calling stack depth
 
 
 sub can_break {
@@ -127,9 +127,11 @@ sub postponed {
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
 # sub sub {
-	log_calls;         # if $log_calls
+	log_calls();         # if $log_calls
 	# goto &$DB::sub;    # if return result not required
 
+
+	dive();
 	my( $ret, @ret );
 	{
 	no strict 'refs';
@@ -139,6 +141,7 @@ my $sub =  sub {
 			$ret =  &$DB::sub :
 			&$DB::sub;
 	}
+	float();
 };
 
 
@@ -147,6 +150,20 @@ sub log_calls {
 	local $" =  ' - ';
 	print "SUB: $DB::sub - @_\n";
 	print "FROM: @{[ (caller(0))[0..2] ]}\n";
+
+	print "DEEP: $DB::deep";
+}
+
+
+
+sub dive {
+	$DB::deep++;
+}
+
+
+
+sub float {
+	$DB::deep--;
 }
 
 
