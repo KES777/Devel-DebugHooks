@@ -9,6 +9,10 @@ our $VERSION =  '0.01';
 package    # hide the package from the PAUSE indexer
     DB;
 
+sub sub {
+	goto &$DB::sub;
+}
+
 use strict;
 use warnings;
 # use Term::ReadKey;
@@ -169,6 +173,7 @@ sub float {
 
 
 # We delay installation until the file's runtime
+no warnings 'redefine';
 *sub =  $sub;
 
 1;
