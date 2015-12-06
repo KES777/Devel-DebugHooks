@@ -131,8 +131,9 @@ sub log_calls {
 }
 
 
-
-sub sub {
+# The sub is installed at compile time as soon as the body has been parsed
+my $sub =  sub {
+# sub sub {
 	log_calls;         # if $log_calls
 	# goto &$DB::sub;    # if return result not required
 
@@ -148,5 +149,7 @@ sub sub {
 };
 
 
+# We delay installation until the file's runtime
+*sub =  $sub;
 
 1;
