@@ -9,6 +9,14 @@ our $VERSION =  '0.01';
 package    # hide the package from the PAUSE indexer
     DB;
 
+sub postponed {
+	my( $file ) =  @_;
+
+	warn "Loaded '$file'\n";
+}
+
+
+
 sub sub {
 	goto &$DB::sub;
 }
@@ -116,14 +124,6 @@ sub watch {
 		#print $@   if $@;
 		print "\n";
 	}
-}
-
-
-
-sub postponed {
-	my( $file ) =  @_;
-
-	warn "Loaded '$file'\n";
 }
 
 
