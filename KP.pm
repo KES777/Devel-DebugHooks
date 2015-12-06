@@ -224,3 +224,22 @@ Describe what is used by perl internals from DB:: at compile time
 goto implicitly changes the value of $DB::sub
 
 At compile time $DB::single is 0
+
+Which data is preserved by forth bit of $^P?
+
+How to debug lvalue subs?
+
++
+"segmentation fault when 'print @_'" (30 lines) at http://paste.scsys.co.uk/502490
+
+The DOC must describe that DB::sub should have :lvalue attribute
+
+Can not control what value is assigned to lvalue sub
+
++
+if sub does not exists lsub is not called at all
+
++
+The caller behaves differently in lsub in compare to sub
+http://paste.scsys.co.uk/502493
+http://paste.scsys.co.uk/502494
