@@ -9,6 +9,25 @@ our $VERSION =  '0.01';
 package    # hide the package from the PAUSE indexer
     DB;
 
+# $^P default values
+# 0111 0011 1111
+# |||| |||| |||^-- Debug subroutine enter/exit.
+# |||| |||| ||^--- Line-by-line debugging.
+# |||| |||| |^---- Switch off optimizations.
+# |||| |||| ^----- Preserve more data for future interactive inspections.
+# |||| ||||
+# |||| |||^------- Keep info about source lines on which a subroutine is defined.
+# |||| ||^-------- Start with single-step on.
+# |||| |^--------- Use subroutine address instead of name when reporting.
+# |||| ^---------- Report goto &subroutine as well.
+# ||||
+# |||^------------ Provide informative "file" names for evals based on the place they were compiled.
+# ||^------------- Provide informative names to anonymous subroutines based on the place they were compiled.
+# |^-------------- Save source code lines into @{"_<$filename"}.
+# ^--------------- When saving source, include evals that generate no subroutines.
+# < When saving source, include source that did not compile.
+
+
 sub postponed {
 	my( $file ) =  @_;
 
