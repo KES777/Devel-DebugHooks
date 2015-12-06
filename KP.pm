@@ -123,17 +123,39 @@ sub postponed {
 }
 
 
+
 sub log_calls {
-	local $" = ' - ';
+	local $" =  ' - ';
 	print "SUB: $DB::sub - @_\n";
 	print "FROM: @{[ (caller(0))[0..2] ]}\n";
 }
 
 
+
 sub sub {
 	log_calls;         # if $log_calls
-	goto &$DB::sub;    # if return result not required
-}
+	# goto &$DB::sub;    # if return result not required
+
+	my( $ret, @ret );
+	if( wantarray ) {
+		no strict 'refs';
+		@ret =  &$DB::sub;
+		@ret;
+	}
+	else {
+		if( defined wantarray ) {
+			no strict 'refs';
+			$ret =  &$DB::sub;
+		}
+		else {
+			no strict 'refs';
+			&$DB::sub;
+			$ret =  undef;
+		}
+
+		$ret;
+	}
+};
 
 
 
