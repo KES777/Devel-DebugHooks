@@ -9,6 +9,10 @@ our $VERSION =  '0.01';
 package    # hide the package from the PAUSE indexer
     DB;
 
+BEGIN {
+	$^P ^= 0x80;
+}
+
 # $^P default values
 # 0111 0011 1111
 # |||| |||| |||^-- Debug subroutine enter/exit.
@@ -143,6 +147,12 @@ sub watch {
 		#print $@   if $@;
 		print "\n";
 	}
+}
+
+
+
+sub goto {
+	print "GOTO: $DB::sub";
 }
 
 
