@@ -12,7 +12,7 @@ package    # hide the package from the PAUSE indexer
     DB;
 
 BEGIN {
-	$^P ^= 0x80;
+	$^P |= 0x80;
 }
 
 # $^P default values
