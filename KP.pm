@@ -122,6 +122,13 @@ sub DB {
 
 
 
+	sub subs {
+		return keys %DB::sub   unless @_;
+
+		my $re =  shift;
+		return grep { /$re/ } keys %DB::sub;
+	}
+
 
 
 	sub can_break {
@@ -215,7 +222,7 @@ sub log_calls {
 
 my $goto =  sub {
 	# HERE we get unexpected results about 'caller'
-	# EXPECTED: the line number where goto called from
+	# EXPECTED: the line number where 'goto' called from
 	log_calls( \@_, 'G', 1 );
 };
 
