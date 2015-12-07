@@ -125,12 +125,8 @@ sub DB {
 
 
 	sub can_break {
-		my( $line, $file ) =  @_;
+		my( $file, $line ) =  @_;
 
-		$file //=  $DB::file;
-		$line //=  $DB::line;
-
-		no strict qw/ refs /;
 		no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
 		return ${ "::_<$file" }[ $line ] != 0;
 	}
