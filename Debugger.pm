@@ -158,10 +158,13 @@ my $sub =  sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	Devel::DebugBase::log_calls( \@_ );         # if $log_calls
+	{
+		local $DB::single =  0;
+		Devel::DebugBase::log_calls( \@_ );         # if $log_calls
+	}
+
+
 	# goto &$DB::sub;    # if return result not required
-
-
 	my( $ret, @ret );
 	{
 	no strict 'refs';
@@ -186,8 +189,11 @@ my $lsub =  sub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	# Here too client's code 'caller' return wrong info
-	Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
+	{
+		local $DB::single =  0;
+		# Here too client's code 'caller' return wrong info
+		Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
+	}
 
 	no strict 'refs';
 	return &$DB::sub;
