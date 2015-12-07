@@ -155,14 +155,21 @@ my $goto =  sub {
 
 
 
+our $ext_call =  0;
+
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	{
-		local $DB::single =  0;
-		Devel::DebugBase::log_calls( \@_ );         # if $log_calls
+	unless( $ext_call ) {
+		# Any subsequent sub call inside next sub will invoke DB::sub again
+		# The right way is to turn off 'Debug subroutine enter/exit'
+		# local $^P =  $^P & ~1;      # But this works at compile time only.
+		# So prevent infinite reentrance manually
+		local $ext_call =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
+		Devel::DebugBase::log_calls( \@_ );   # if $log_calls
 	}
 
 
@@ -191,8 +198,13 @@ my $lsub =  sub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	{
-		local $DB::single =  0;
+	unless( $ext_call ) {
+		# Any subsequent sub call inside next sub will invoke DB::sub again
+		# The right way is to turn off 'Debug subroutine enter/exit'
+		# local $^P =  $^P & ~1;      # But this works at compile time only.
+		# So prevent infinite reentrance manually
+		local $ext_call =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
 		Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
 	}
