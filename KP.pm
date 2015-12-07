@@ -256,3 +256,5 @@ if sub does not exists lsub is not called at all
 The caller behaves differently in lsub in compare to sub
 http://paste.scsys.co.uk/502493
 http://paste.scsys.co.uk/502494
+
+no description/link for the $DEBUGGING variable in perlvar
