@@ -163,11 +163,13 @@ sub goto {
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
 # sub sub {
+	# When we leave the scope the original value is restored.
+	# So it is the same like '$DB::deep--'
+	local $DB::deep =  $DB::deep +1;
 	log_calls();         # if $log_calls
 	# goto &$DB::sub;    # if return result not required
 
 
-	dive();
 	my( $ret, @ret );
 	{
 	no strict 'refs';
@@ -177,7 +179,8 @@ my $sub =  sub {
 			$ret =  &$DB::sub :
 			&$DB::sub;
 	}
-	float();
+	# the last statement is the sub result: @ret or $ret depending on context
+	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
 };
 
 
@@ -194,24 +197,17 @@ sub log_calls {
 
 
 
-sub dive {
-	$DB::deep++;
-}
-
-
-
-sub float {
-	$DB::deep--;
-}
-
-
-
 # sub lsub : lvalue {
 my $lsub =  sub : lvalue {
+	# When we leave the scope the original value is restored.
+	# So it is the same like '$DB::deep--'
+	local $DB::deep =  $DB::deep +1;
 	log_calls(1);         # if $log_calls
 
 	no strict 'refs';
 	&$DB::sub;
+	# the last statement is the sub result.
+	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
 };
 
 
