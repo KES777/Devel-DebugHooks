@@ -183,9 +183,11 @@ my $sub =  sub {
 
 
 sub log_calls {
+	my( $level ) =  shift || 0;
+
 	local $" =  ' - ';
 	print "SUB: $DB::sub( ${ DB::sub{ $DB::sub } } ) - @_\n";
-	print "FROM: @{[ (caller(0))[0..2] ]}\n";
+	print "FROM: @{[ (caller($level))[0..2] ]}\n";
 
 	print "DEEP: $DB::deep\n";
 }
@@ -206,7 +208,7 @@ sub float {
 
 # sub lsub : lvalue {
 my $lsub =  sub : lvalue {
-	log_calls();         # if $log_calls
+	log_calls(1);         # if $log_calls
 
 	no strict 'refs';
 	&$DB::sub;
