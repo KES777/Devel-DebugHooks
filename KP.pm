@@ -32,6 +32,11 @@ BEGIN {
 # < When saving source, include source that did not compile.
 
 
+BEGIN {
+	$DB::postponed{ 'DB::DB' } =  1;
+}
+
+
 sub postponed {
 	my( $file ) =  @_;
 
