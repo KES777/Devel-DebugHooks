@@ -167,6 +167,9 @@ sub log_calls {
 
 
 sub goto {
+	# HERE we get unexpected results about 'caller'
+	# EXPECTED: the line number where goto called from
+	log_calls( 1 );
 	print "GOTO: $DB::sub\n";
 }
 
@@ -207,6 +210,7 @@ my $lsub =  sub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
+	# Here too client's code 'caller' return wrong info
 	log_calls(1);         # if $log_calls
 
 	no strict 'refs';
