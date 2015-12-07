@@ -70,9 +70,9 @@ our $deep =  0;  # watch the calling stack depth
 sub DB {
 	init();
 
-	bbreak();
-	process();
-	abreak();
+	Devel::DebugBase::bbreak();
+	Devel::DebugBase::process();
+	Devel::DebugBase::abreak();
 }
 
 
