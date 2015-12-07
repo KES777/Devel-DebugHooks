@@ -201,10 +201,6 @@ sub float {
 
 
 
-# We delay installation until the file's runtime
-no warnings 'redefine';
-*sub =  $sub;
-
 # sub lsub : lvalue {
 my $lsub =  sub : lvalue {
 	log_calls();         # if $log_calls
@@ -213,7 +209,14 @@ my $lsub =  sub : lvalue {
 	&$DB::sub;
 };
 
-*lsub =  $lsub;
+
+
+# We delay installation until the file's runtime
+{
+	no warnings 'redefine';
+	*sub  =  $sub;
+	*lsub =  $lsub;
+}
 
 1;
 
