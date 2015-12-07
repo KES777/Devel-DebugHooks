@@ -40,11 +40,11 @@ sub postponed {
 
 
 
-sub sub {
+sub sub : lvalue {
 	print "SUB: $DB::sub\n"                    if 0;
 	print "FROM: @{[ (caller(0))[0..2] ]}\n"   if 0;
 
-	goto &$DB::sub;
+	&$DB::sub;
 }
 
 use strict;
