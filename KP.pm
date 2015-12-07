@@ -303,3 +303,10 @@ http://paste.scsys.co.uk/502493
 http://paste.scsys.co.uk/502494
 
 no description/link for the $DEBUGGING variable in perlvar
+
+
+Why the 'DB::' namespace is exluded from loading subs process?
+whereas 'DB::postpone' is works fine for whole module
+BEGIN {
+	$DB::postponed{ 'DB::DB' } =  1;
+} # The DB::postpone( 'DB::DB' ) is not called
