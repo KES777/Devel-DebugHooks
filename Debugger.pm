@@ -1,8 +1,10 @@
-package Devel::KP;
+package Devel::Debugger;
 
 our $VERSION =  '0.01';
 
-# use Log::Any '$log', default_adapter => 'Stderr';
+BEGIN {
+	our $Module  =  'DebugBase';
+}
 
 
 
@@ -40,7 +42,7 @@ BEGIN {
 sub postponed {
 	my( $file ) =  @_;
 
-	print "Loaded '$file'\n"   if 0;
+	print "Loaded '$file'\n"   if 1;
 }
 
 
@@ -52,22 +54,10 @@ sub sub : lvalue {
 	&$DB::sub;
 }
 
+
+
 use strict;
 use warnings;
-# use Term::ReadKey;
-
-use Data::Dump qw/ pp /;
-
-use B::Deparse ();
-my $deparse =  B::Deparse->new();
-
-use Package::Stash;
-my $this =  Package::Stash->new( 'DB' );
-
-use Benchmark qw/ cmpthese /;
-
-use PadWalker qw/ peek_my peek_our /;
-
 
 
 our $package;    # current package
@@ -88,6 +78,8 @@ sub DB {
 
 # Hooks to Perl internals data
 {
+	#@DB::args << caller(N)
+
 	no strict qw/ refs /;
 
 	sub file {
@@ -149,62 +141,13 @@ sub init {
 
 	die "'$DB::file' ne '" .file( $DB::file ) ."'"
 		if $DB::file ne file( $DB::file );
-
-
-	# print "\n\nPad:";
-	# my $all =  $this->get_all_symbols;
-	# delete $all->{sub};
-	# print "\n" .pp $all;
-
-}
-
-
-
-sub bbreak {
-	print "\n" .'- ' x30 ."\n";
-
-	watch();
-
-	print "$DB::file:$DB::line    " .source()->[ $DB::line ];
-}
-
-
-
-sub process {
-}
-
-
-
-sub abreak {
-}
-
-
-
-use YAML ();
-my $watch =  YAML::LoadFile( ".db_watch" );
-print pp $watch, \@_;
-print "\n";
-
-sub watch {
-	my @vars =  @_ ? @_ : keys %$watch;
-
-	return   unless @vars;
-
-	for( @vars ) {
-		my @value =  eval "package $DB::package; $_";
-		# @value =  ( '><' )   if $@;
-		print "$_ :  "
-			.( $@  ?  '><'  :  pp @value );
-
-		#print $@   if $@;
-		print "\n";
-	}
 }
 
 
 
 sub log_calls {
 	my( $args, $t, $level ) =  @_;
+	return;
 	$t     //=  'C';
 	$level //=  0;
 
@@ -310,7 +253,7 @@ http://paste.scsys.co.uk/502493
 http://paste.scsys.co.uk/502494
 
 no description/link for the $DEBUGGING variable in perlvar
-
+>>perl -Dxxx command described in perlrun
 
 Why the 'DB::' namespace is exluded from loading subs process?
 whereas 'DB::postpone' is works fine for whole module
