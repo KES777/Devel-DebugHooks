@@ -184,7 +184,8 @@ my $sub =  sub {
 
 	# watch_return_value   if $watch
 
-	wantarray ? @ret : $ret ;
+	return
+		wantarray ? @ret : $ret ;
 };
 
 
@@ -209,7 +210,7 @@ my $lsub =  sub : lvalue {
 	log_calls(1);         # if $log_calls
 
 	no strict 'refs';
-	&$DB::sub;
+	return &$DB::sub;
 	# the last statement is the sub result.
 	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
 };
