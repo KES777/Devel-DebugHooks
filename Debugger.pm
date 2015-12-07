@@ -145,28 +145,10 @@ sub init {
 
 
 
-sub log_calls {
-	my( $args, $t, $level ) =  @_;
-	return;
-	$t     //=  'C';
-	$level //=  0;
-
-	local $" =  ' - ';
-	print "\n";
-	print '- ' x15, "\n";
-	print "${t}SUB: $DB::sub( @$args )\n";
-	print "FROM: @{[ (caller($level))[0..2] ]}\n";
-	print "TEXT: " .location ."\n";
-	print "DEEP: $DB::deep\n";
-	print '- ' x15, "\n";
-}
-
-
-
 my $goto =  sub {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
-	log_calls( \@_, 'G', 1 );
+	Devel::DebugBase::log_calls( \@_, 'G', 1 );
 };
 
 
@@ -176,7 +158,7 @@ my $sub =  sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	log_calls( \@_ );         # if $log_calls
+	Devel::DebugBase::log_calls( \@_ );         # if $log_calls
 	# goto &$DB::sub;    # if return result not required
 
 
@@ -205,7 +187,7 @@ my $lsub =  sub : lvalue {
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
 	# Here too client's code 'caller' return wrong info
-	log_calls( \@_, 'L', 1 );         # if $log_calls
+	Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
 
 	no strict 'refs';
 	return &$DB::sub;

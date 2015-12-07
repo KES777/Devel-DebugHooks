@@ -33,6 +33,24 @@ sub abreak {
 
 
 
+sub log_calls {
+	my( $args, $t, $level ) =  @_;
+	return;
+	$t     //=  'C';
+	$level //=  0;
+
+	local $" =  ' - ';
+	print "\n";
+	print '- ' x15, "\n";
+	print "${t}SUB: $DB::sub( @$args )\n";
+	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+	print "TEXT: " .location ."\n";
+	print "DEEP: $DB::deep\n";
+	print '- ' x15, "\n";
+}
+
+
+
 sub watch {
 	my @vars =  @_ ? @_ : keys %$watch;
 
