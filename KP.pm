@@ -35,12 +35,15 @@ BEGIN {
 sub postponed {
 	my( $file ) =  @_;
 
-	print "Loaded '$file'\n";
+	print "Loaded '$file'\n"   if 0;
 }
 
 
 
 sub sub {
+	print "SUB: $DB::sub\n"                    if 0;
+	print "FROM: @{[ (caller(0))[0..2] ]}\n"   if 0;
+
 	goto &$DB::sub;
 }
 
@@ -152,7 +155,7 @@ sub watch {
 
 
 sub goto {
-	print "GOTO: $DB::sub";
+	print "GOTO: $DB::sub\n";
 }
 
 
@@ -181,10 +184,10 @@ my $sub =  sub {
 
 sub log_calls {
 	local $" =  ' - ';
-	print "SUB: $DB::sub - @_\n";
+	print "SUB: $DB::sub( ${ DB::sub{ $DB::sub } } ) - @_\n";
 	print "FROM: @{[ (caller(0))[0..2] ]}\n";
 
-	print "DEEP: $DB::deep";
+	print "DEEP: $DB::deep\n";
 }
 
 
