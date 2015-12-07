@@ -74,6 +74,7 @@ sub DB {
 	init();
 
 	local $ext_call =  $ext_call +1;
+	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 	Devel::DebugBase::bbreak();
 	Devel::DebugBase::process();
 	Devel::DebugBase::abreak();
@@ -114,6 +115,7 @@ sub DB {
 	sub location {
 		my $subname =  shift // $DB::sub;
 
+		# The subs from DB::* are not placed here. Why???
 		return $DB::sub{ $subname };
 	}
 
