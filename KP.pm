@@ -104,6 +104,9 @@ sub init {
 	( $DB::package, $DB::file, $DB::line ) = caller(1);
 
 	no strict qw/ refs /;
+	die "'$DB::file' ne '${ \"::_<$DB::file\" }'"
+		if $DB::file ne ${ "::_<$DB::file" };
+
 	*DB::code =  \@{ "::_<$DB::file" };
 
 	# print "\n\nPad:";
