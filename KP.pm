@@ -127,6 +127,9 @@ sub DB {
 	sub can_break {
 		my( $file, $line ) =  @_;
 
+		($file, $line) =  split ':', $file
+			unless defined $line;
+
 		no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
 		return ${ "::_<$file" }[ $line ] != 0;
 	}
