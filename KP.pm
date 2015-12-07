@@ -154,6 +154,18 @@ sub watch {
 
 
 
+sub log_calls {
+	my( $level ) =  shift || 0;
+
+	local $" =  ' - ';
+	print "SUB: $DB::sub( ${ DB::sub{ $DB::sub } } ) - @_\n";
+	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+
+	print "DEEP: $DB::deep\n";
+}
+
+
+
 sub goto {
 	print "GOTO: $DB::sub\n";
 }
@@ -187,18 +199,6 @@ my $sub =  sub {
 	return
 		wantarray ? @ret : $ret ;
 };
-
-
-
-sub log_calls {
-	my( $level ) =  shift || 0;
-
-	local $" =  ' - ';
-	print "SUB: $DB::sub( ${ DB::sub{ $DB::sub } } ) - @_\n";
-	print "FROM: @{[ (caller($level))[0..2] ]}\n";
-
-	print "DEEP: $DB::deep\n";
-}
 
 
 
