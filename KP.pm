@@ -181,8 +181,10 @@ my $sub =  sub {
 			# We do not assign $ret = undef explicitly
 			# It has 'undef' when is created
 	}
-	# the last statement is the sub result: @ret or $ret depending on context
-	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
+
+	# watch_return_value   if $watch
+
+	wantarray ? @ret : $ret ;
 };
 
 
