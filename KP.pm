@@ -155,13 +155,18 @@ sub watch {
 
 
 sub log_calls {
-	my( $level ) =  shift || 0;
+	my( $args, $t, $level ) =  @_;
+	$t     //=  'C';
+	$level //=  0;
 
 	local $" =  ' - ';
-	print "SUB: $DB::sub( ${ DB::sub{ $DB::sub } } ) - @_\n";
+	print "\n";
+	print '- ' x15, "\n";
+	print "${t}SUB: $DB::sub( @$args )\n";
 	print "FROM: @{[ (caller($level))[0..2] ]}\n";
-
+	print "TEXT: ${ DB::sub{ $DB::sub } }\n";
 	print "DEEP: $DB::deep\n";
+	print '- ' x15, "\n";
 }
 
 
@@ -169,9 +174,8 @@ sub log_calls {
 sub goto {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where goto called from
-	log_calls( 1 );
-	print "GOTO: $DB::sub\n";
-}
+	log_calls( \@_, 'G', 1 );
+};
 
 
 
@@ -181,7 +185,7 @@ my $sub =  sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	log_calls();         # if $log_calls
+	log_calls( \@_ );         # if $log_calls
 	# goto &$DB::sub;    # if return result not required
 
 
@@ -211,7 +215,7 @@ my $lsub =  sub : lvalue {
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
 	# Here too client's code 'caller' return wrong info
-	log_calls(1);         # if $log_calls
+	log_calls( \@_, 'L', 1 );         # if $log_calls
 
 	no strict 'refs';
 	return &$DB::sub;
