@@ -76,17 +76,6 @@ our $line;       # current line number
 our $deep =  0;  # watch the calling stack depth
 
 
-sub can_break {
-	my( $line, $file ) =  @_;
-
-	$file //=  $DB::file;
-	$line //=  $DB::line;
-
-	no strict qw/ refs /;
-	no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
-	return ${ "::_<$file" }[ $line ] != 0;
-}
-
 
 sub DB {
 	init();
@@ -129,6 +118,21 @@ sub DB {
 		my $subname =  shift // $DB::sub;
 
 		return $DB::sub{ $subname };
+	}
+
+
+
+
+
+	sub can_break {
+		my( $line, $file ) =  @_;
+
+		$file //=  $DB::file;
+		$line //=  $DB::line;
+
+		no strict qw/ refs /;
+		no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
+		return ${ "::_<$file" }[ $line ] != 0;
 	}
 }
 
