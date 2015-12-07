@@ -39,6 +39,7 @@ BEGIN {
 }
 
 
+# We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	my( $file ) =  @_;
 
@@ -76,7 +77,8 @@ sub DB {
 }
 
 
-# Hooks to Perl internals data
+
+# Hooks to Perl's internals
 {
 	#@DB::args << caller(N)
 
