@@ -73,8 +73,6 @@ use PadWalker qw/ peek_my peek_our /;
 our $package;    # current package
 our $file;       # current file
 our $line;       # current line number
-our $next;       # the code at the current line
-our @code;       # the code at the current file
 our $deep =  0;  # watch the calling stack depth
 
 
@@ -139,18 +137,15 @@ sub DB {
 sub init {
 	( $DB::package, $DB::file, $DB::line ) = caller(1);
 
-	no strict qw/ refs /;
-	die "'$DB::file' ne '${ \"::_<$DB::file\" }'"
-		if $DB::file ne ${ "::_<$DB::file" };
+	die "'$DB::file' ne '" .file( $DB::file ) ."'"
+		if $DB::file ne file( $DB::file );
 
-	*DB::code =  \@{ "::_<$DB::file" };
 
 	# print "\n\nPad:";
 	# my $all =  $this->get_all_symbols;
 	# delete $all->{sub};
 	# print "\n" .pp $all;
 
-	$DB::next =  $DB::code[ $DB::line ];
 }
 
 
@@ -160,7 +155,7 @@ sub bbreak {
 
 	watch();
 
-	print "$DB::file:$DB::line    " .$DB::next;
+	print "$DB::file:$DB::line    " .source()->[ $DB::line ];
 }
 
 
@@ -208,7 +203,7 @@ sub log_calls {
 	print '- ' x15, "\n";
 	print "${t}SUB: $DB::sub( @$args )\n";
 	print "FROM: @{[ (caller($level))[0..2] ]}\n";
-	print "TEXT: ${ DB::sub{ $DB::sub } }\n";
+	print "TEXT: " .location ."\n";
 	print "DEEP: $DB::deep\n";
 	print '- ' x15, "\n";
 }
