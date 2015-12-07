@@ -205,6 +205,11 @@ my $lsub =  sub : lvalue {
 	*goto =  $goto;
 }
 
+
+BEGIN {
+	eval "use Devel::$Devel::Debugger::Module";
+}
+
 1;
 
 __END__
