@@ -171,7 +171,7 @@ sub log_calls {
 
 
 
-sub goto {
+my $goto =  sub {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where goto called from
 	log_calls( \@_, 'G', 1 );
@@ -181,7 +181,6 @@ sub goto {
 
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
-# sub sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
@@ -209,7 +208,6 @@ my $sub =  sub {
 
 
 
-# sub lsub : lvalue {
 my $lsub =  sub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
@@ -230,6 +228,7 @@ my $lsub =  sub : lvalue {
 	no warnings 'redefine';
 	*sub  =  $sub;
 	*lsub =  $lsub;
+	*goto =  $goto;
 }
 
 1;
