@@ -99,6 +99,42 @@ sub DB {
 }
 
 
+# Hooks to Perl internals data
+{
+	no strict qw/ refs /;
+
+	sub file {
+		my $filename =  shift // $DB::file;
+
+		return ${ "::_<$filename" };
+	}
+
+
+
+	sub source {
+		my $filename =  shift // $DB::file;
+
+		return \@{ "::_<$filename" };
+	}
+
+
+
+	sub traps {
+		my $filename =  shift // $DB::file;
+
+		return \%{ "::_<$filename" };
+	}
+
+
+
+	sub location {
+		my $subname =  shift // $DB::sub;
+
+		return $DB::sub{ $subname };
+	}
+}
+
+
 
 sub init {
 	( $DB::package, $DB::file, $DB::line ) = caller(1);
