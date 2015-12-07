@@ -61,16 +61,19 @@ use strict;
 use warnings;
 
 
-our $package;    # current package
-our $file;       # current file
-our $line;       # current line number
-our $deep =  0;  # watch the calling stack depth
+our $package;        # current package
+our $file;           # current file
+our $line;           # current line number
+our $deep =  0;      # watch the calling stack depth
+our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from DB::*
+
 
 
 
 sub DB {
 	init();
 
+	local $ext_call =  $ext_call +1;
 	Devel::DebugBase::bbreak();
 	Devel::DebugBase::process();
 	Devel::DebugBase::abreak();
@@ -150,12 +153,19 @@ sub init {
 my $goto =  sub {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
-	Devel::DebugBase::log_calls( \@_, 'G', 1 );
+	unless( $ext_call ) {
+		# Any subsequent sub call inside next sub will invoke DB::sub again
+		# The right way is to turn off 'Debug subroutine enter/exit'
+		# local $^P =  $^P & ~1;      # But this works at compile time only.
+		# So prevent infinite reentrance manually
+		local $ext_call =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
+		Devel::DebugBase::log_calls( \@_, 'G', 1 );   # if $log_calls
+	}
 };
 
 
 
-our $ext_call =  0;
 
 # The sub is installed at compile time as soon as the body has been parsed
 my $sub =  sub {
@@ -208,6 +218,7 @@ my $lsub =  sub : lvalue {
 		# Here too client's code 'caller' return wrong info
 		Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
 	}
+
 
 	no strict 'refs';
 	return &$DB::sub;
