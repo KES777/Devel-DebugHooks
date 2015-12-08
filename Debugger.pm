@@ -219,38 +219,40 @@ my $sub =  sub {
 
 	goto &$DB::sub   if $ext_call  ||  !$options{ trace_returns };
 
-	my( $ret, @ret );
 	{
 		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
 
-		if( wantarray ) {
-			@ret =  &$DB::sub;
+		if( wantarray ) {                             # list context
+			my @ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
 			Devel::DebugBase::trace_returns( @ret );
+
+			return @ret;
 		}
-		elsif( defined wantarray ) {
-			$ret =  &$DB::sub;
+		elsif( defined wantarray ) {                  # scalar context
+			my $ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
 			Devel::DebugBase::trace_returns( $ret );
+
+			return $ret;
 		}
-		else {
+		else {                                        # void context
 			&$DB::sub;
-			# We do not assign $ret = undef explicitly
-			# It has 'undef' when is created
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
 			Devel::DebugBase::trace_returns();
+
+			return;
 		}
 	}
 
 
-	return
-		wantarray ? @ret : $ret ;
+	die "This should be reached never";
 };
 
 
