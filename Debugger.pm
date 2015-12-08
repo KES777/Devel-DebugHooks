@@ -34,6 +34,16 @@ BEGIN {
 # < When saving source, include source that did not compile.
 
 
+
+our $package;        # current package
+our $file;           # current file
+our $line;           # current line number
+our $deep =  0;      # watch the calling stack depth
+our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from DB::*
+our %options;
+
+
+
 BEGIN {
 	$DB::postponed{ 'DB::DB' } =  1;
 }
@@ -54,15 +64,6 @@ sub sub : lvalue {
 
 	&$DB::sub;
 }
-
-
-
-our $package;        # current package
-our $file;           # current file
-our $line;           # current line number
-our $deep =  0;      # watch the calling stack depth
-our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from DB::*
-our %options;
 
 
 
