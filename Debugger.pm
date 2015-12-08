@@ -330,3 +330,13 @@ whereas 'DB::postpone' is works fine for whole module
 BEGIN {
 	$DB::postponed{ 'DB::DB' } =  1;
 } # The DB::postpone( 'DB::DB' ) is not called
+
+
+Write test that checks that Devel::Debugger is loaded first
+
+
+
+Why the DB::DB is called twice for:
+print "@{[ (caller(0))[0..2] ]}\n";
+but only one for this:
+print sb();
