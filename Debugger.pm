@@ -57,16 +57,25 @@ sub sub : lvalue {
 
 
 
-use strict;
-use warnings;
-
-
 our $package;        # current package
 our $file;           # current file
 our $line;           # current line number
 our $deep =  0;      # watch the calling stack depth
 our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from DB::*
+our %options;
 
+
+
+BEGIN {
+	@options{ qw/ s w / } =  ( 1, 1 );
+
+	if( $options{ s } ) { require 'strict.pm';    strict->import();   }
+	if( $options{ w } ) { require 'warnings.pm';  warnings->import(); }
+	# http://perldoc.perl.org/warnings.html
+	# The scope of the strict/warnings pragma is limited to the enclosing block.
+	# But this not truth.
+	# It is limited to the first enclosing block of the BEGIN block
+}
 
 
 
@@ -74,7 +83,7 @@ our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from D
 {
 	#@DB::args << caller(N)
 
-	no strict qw/ refs /;
+	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
 
 	sub file {
 		my $filename =  shift // $DB::file;
@@ -124,7 +133,8 @@ our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from D
 		($file, $line) =  split ':', $file
 			unless defined $line;
 
-		no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
+		# do not distrub if wrong $file/$line is given
+		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 		return ${ "::_<$file" }[ $line ] != 0;
 	}
 }
@@ -188,7 +198,7 @@ my $sub =  sub {
 	# goto &$DB::sub;    # if return result not required
 	my( $ret, @ret );
 	{
-	no strict 'refs';
+	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
 	wantarray ?
 		@ret =  &$DB::sub :
 		defined wantarray ?
@@ -222,7 +232,7 @@ my $lsub =  sub : lvalue {
 	}
 
 
-	no strict 'refs';
+	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
 	return &$DB::sub;
 	# the last statement is the sub result.
 	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
@@ -232,11 +242,12 @@ my $lsub =  sub : lvalue {
 
 # We delay installation until the file's runtime
 {
-	no warnings 'redefine';
+	BEGIN{ warnings->unimport( 'redefine' )   if $options{ w } }
 	*sub  =  $sub;
 	*lsub =  $lsub;
 	*goto =  $goto;
 }
+
 
 
 BEGIN {
