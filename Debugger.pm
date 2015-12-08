@@ -1,9 +1,36 @@
 package Devel::Debugger;
 
 our $VERSION =  '0.01';
+our $dbg;
 
 BEGIN {
-	our $Module  =  'DebugBase';
+	our $dbg =  'Devel::Debugger';
+}
+
+
+sub import {
+	# $dbg =  caller;
+
+	return 'HELLO';
+}
+
+
+sub bbreak {
+	print "\n" .'= ' x30 ."$DB::ext_call\n";
+
+	# watch();
+
+	print "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
+}
+
+
+
+sub process {
+}
+
+
+
+sub abreak {
 }
 
 
@@ -55,37 +82,6 @@ BEGIN {
 }
 
 
-# We define posponed/sub as soon as possible to be able watch whole process
-sub postponed {
-	trace_load( @_ )   if $options{ trace_load };
-}
-
-
-
-sub trace_subs {
-	my( $args, $t, $level ) =  @_;
-
-	$t     //=  'C';
-	$level //=  0;
-
-	local $" =  ' - ';
-	print "\n";
-	print '= ' x15, "\n";
-	print "${t}SUB: $DB::sub( @$args )\n";
-	print "FROM: @{[ (caller($level))[0..2] ]}\n";
-	print "DEEP: $DB::deep\n";
-	print '= ' x15, "\n";
-}
-
-
-
-sub sub : lvalue {
-	trace_subs( \@_ )   if $options{ trace_subs };
-
-	&$DB::sub;
-}
-
-
 
 # NOTICE: it is better to not use any modules from this one
 # because they will appear to compiler first, but we do not want that
@@ -100,7 +96,8 @@ BEGIN {
 
 
 
-# Hooks to Perl's internals
+# Hooks to Perl's internals should be first.
+# Because debugger descendants may call them
 {
 	#@DB::args << caller(N)
 
@@ -162,14 +159,46 @@ BEGIN {
 
 
 
+# We define posponed/sub as soon as possible to be able watch whole process
+sub postponed {
+	$Devel::Debugger::dbg->trace_load( @_ )   if $options{ trace_load };
+}
+
+
+
+sub trace_subs {
+	my( $args, $t, $level ) =  @_;
+
+	$t     //=  'C';
+	$level //=  0;
+
+	local $" =  ' - ';
+	print "\n";
+	print '= ' x15, "\n";
+	print "${t}SUB: $DB::sub( @$args )\n";
+	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+	print "DEEP: $DB::deep\n";
+	print '= ' x15, "\n";
+}
+
+
+
+sub sub : lvalue {
+	$Devel::Debugger::dbg->trace_subs( \@_ )   if $options{ trace_subs };
+
+	&$DB::sub;
+}
+
+
+
 sub DB {
 	init();
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	Devel::DebugBase::bbreak();
-	Devel::DebugBase::process();
-	Devel::DebugBase::abreak();
+	$Devel::Debugger::dbg->bbreak();
+	$Devel::Debugger::dbg->process();
+	$Devel::Debugger::dbg->abreak();
 }
 
 
@@ -193,7 +222,7 @@ my $goto =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::trace_subs( \@_, 'G', 1 );
+		$Devel::Debugger::dbg->trace_subs( \@_, 'G', 1 );
 	}
 };
 
@@ -211,7 +240,7 @@ my $sub =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::trace_subs( \@_ );
+		$Devel::Debugger::dbg->trace_subs( \@_ );
 	}
 
 
@@ -225,7 +254,7 @@ my $sub =  sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			Devel::DebugBase::trace_returns( @ret );
+			$Devel::Debugger::dbg->trace_returns( @ret );
 
 			return @ret;
 		}
@@ -234,7 +263,7 @@ my $sub =  sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			Devel::DebugBase::trace_returns( $ret );
+			$Devel::Debugger::dbg->trace_returns( $ret );
 
 			return $ret;
 		}
@@ -243,7 +272,7 @@ my $sub =  sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			Devel::DebugBase::trace_returns();
+			$Devel::Debugger::dbg->trace_returns();
 
 			return;
 		}
@@ -267,7 +296,7 @@ my $lsub =  sub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
-		Devel::DebugBase::trace_subs( \@_, 'L', 1 );
+		$Devel::Debugger::dbg->trace_subs( \@_, 'L', 1 );
 	}
 
 
@@ -290,8 +319,9 @@ my $lsub =  sub : lvalue {
 
 
 BEGIN {
-	eval "use Devel::$Devel::Debugger::Module";
+	eval "use Devel::$Devel::Debugger::dbg";
 }
+
 
 1;
 
@@ -340,3 +370,10 @@ Why the DB::DB is called twice for:
 print "@{[ (caller(0))[0..2] ]}\n";
 but only one for this:
 print sb();
+
+
+use should have args. and the caller called from DB:: namespace should set @DB::args
+at compile time 'caller' also does not fill @DB::args
+BEGIN {
+	print caller, @DB::args
+}
