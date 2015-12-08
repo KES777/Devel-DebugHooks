@@ -168,9 +168,8 @@ sub postponed {
 
 
 sub trace_subs {
-	my( $args, $t, $level ) =  @_;
+	my( $t, $context, $args ) =  @_;
 
-	$t     //=  'C';
 	$level //=  0;
 
 	local $" =  ' - ';
@@ -185,7 +184,7 @@ sub trace_subs {
 
 
 sub sub : lvalue {
-	$Devel::Debugger::dbg->trace_subs( \@_ )   if $options{ trace_subs };
+	$Devel::Debugger::dbg->trace_subs( 'C', wantarray, \@_ )   if $options{ trace_subs };
 
 	&$DB::sub;
 }
@@ -223,7 +222,7 @@ my $goto =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$Devel::Debugger::dbg->trace_subs( \@_, 'G', 1 );
+		$Devel::Debugger::dbg->trace_subs( 'G', wantarray, \@_ );
 	}
 };
 
@@ -241,7 +240,7 @@ my $sub =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$Devel::Debugger::dbg->trace_subs( \@_ );
+		$Devel::Debugger::dbg->trace_subs( 'C', wantarray, \@_ );
 	}
 
 
@@ -297,7 +296,7 @@ my $lsub =  sub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
-		$Devel::Debugger::dbg->trace_subs( \@_, 'L', 1 );
+		$Devel::Debugger::dbg->trace_subs( 'L', wantarray, \@_ );
 	}
 
 
