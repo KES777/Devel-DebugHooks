@@ -44,7 +44,12 @@ our %options;
 
 
 
+# Do DB:: configuration stuff here
 BEGIN {
+	@options{ qw/ s w / }  =  ( 1, 1 );
+	$options{ trace_subs } =  0;
+	$options{ trace_load } =  0;
+
 	$DB::postponed{ 'DB::DB' } =  1;
 }
 
@@ -53,14 +58,30 @@ BEGIN {
 sub postponed {
 	my( $file ) =  @_;
 
-	print "Loaded '$file'\n"   if 1;
+	print "Loaded '$file'\n"   if $options{ trace_load };
+}
+
+
+
+sub log_calls {
+	my( $args, $t, $level ) =  @_;
+
+	$t     //=  'C';
+	$level //=  0;
+
+	local $" =  ' - ';
+	print "\n";
+	print '= ' x15, "\n";
+	print "${t}SUB: $DB::sub( @$args )\n";
+	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+	print "DEEP: $DB::deep\n";
+	print '= ' x15, "\n";
 }
 
 
 
 sub sub : lvalue {
-	print "SUB: $DB::sub\n"                    if 0;
-	print "FROM: @{[ (caller(0))[0..2] ]}\n"   if 0;
+	log_calls( \@_ )   if $options{ trace_subs };
 
 	&$DB::sub;
 }
@@ -70,8 +91,6 @@ sub sub : lvalue {
 # NOTICE: it is better to not use any modules from this one
 # because they will appear to compiler first, but we do not want that
 BEGIN {
-	@options{ qw/ s w / } =  ( 1, 1 );
-
 	if( $options{ s } ) { require 'strict.pm';    strict->import();   }
 	if( $options{ w } ) { require 'warnings.pm';  warnings->import(); }
 	# http://perldoc.perl.org/warnings.html
@@ -168,17 +187,16 @@ sub init {
 my $goto =  sub {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
-	unless( $ext_call ) {
+	if( $options{ trace_subs }  &&  !$ext_call ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
 		# So prevent infinite reentrance manually
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::log_calls( \@_, 'G', 1 );   # if $log_calls
+		Devel::DebugBase::log_calls( \@_, 'G', 1 );
 	}
 };
-
 
 
 
@@ -187,14 +205,14 @@ my $sub =  sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	unless( $ext_call ) {
+	if( $options{ trace_subs }  &&  !$ext_call ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
 		# So prevent infinite reentrance manually
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::log_calls( \@_ );   # if $log_calls
+		Devel::DebugBase::log_calls( \@_ );
 	}
 
 
@@ -223,7 +241,7 @@ my $lsub =  sub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	unless( $ext_call ) {
+	if( $options{ trace_subs }  &&  !$ext_call ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
@@ -231,7 +249,7 @@ my $lsub =  sub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
-		Devel::DebugBase::log_calls( \@_, 'L', 1 );         # if $log_calls
+		Devel::DebugBase::log_calls( \@_, 'L', 1 );
 	}
 
 
