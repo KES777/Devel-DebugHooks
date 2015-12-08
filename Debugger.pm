@@ -57,14 +57,12 @@ BEGIN {
 
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
-	my( $file ) =  @_;
-
-	print "Loaded '$file'\n"   if $options{ trace_load };
+	trace_load( @_ )   if $options{ trace_load };
 }
 
 
 
-sub log_calls {
+sub trace_subs {
 	my( $args, $t, $level ) =  @_;
 
 	$t     //=  'C';
@@ -82,7 +80,7 @@ sub log_calls {
 
 
 sub sub : lvalue {
-	log_calls( \@_ )   if $options{ trace_subs };
+	trace_subs( \@_ )   if $options{ trace_subs };
 
 	&$DB::sub;
 }
@@ -195,7 +193,7 @@ my $goto =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::log_calls( \@_, 'G', 1 );
+		Devel::DebugBase::trace_subs( \@_, 'G', 1 );
 	}
 };
 
@@ -213,7 +211,7 @@ my $sub =  sub {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		Devel::DebugBase::log_calls( \@_ );
+		Devel::DebugBase::trace_subs( \@_ );
 	}
 
 
@@ -269,7 +267,7 @@ my $lsub =  sub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
-		Devel::DebugBase::log_calls( \@_, 'L', 1 );
+		Devel::DebugBase::trace_subs( \@_, 'L', 1 );
 	}
 
 
