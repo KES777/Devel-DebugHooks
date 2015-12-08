@@ -175,8 +175,10 @@ sub trace_subs {
 	local $" =  ' - ';
 	print "\n";
 	print '= ' x15, "\n";
+	print "CNTX: " . ($context ? 'list' : (defined $context ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @$args )\n";
 	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+	print "TEXT: " .DB::location() ."\n";
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
 }
