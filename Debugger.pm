@@ -131,6 +131,7 @@ BEGIN {
 		my $subname =  shift // $DB::sub;
 
 		# The subs from DB::* are not placed here. Why???
+		# A? Maybe they are placed after module loaded?
 		return $DB::sub{ $subname };
 	}
 
@@ -341,8 +342,12 @@ How to debug lvalue subs?
 "segmentation fault when 'print @_'" (30 lines) at http://paste.scsys.co.uk/502490
 
 The DOC must describe that DB::sub should have :lvalue attribute
+if DB::lsub is not defined
+
+
 
 Can not control what value is assigned to lvalue sub
+
 
 +
 if sub does not exists lsub is not called at all
