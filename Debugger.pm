@@ -46,9 +46,10 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
-	@options{ qw/ s w / }  =  ( 1, 1 );
-	$options{ trace_subs } =  0;
-	$options{ trace_load } =  0;
+	@options{ qw/ s w / }     =  ( 0, 0 );
+	$options{ trace_subs }    =  0;
+	$options{ trace_load }    =  0;
+	$options{ trace_returns } =  1;
 
 	$DB::postponed{ 'DB::DB' } =  1;
 }
@@ -192,7 +193,7 @@ my $goto =  sub {
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
 		# So prevent infinite reentrance manually
-		local $ext_call =  $ext_call +1;
+		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		Devel::DebugBase::log_calls( \@_, 'G', 1 );
 	}
@@ -210,26 +211,43 @@ my $sub =  sub {
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
 		# So prevent infinite reentrance manually
-		local $ext_call =  $ext_call +1;
+		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		Devel::DebugBase::log_calls( \@_ );
 	}
 
 
-	# goto &$DB::sub;    # if return result not required
+	goto &$DB::sub   if $ext_call  ||  !$options{ trace_returns };
+
 	my( $ret, @ret );
 	{
-	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
-	wantarray ?
-		@ret =  &$DB::sub :
-		defined wantarray ?
-			$ret =  &$DB::sub :
+		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+
+		if( wantarray ) {
+			@ret =  &$DB::sub;
+
+			local $ext_call   =  $ext_call +1;
+			local $DB::single =  0;
+			Devel::DebugBase::trace_returns( @ret );
+		}
+		elsif( defined wantarray ) {
+			$ret =  &$DB::sub;
+
+			local $ext_call   =  $ext_call +1;
+			local $DB::single =  0;
+			Devel::DebugBase::trace_returns( $ret );
+		}
+		else {
 			&$DB::sub;
 			# We do not assign $ret = undef explicitly
 			# It has 'undef' when is created
+
+			local $ext_call   =  $ext_call +1;
+			local $DB::single =  0;
+			Devel::DebugBase::trace_returns();
+		}
 	}
 
-	# watch_return_value   if $watch
 
 	return
 		wantarray ? @ret : $ret ;
