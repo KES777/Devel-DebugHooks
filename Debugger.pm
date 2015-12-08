@@ -66,6 +66,8 @@ our %options;
 
 
 
+# NOTICE: it is better to not use any modules from this one
+# because they will appear to compiler first, but we do not want that
 BEGIN {
 	@options{ qw/ s w / } =  ( 1, 1 );
 
