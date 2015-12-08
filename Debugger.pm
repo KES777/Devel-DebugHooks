@@ -70,18 +70,6 @@ our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from D
 
 
 
-sub DB {
-	init();
-
-	local $ext_call =  $ext_call +1;
-	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	Devel::DebugBase::bbreak();
-	Devel::DebugBase::process();
-	Devel::DebugBase::abreak();
-}
-
-
-
 # Hooks to Perl's internals
 {
 	#@DB::args << caller(N)
@@ -139,6 +127,18 @@ sub DB {
 		no warnings qw/ uninitialized /; # do not distrub if wrong $file/$line is given
 		return ${ "::_<$file" }[ $line ] != 0;
 	}
+}
+
+
+
+sub DB {
+	init();
+
+	local $ext_call =  $ext_call +1;
+	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
+	Devel::DebugBase::bbreak();
+	Devel::DebugBase::process();
+	Devel::DebugBase::abreak();
 }
 
 
