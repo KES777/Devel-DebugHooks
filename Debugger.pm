@@ -67,6 +67,7 @@ our $file;           # current file
 our $line;           # current line number
 our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
+our $prev_sub;       # keep track what is the previous sub. 'caller' lost that info while 'goto'
 our %options;
 
 
@@ -229,6 +230,7 @@ sub init {
 
 
 sub goto {
+	$prev_sub =  $DB::sub;
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
 	if( $options{ trace_subs }  &&  !$ext_call ) {
@@ -246,6 +248,8 @@ sub goto {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	$DB::prev_sub =  $DB::sub;
+
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
@@ -301,6 +305,8 @@ sub sub {
 
 
 sub lsub : lvalue {
+	$DB::prev_sub =  $DB::sub;
+
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
