@@ -202,7 +202,6 @@ sub trace_subs {
 	print '= ' x15, "\n";
 	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @DB::args )\n";
-	print "FROM: @{[ (caller($level))[0..2] ]}\n"   if !@DB::goto_frames;
 	print "FROM: @{ $_ }\n"   for reverse @DB::goto_frames;
 	print "TEXT: " .DB::location() ."\n";
 	print "DEEP: $DB::deep\n";
