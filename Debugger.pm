@@ -177,21 +177,26 @@ BEGIN { # Initialization goes here
 
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
-	$Devel::Debugger::dbg->trace_load( @_ )   if $options{ trace_load };
+	print "Loaded '@_'\n"  if $options{ trace_load };
+
+	# $Devel::Debugger::dbg->trace_load( @_ )   if $options{ trace_load };
 }
 
 
 
 sub trace_subs {
-	my( $t, $context, $args ) =  @_;
+	my( $t ) =  @_;
 
-	$level //=  0;
+	my $level //=  0;
+	$level +=  2   if $t eq 'G';
+
+	my @frame =  caller($level);
 
 	local $" =  ' - ';
 	print "\n";
 	print '= ' x15, "\n";
-	print "CNTX: " . ($context ? 'list' : (defined $context ? 'scalar' : 'void')) ."\n";
-	print "${t}SUB: $DB::sub( @$args )\n";
+	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
+	print "${t}SUB: $DB::sub( @DB::args )\n";
 	print "FROM: @{[ (caller($level))[0..2] ]}\n";
 	print "TEXT: " .DB::location() ."\n";
 	print "DEEP: $DB::deep\n";
@@ -200,10 +205,6 @@ sub trace_subs {
 
 
 
-sub sub : lvalue {
-	$Devel::Debugger::dbg->trace_subs( 'C', wantarray, \@_ )   if $options{ trace_subs };
-
-	&$DB::sub;
 }
 
 
@@ -243,7 +244,8 @@ sub goto {
 		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$Devel::Debugger::dbg->trace_subs( 'G', wantarray, \@_ );
+		# $Devel::Debugger::dbg->trace_subs( 'G' );
+		trace_subs( 'G' );
 	}
 };
 
@@ -271,7 +273,8 @@ sub sub {
 		# Another:
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$Devel::Debugger::dbg->trace_subs( 'C', wantarray, \@_ );
+		# $Devel::Debugger::dbg->trace_subs( 'C' );
+		trace_subs( 'C' );
 	}
 
 
@@ -334,7 +337,7 @@ sub lsub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# Here too client's code 'caller' return wrong info
-		$Devel::Debugger::dbg->trace_subs( 'L', wantarray, \@_ );
+		$Devel::Debugger::dbg->trace_subs( 'L' );
 	}
 
 
