@@ -260,9 +260,8 @@ sub init {
 # Becase @list = goto &sub is useless at any case
 
 
-my $ignore_goto =  0;
 sub goto {
-	do{ $ignore_goto--; return }   if $ignore_goto  ||  $ext_call;
+	return   if $ext_call;
 
 	push @goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::prev_sub ];
 	$prev_sub =  $DB::sub;
@@ -311,7 +310,7 @@ sub sub {
 	}
 
 
-	do{ $ignore_goto++; goto &$DB::sub; }   if !$options{ trace_returns };
+	return &$DB::sub   if !$options{ trace_returns };
 
 	{
 		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
