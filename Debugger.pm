@@ -229,11 +229,14 @@ sub init {
 
 
 
+my $ignore_goto =  0;
 sub goto {
+	do{ $ignore_goto--; return }   if $ignore_goto  ||  $ext_call;
+
 	$prev_sub =  $DB::sub;
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
-	if( $options{ trace_subs }  &&  !$ext_call ) {
+	if( $options{ trace_subs } ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
@@ -248,12 +251,17 @@ sub goto {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	if( $ext_call ) {
+		BEGIN{ strict->unimport( 'refs' )   if $options{ s } };
+		return &$DB::sub
+	}
+
 	$DB::prev_sub =  $DB::sub;
 
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	if( $options{ trace_subs }  &&  !$ext_call ) {
+	if( $options{ trace_subs } ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
@@ -264,7 +272,7 @@ sub sub {
 	}
 
 
-	goto &$DB::sub   if $ext_call  ||  !$options{ trace_returns };
+	do{ $ignore_goto++; goto &$DB::sub; }   if !$options{ trace_returns };
 
 	{
 		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
@@ -305,12 +313,17 @@ sub sub {
 
 
 sub lsub : lvalue {
+	if( $ext_call ) {
+		BEGIN{ strict->unimport( 'refs' )   if $options{ s } };
+		return &$DB::sub
+	}
+
 	$DB::prev_sub =  $DB::sub;
 
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
-	if( $options{ trace_subs }  &&  !$ext_call ) {
+	if( $options{ trace_subs } ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
