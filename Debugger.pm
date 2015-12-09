@@ -76,9 +76,10 @@ BEGIN {
 	@options{ qw/ s w / }     =  ( 0, 0 );
 	$options{ trace_subs }    =  0;
 	$options{ trace_load }    =  0;
-	$options{ trace_returns } =  1;
+	$options{ trace_returns } =  0;
+	$options{ trace_goto }    =  0;
 
-	$options{ goto_callstack } =  1;
+	$options{ goto_callstack } =  0;
 
 	$DB::postponed{ 'DB::DB' } =  1;
 }
@@ -262,7 +263,8 @@ sub goto {
 	return   if $ext_call;
 
 
-	push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
+	push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ]
+		if $options{ trace_goto };
 
 	if( $options{ goto_callstack } ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
@@ -290,7 +292,9 @@ sub sub {
 		return &$DB::sub
 	}
 
+	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
+	$root->[-1][4] =  \@DB::goto_frames   if $options{ trace_goto };
 
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
@@ -354,7 +358,9 @@ sub lsub : lvalue {
 		return &$DB::sub
 	}
 
+	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
+	$root->[-1][4] =  \@DB::goto_frames   if $options{ trace_goto };
 
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
