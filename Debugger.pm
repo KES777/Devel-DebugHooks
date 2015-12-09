@@ -265,7 +265,10 @@ sub sub {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
-		# So prevent infinite reentrance manually
+		# So prevent infinite reentrance manually. One way to compete this:
+		# my $stub = sub { &$DB::sub };
+		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
+		# Another:
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		$Devel::Debugger::dbg->trace_subs( 'C', wantarray, \@_ );
