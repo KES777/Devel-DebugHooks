@@ -84,7 +84,15 @@ BEGIN {
 
 
 # NOTICE: it is better to not use any modules from this one
-# because they will appear to compiler first, but we do not want that
+# because we do not want that they appear to compiler before
+# we can track module loading and subs calling process
+# Also it is safe that descendant debugger module 'use' us. BUT BE AWARE!!!
+# That module should not use any module before this one
+# if they want track when each sub call occour and each module is loaded
+#
+# When we 'use' descendant debugger at the end our module appears last at load chain.
+# Also there is a problem how to pass descendant class name to 'use' it.
+# Keep this comment for history. Find this commit at 'git blame' to see what was changed
 BEGIN {
 	if( $options{ s } ) { require 'strict.pm';    strict->import();   }
 	if( $options{ w } ) { require 'warnings.pm';  warnings->import(); }
@@ -214,7 +222,7 @@ sub init {
 
 
 
-my $goto =  sub {
+sub goto {
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
 	if( $options{ trace_subs }  &&  !$ext_call ) {
@@ -231,7 +239,7 @@ my $goto =  sub {
 
 
 # The sub is installed at compile time as soon as the body has been parsed
-my $sub =  sub {
+sub sub {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
@@ -286,7 +294,7 @@ my $sub =  sub {
 
 
 
-my $lsub =  sub : lvalue {
+sub lsub : lvalue {
 	# When we leave the scope the original value is restored.
 	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
@@ -309,20 +317,6 @@ my $lsub =  sub : lvalue {
 };
 
 
-
-# We delay installation until the file's runtime
-{
-	BEGIN{ warnings->unimport( 'redefine' )   if $options{ w } }
-	*sub  =  $sub;
-	*lsub =  $lsub;
-	*goto =  $goto;
-}
-
-
-
-BEGIN {
-	eval "use Devel::$Devel::Debugger::dbg";
-}
 
 
 1;
