@@ -68,9 +68,7 @@ our $line;           # current line number
 our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
-our $prev_sub;       # keep track what is the previous sub. 'caller' lost that info while 'goto'
 our %options;
-
 
 
 # Do DB:: configuration stuff here
@@ -113,7 +111,7 @@ BEGIN { # Initialization goes here
 	$DB::ext_call =  0;
 
 
-	@goto_frames =  ();
+	@DB::goto_frames =  ( [] );
 }
 
 
@@ -263,8 +261,8 @@ sub init {
 sub goto {
 	return   if $ext_call;
 
-	push @goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::prev_sub ];
-	$prev_sub =  $DB::sub;
+
+	push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
 
 	if( $options{ goto_callstack } ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
@@ -292,7 +290,7 @@ sub sub {
 		return &$DB::sub
 	}
 
-	$DB::prev_sub =  $DB::sub;
+	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
 
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
@@ -356,7 +354,7 @@ sub lsub : lvalue {
 		return &$DB::sub
 	}
 
-	$DB::prev_sub =  $DB::sub;
+	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
 
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
