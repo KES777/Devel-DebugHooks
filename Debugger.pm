@@ -67,6 +67,7 @@ our $file;           # current file
 our $line;           # current line number
 our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
+our @goto_frames;    # save sequence of places where nested gotos are called
 our $prev_sub;       # keep track what is the previous sub. 'caller' lost that info while 'goto'
 our %options;
 
@@ -108,6 +109,9 @@ BEGIN { # Initialization goes here
 	# If we do not we can still init them when define
 	$DB::deep     =  0;
 	$DB::ext_call =  0;
+
+
+	@goto_frames =  ();
 }
 
 
@@ -198,6 +202,7 @@ sub trace_subs {
 	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @DB::args )\n";
 	print "FROM: @{[ (caller($level))[0..2] ]}\n";
+	print "ORIG: @{ $_ }\n"   for @goto_frames;
 	print "TEXT: " .DB::location() ."\n";
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
@@ -234,6 +239,7 @@ my $ignore_goto =  0;
 sub goto {
 	do{ $ignore_goto--; return }   if $ignore_goto  ||  $ext_call;
 
+	push @goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::prev_sub ];
 	$prev_sub =  $DB::sub;
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
