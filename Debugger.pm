@@ -242,6 +242,9 @@ sub init {
 }
 
 
+# HERE we get unexpected results about 'caller'
+# EXPECTED: the line number where 'goto' called from
+
 # 1 sub t { }
 # 2 sub sb {
 # 3    goto &t;  # << The DB::goto is called from here
@@ -273,14 +276,7 @@ sub goto {
 		}
 	}
 
-
-	# HERE we get unexpected results about 'caller'
-	# EXPECTED: the line number where 'goto' called from
 	if( $options{ trace_subs } ) {
-		# Any subsequent sub call inside next sub will invoke DB::sub again
-		# The right way is to turn off 'Debug subroutine enter/exit'
-		# local $^P =  $^P & ~1;      # But this works at compile time only.
-		# So prevent infinite reentrance manually
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# $Devel::Debugger::dbg->trace_subs( 'G' );
@@ -299,8 +295,6 @@ sub sub {
 
 	$DB::prev_sub =  $DB::sub;
 
-	# When we leave the scope the original value is restored.
-	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
 		# Any subsequent sub call inside next sub will invoke DB::sub again
@@ -365,25 +359,19 @@ sub lsub : lvalue {
 
 	$DB::prev_sub =  $DB::sub;
 
-	# When we leave the scope the original value is restored.
-	# So it is the same like '$DB::deep--'
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
-		# Any subsequent sub call inside next sub will invoke DB::sub again
-		# The right way is to turn off 'Debug subroutine enter/exit'
-		# local $^P =  $^P & ~1;      # But this works at compile time only.
-		# So prevent infinite reentrance manually
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		# Here too client's code 'caller' return wrong info
+		# HERE TOO client's code 'caller' return wrong info
 		$Devel::Debugger::dbg->trace_subs( 'L' );
 	}
 
 
-	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
-	return &$DB::sub;
-	# the last statement is the sub result.
-	# We can not do '$DB::deep--' here. So we use 'local $DB::deep'.
+	{
+		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+		return &$DB::sub;
+	}
 };
 
 
