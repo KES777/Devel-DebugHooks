@@ -80,6 +80,8 @@ BEGIN {
 	$options{ trace_load }    =  0;
 	$options{ trace_returns } =  1;
 
+	$options{ goto_callstack } =  1;
+
 	$DB::postponed{ 'DB::DB' } =  1;
 }
 
@@ -206,9 +208,15 @@ sub trace_subs {
 	print "TEXT: " .DB::location() ."\n";
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
-}
 
-
+	if( $options{ goto_callstack }  &&  $t eq 'G' ) {
+		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+		local $" = ' - ';
+		for( 0..7 ) {
+			my @frame = caller($_);
+			print "@frame -- >>@DB::args<<\n";
+		}
+	}
 
 }
 
@@ -234,6 +242,20 @@ sub init {
 }
 
 
+# 1 sub t { }
+# 2 sub sb {
+# 3    goto &t;  # << The DB::goto is called from here
+# 4 }
+# 5 sub sb( a => 3 )
+
+# But caller called form DB::goto return next info:
+# main - t3.pl - 5 - DB::goto - 1 -  -  -  - 256 -  -  -- >><<
+# main - t3.pl - 5 - main::t - 1 - 1 -  -  - 256 -  -  -- >>a - 3<<
+# Because the DB::goto is called as ordinary sub. So its call frame should be right
+# I mean the (caller(0))[2] should be 3 instead of 5
+#        the (caller(0))[5] shold be 1 instead of undef (The value of caller(1)[5])
+# Becase @list = goto &sub is useless at any case
+
 
 my $ignore_goto =  0;
 sub goto {
@@ -241,6 +263,17 @@ sub goto {
 
 	push @goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::prev_sub ];
 	$prev_sub =  $DB::sub;
+
+	if( $options{ goto_callstack } ) {
+		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+		local $" = ' - ';
+		for( 0..7 ) {
+			my @frame = caller($_);
+			print "@frame -- >>@DB::args<<\n";
+		}
+	}
+
+
 	# HERE we get unexpected results about 'caller'
 	# EXPECTED: the line number where 'goto' called from
 	if( $options{ trace_subs } ) {
