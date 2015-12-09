@@ -65,8 +65,8 @@ BEGIN {
 our $package;        # current package
 our $file;           # current file
 our $line;           # current line number
-our $deep =  0;      # watch the calling stack depth
-our $ext_call =  0;  # keep silent at DB::sub/lsub while do external call from DB::*
+our $deep;           # watch the calling stack depth
+our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our %options;
 
 
@@ -102,6 +102,12 @@ BEGIN {
 	# It is limited to the first enclosing block of the BEGIN block
 }
 
+BEGIN { # Initialization goes here
+	# When we 'use Something' from this module the DB::sub is called at compile time
+	# If we do not we can still init them when define
+	$DB::deep     =  0;
+	$DB::ext_call =  0;
+}
 
 
 # Hooks to Perl's internals should be first.
