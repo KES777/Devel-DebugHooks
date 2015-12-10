@@ -58,7 +58,10 @@ sub trace_subs {
 	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @$args )\n";
 	print "FROM: @{ $_ }\n"   for reverse @DB::goto_frames;
-	print "TEXT: " .DB::location( $DB::sub ) ."\n";
+	# print "TEXT: " .DB::location( $DB::sub ) ."\n";
+	# WORKAROUND: even before function call $DB::sub changes its value to DB::location
+	my $sub =  $DB::sub;
+	print "TEXT: " .DB::location( $sub ) ."\n";
 
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
@@ -187,7 +190,7 @@ BEGIN { # Initialization goes here
 
 
 	sub location {
-		my $subname =  shift // $DB::sub;
+		my $subname =  shift;
 
 		# The subs from DB::* are not placed here. Why???
 		# A? Maybe they are placed after module loaded?
