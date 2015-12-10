@@ -113,7 +113,7 @@ our %options;
 # Do DB:: configuration stuff here
 BEGIN {
 	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
-	$options{ frames }         //=  0;         # compile time & runtime option
+	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	# The differece when we set it compile time, we trace internal call and
 	# Module::import calls at runtime we do not see those
@@ -230,7 +230,7 @@ BEGIN { # Initialization goes here
 		$level++   if (caller($level))[ 3 ] eq 'DB::goto';
 
 		my @frames;
-		my $count =  $options{ frames } || -1;
+		my $count =  $options{ frames };
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
 			last   if !@frame;
 			push @frames, [ [ @DB::args ], @frame ];
