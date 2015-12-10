@@ -226,7 +226,7 @@ BEGIN { # Initialization goes here
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
 
 		$level =  1;
-		$level++   if           $frame[ 3 ] eq 'Devel::DebugHooks::trace_subs';
+		1 while( $ext_call  &&  (caller($level++))[3] ne 'DB::trace_subs' );
 		$level++   if (caller($level))[ 3 ] eq 'DB::goto';
 
 		my @frames;
@@ -271,6 +271,14 @@ sub init {
 }
 
 
+
+
+sub trace_subs {
+	$dbg->trace_subs( @_ );
+}
+
+
+
 # HERE we get unexpected results about 'caller'
 # EXPECTED: the line number where 'goto' called from
 
@@ -298,7 +306,7 @@ sub goto {
 
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$dbg->trace_subs( 'G' );
+		trace_subs( 'G' );
 	}
 
 
@@ -337,7 +345,7 @@ sub sub {
 		# Another:
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		$dbg->trace_subs( 'C' );
+		trace_subs( 'C' );
 	}
 
 
@@ -397,7 +405,7 @@ sub lsub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# HERE TOO client's code 'caller' return wrong info
-		$dbg->trace_subs( 'L' );
+		trace_subs( 'L' );
 	}
 
 
