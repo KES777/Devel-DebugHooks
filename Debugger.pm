@@ -213,9 +213,8 @@ BEGIN { # Initialization goes here
 		($file, $line) =  split ':', $file
 			unless defined $line;
 
-		# do not distrub if wrong $file/$line is given
-		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
-		return ${ "::_<$file" }[ $line ] != 0;
+		return defined ${ "::_<$file" }  &&  $line <= $#{ "::_<$file" }
+			&& ${ "::_<$file" }[ $line ] != 0;
 	}
 
 
