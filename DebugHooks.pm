@@ -49,7 +49,7 @@ sub trace_subs {
 
 	BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 
-	my $level //=  0;
+	my $level =  0;
 	$level +=  2   if $t eq 'G';
 
 	my( $args, @frame ) =  DB::frames( $level );
@@ -224,6 +224,7 @@ BEGIN { # Initialization goes here
 
 		my @frames;
 		$level =  1;
+		$level++   if $frame[ 3 ] eq 'Devel::DebugHooks::trace_subs';
 		while( my @frame =  caller( $level++ ) ) {
 			last   if !@frame;
 			push @frames, [ [ @DB::args ], @frame ];
