@@ -311,10 +311,10 @@ sub sub {
 	}
 
 
-	return &$DB::sub   if !$options{ trace_returns };
-
 	{
 		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+		return &$DB::sub   if !$options{ trace_returns };
+
 
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
