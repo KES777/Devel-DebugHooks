@@ -274,6 +274,15 @@ sub init {
 
 
 sub trace_subs {
+	# Any subsequent sub call inside next sub will invoke DB::sub again
+	# The right way is to turn off 'Debug subroutine enter/exit'
+	# local $^P =  $^P & ~1;      # But this works at compile time only.
+	# So prevent infinite reentrance manually. One way to compete this:
+	# my $stub = sub { &$DB::sub };
+	# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
+	# Another:
+	local $ext_call   =  $ext_call +1;
+	local $DB::single =  0;     # Prevent debugging for next call
 	$dbg->trace_subs( @_ );
 }
 
@@ -304,8 +313,6 @@ sub goto {
 	if( $options{ trace_subs } ) {
 		push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
 
-		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
 		trace_subs( 'G' );
 	}
 
@@ -336,15 +343,6 @@ sub sub {
 		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
 		$root->[-1][4] =  \@DB::goto_frames;
 
-		# Any subsequent sub call inside next sub will invoke DB::sub again
-		# The right way is to turn off 'Debug subroutine enter/exit'
-		# local $^P =  $^P & ~1;      # But this works at compile time only.
-		# So prevent infinite reentrance manually. One way to compete this:
-		# my $stub = sub { &$DB::sub };
-		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
-		# Another:
-		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
 		trace_subs( 'C' );
 	}
 
@@ -402,8 +400,6 @@ sub lsub : lvalue {
 		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
 		$root->[-1][4] =  \@DB::goto_frames;
 
-		local $ext_call =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
 		# HERE TOO client's code 'caller' return wrong info
 		trace_subs( 'L' );
 	}
