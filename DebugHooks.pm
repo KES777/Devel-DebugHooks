@@ -111,8 +111,10 @@ our %options;
 # Do DB:: configuration stuff here
 BEGIN {
 	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
-	$options{ trace_subs }     //=  0;
-	$options{ trace_load }     //=  0;         # compile time options
+	$options{ trace_subs }     //=  0;         # compile time / runtime option
+	# The differece when we set it compile time, we trace internal call and
+	# Module::import calls at runtime we do not see those
+	$options{ trace_load }     //=  0;         # compile time option
 	$options{ trace_returns }  //=  0;
 
 	$options{ goto_callstack } //=  0;
