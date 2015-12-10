@@ -1,17 +1,24 @@
 package Devel::Debugger;
 
 our $VERSION =  '0.01';
-our $dbg;
+
 
 BEGIN {
-	our $dbg =  'Devel::Debugger';
+	$DB::dbg =  'Devel::Debugger';
 }
 
 
 sub import {
-	# $dbg =  caller;
+	my $class =  shift;
 
-	return 'HELLO';
+	$DB::dbg =  $class;
+}
+
+
+sub trace_load {
+	my $self =  shift;
+
+	print "Loaded '@_'\n"
 }
 
 
@@ -35,8 +42,42 @@ sub abreak {
 
 
 
+sub trace_subs {
+	my( $self, $t ) =  @_;
+
+	BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+
+	my $level //=  0;
+	$level +=  2   if $t eq 'G';
+
+	my( $args, @frame ) =  DB::frames( $level );
+
+	local $" =  ' - ';
+	print "\n";
+	print '= ' x15, "\n";
+	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
+	print "${t}SUB: $DB::sub( @$args )\n";
+	print "FROM: @{ $_ }\n"   for reverse @DB::goto_frames;
+	print "TEXT: " .DB::location( $DB::sub ) ."\n";
+
+	print "DEEP: $DB::deep\n";
+	print '= ' x15, "\n";
+
+	if( $options{ goto_callstack }  &&  $t eq 'G' ) {
+		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+		local $" = ' - ';
+		for( 0..7 ) {
+			my @frame = caller($_);
+			print "@frame -- >>@DB::args<<\n";
+		}
+	}
+}
+
+
 package    # hide the package from the PAUSE indexer
     DB;
+
+
 
 BEGIN {
 	$^P |= 0x80;
@@ -61,7 +102,7 @@ BEGIN {
 # < When saving source, include source that did not compile.
 
 
-
+our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
 our $line;           # current line number
@@ -176,46 +217,15 @@ BEGIN { # Initialization goes here
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 		return ${ "::_<$file" }[ $line ] != 0;
 	}
-}
+
+
+
 
 
 
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
-	print "Loaded '@_'\n"  if $options{ trace_load };
-
-	# $Devel::Debugger::dbg->trace_load( @_ )   if $options{ trace_load };
-}
-
-
-
-sub trace_subs {
-	my( $t ) =  @_;
-
-	my $level //=  0;
-	$level +=  2   if $t eq 'G';
-
-	my @frame =  caller($level);
-
-	local $" =  ' - ';
-	print "\n";
-	print '= ' x15, "\n";
-	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
-	print "${t}SUB: $DB::sub( @DB::args )\n";
-	print "FROM: @{ $_ }\n"   for reverse @DB::goto_frames;
-	print "TEXT: " .DB::location() ."\n";
-	print "DEEP: $DB::deep\n";
-	print '= ' x15, "\n";
-
-	if( $options{ goto_callstack }  &&  $t eq 'G' ) {
-		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
-		local $" = ' - ';
-		for( 0..7 ) {
-			my @frame = caller($_);
-			print "@frame -- >>@DB::args<<\n";
-		}
-	}
-
+	$dbg->trace_load( @_ )   if $options{ trace_load };
 }
 
 
@@ -225,9 +235,9 @@ sub DB {
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	$Devel::Debugger::dbg->bbreak();
-	$Devel::Debugger::dbg->process();
-	$Devel::Debugger::dbg->abreak();
+	$dbg->bbreak();
+	$dbg->process();
+	$dbg->abreak();
 }
 
 
@@ -277,8 +287,7 @@ sub goto {
 	if( $options{ trace_subs } ) {
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		# $Devel::Debugger::dbg->trace_subs( 'G' );
-		trace_subs( 'G' );
+		$dbg->trace_subs( 'G' );
 	}
 };
 
@@ -306,8 +315,7 @@ sub sub {
 		# Another:
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
-		# $Devel::Debugger::dbg->trace_subs( 'C' );
-		trace_subs( 'C' );
+		$dbg->trace_subs( 'C' );
 	}
 
 
@@ -321,7 +329,7 @@ sub sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			$Devel::Debugger::dbg->trace_returns( @ret );
+			$dbg->trace_returns( @ret );
 
 			return @ret;
 		}
@@ -330,7 +338,7 @@ sub sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			$Devel::Debugger::dbg->trace_returns( $ret );
+			$dbg->trace_returns( $ret );
 
 			return $ret;
 		}
@@ -339,7 +347,7 @@ sub sub {
 
 			local $ext_call   =  $ext_call +1;
 			local $DB::single =  0;
-			$Devel::Debugger::dbg->trace_returns();
+			$dbg->trace_returns();
 
 			return;
 		}
@@ -366,7 +374,7 @@ sub lsub : lvalue {
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# HERE TOO client's code 'caller' return wrong info
-		$Devel::Debugger::dbg->trace_subs( 'L' );
+		$dbg->trace_subs( 'L' );
 	}
 
 
