@@ -66,12 +66,12 @@ sub trace_subs {
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
 
-	if( $options{ goto_callstack }  &&  $t eq 'G' ) {
+	if( $DB::options{ goto_callstack }  &&  $t eq 'G' ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 		local $" = ' - ';
-		for( 0..7 ) {
-			my @frame = caller($_);
-			print "@frame -- >>@DB::args<<\n";
+		for( DB::frames() ) {
+			my $args =  shift @$_;
+			print "@$_ ( @$args )\n";
 		}
 	}
 }
@@ -222,6 +222,14 @@ BEGIN { # Initialization goes here
 		my $level =  shift;
 
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
+
+		my @frames;
+		while( my @frame =  caller( $level++ ) ) {
+			last   if !@frame;
+			push @frames, [ [ @DB::args ], @frame ];
+		}
+
+		return @frames;
 	}
 }
 
@@ -279,9 +287,9 @@ sub goto {
 	if( $options{ goto_callstack } ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 		local $" = ' - ';
-		for( 0..7 ) {
-			my @frame =  caller($_);
-			print "@frame -- >>@DB::args<<\n";
+		for( DB::frames() ) {
+			my $args =  shift @$_;
+			print "@$_ ( @$args )\n";
 		}
 	}
 
