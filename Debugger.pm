@@ -111,6 +111,7 @@ BEGIN {
 	@options{ qw/ s w / }     =  ( 0, 0 );
 	$options{ trace_subs }    =  0;
 	$options{ trace_load }    =  0;
+	#options{ store_branches }
 	$options{ trace_returns } =  0;
 
 	$options{ goto_callstack } =  0;
@@ -399,6 +400,19 @@ sub lsub : lvalue {
 __END__
 
 Describe what is used by perl internals from DB:: at compile time
+${ "::_<$filename" } - $filename
+@{ "::_<$filename" } - source lines. Line in compare to 0 shows trapnessability
+%{ "::_<$filename" } - traps keyed by line number ***
+$DB::sub - the current sub
+%DB::sub - the sub definition
+@DB::args - ref to the @_ at the given level at caller(N)
+&DB::goto, &DB::sub, &DB::lsub, &DB::postponed - called at appropriate events
+$^P - flags to control behaviour
+$DB::postponed{subname} - trace sub loads        ***
+$DB::trace, $DB::single, $DB::signal - controls if the program should break
+
+initialization steps: rc -> env
+
 
 goto implicitly changes the value of $DB::sub
 
