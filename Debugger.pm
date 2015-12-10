@@ -121,7 +121,6 @@ BEGIN {
 	$options{ trace_subs }    =  0;
 	$options{ trace_load }    =  0;
 	$options{ trace_returns } =  0;
-	$options{ trace_goto }    =  0;
 
 	$options{ goto_callstack } =  0;
 
@@ -278,19 +277,18 @@ sub goto {
 	return   if $ext_call;
 
 
-	push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ]
-		if $options{ trace_goto };
-
 	if( $options{ goto_callstack } ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 		local $" = ' - ';
 		for( 0..7 ) {
-			my @frame = caller($_);
+			my @frame =  caller($_);
 			print "@frame -- >>@DB::args<<\n";
 		}
 	}
 
 	if( $options{ trace_subs } ) {
+		push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
+
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		$dbg->trace_subs( 'G' );
@@ -307,11 +305,12 @@ sub sub {
 	}
 
 	my $root =  \@DB::goto_frames;
-	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
-	$root->[-1][4] =  \@DB::goto_frames   if $options{ trace_goto };
-
+	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
+		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
+		$root->[-1][4] =  \@DB::goto_frames;
+
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
 		# local $^P =  $^P & ~1;      # But this works at compile time only.
@@ -372,11 +371,12 @@ sub lsub : lvalue {
 	}
 
 	my $root =  \@DB::goto_frames;
-	local @DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
-	$root->[-1][4] =  \@DB::goto_frames   if $options{ trace_goto };
-
+	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
+		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
+		$root->[-1][4] =  \@DB::goto_frames;
+
 		local $ext_call =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		# HERE TOO client's code 'caller' return wrong info
