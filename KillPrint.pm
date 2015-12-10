@@ -1,4 +1,4 @@
-package Devel::DebugBase;
+package Devel::KillPrint;
 
 our $VERSION =  '0.01';
 
