@@ -282,16 +282,22 @@ sub init {
 
 
 sub trace_subs {
-	# Any subsequent sub call inside next sub will invoke DB::sub again
-	# The right way is to turn off 'Debug subroutine enter/exit'
-	# local $^P =  $^P & ~1;      # But this works at compile time only.
-	# So prevent infinite reentrance manually. One way to compete this:
-	# my $stub = sub { &$DB::sub };
-	# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
-	# Another:
-	local $ext_call   =  $ext_call +1;
-	local $DB::single =  0;     # Prevent debugging for next call
-	$dbg->trace_subs( @_ );
+	if( $options{ trace_subs } ) {
+		my $last_frames =  shift;
+		push @DB::goto_frames,
+			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ];
+
+		# Any subsequent sub call inside next sub will invoke DB::sub again
+		# The right way is to turn off 'Debug subroutine enter/exit'
+		# local $^P =  $^P & ~1;      # But this works at compile time only.
+		# So prevent infinite reentrance manually. One way to compete this:
+		# my $stub = sub { &$DB::sub };
+		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
+		# Another:
+		local $ext_call   =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
+		$dbg->trace_subs( @_ );
+	}
 }
 
 
@@ -317,13 +323,7 @@ sub trace_subs {
 sub goto {
 	return   if $ext_call;
 
-
-	if( $options{ trace_subs } ) {
-		push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
-
-		trace_subs( 'G' );
-	}
-
+	trace_subs( undef, 'G' );
 
 	if( $DB::options{ goto_callstack } ) {
 		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
@@ -347,11 +347,7 @@ sub sub {
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
-	if( $options{ trace_subs } ) {
-		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub, $root ] );
-
-		trace_subs( 'C' );
-	}
+	trace_subs( $root, 'C' );
 
 
 	{
@@ -403,12 +399,8 @@ sub lsub : lvalue {
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
-	if( $options{ trace_subs } ) {
-		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub, $root ] );
-
-		# HERE TOO client's code 'caller' return wrong info
-		trace_subs( 'L' );
-	}
+	# HERE TOO client's code 'caller' return wrong info
+	trace_subs( $root, 'L' );
 
 
 	{
