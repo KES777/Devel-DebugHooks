@@ -1,10 +1,10 @@
-package Devel::Debugger;
+package Devel::DebugHooks;
 
 our $VERSION =  '0.01';
 
 
 BEGIN {
-	$DB::dbg =  'Devel::Debugger';
+	$DB::dbg =  'Devel::DebugHooks';
 }
 
 
