@@ -214,6 +214,8 @@ BEGIN { # Initialization goes here
 		my $level =  shift;
 		# Note that we should ignore our frame, so +1
 
+		#WORKAROUND FOR: https://rt.perl.org/Ticket/Display.html?id=126872
+		my @frame =  caller( $level +1 );
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
 
 		my @frames;
