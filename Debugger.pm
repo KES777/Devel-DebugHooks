@@ -160,8 +160,6 @@ BEGIN { # Initialization goes here
 # Hooks to Perl's internals should be first.
 # Because debugger descendants may call them
 {
-	#@DB::args << caller(N)
-
 	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
 
 	sub file {
@@ -219,7 +217,12 @@ BEGIN { # Initialization goes here
 	}
 
 
+	sub frames {
+		my $level =  shift;
 
+		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
+	}
+}
 
 
 
