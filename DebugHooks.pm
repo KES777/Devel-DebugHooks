@@ -59,8 +59,19 @@ sub trace_subs {
 	print '= ' x15, "\n";
 	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @$args )\n";
-	print "GOTO: @{ $_ }\n"   for reverse @DB::goto_frames;
-	print "FROM : @{$_}[1..4] \n"   for DB::frames();
+	my $gf =  \@DB::goto_frames;
+	for my $frame ( DB::frames() ) {
+		if(    $gf->[0][0] == $frame->[1]
+			&& $gf->[0][1] == $frame->[2]
+			&& $gf->[0][2] == $frame->[3]
+		) {
+			print "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf;
+			$gf =  $DB::goto_frames[0][4];
+		}
+
+		print "FROM: @{$frame}[1..4] \n";
+	}
+
 	# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 	# WORKAROUND: even before function call $DB::sub changes its value to DB::location
 	my $sub =  $DB::sub;
@@ -152,9 +163,6 @@ BEGIN { # Initialization goes here
 	# If we do not we can still init them when define
 	$DB::deep     =  0;
 	$DB::ext_call =  0;
-
-
-	@DB::goto_frames =  ( [] );
 }
 
 
@@ -340,8 +348,7 @@ sub sub {
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
-		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
-		$root->[-1][4] =  \@DB::goto_frames;
+		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub, $root ] );
 
 		trace_subs( 'C' );
 	}
@@ -397,8 +404,7 @@ sub lsub : lvalue {
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
 	if( $options{ trace_subs } ) {
-		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub ] );
-		$root->[-1][4] =  \@DB::goto_frames;
+		@DB::goto_frames =  ( [ $DB::package, $DB::file, $DB::line, $DB::sub, $root ] );
 
 		# HERE TOO client's code 'caller' return wrong info
 		trace_subs( 'L' );
