@@ -109,10 +109,12 @@ our @goto_frames;    # save sequence of places where nested gotos are called
 our %options;
 
 
+
 # Do DB:: configuration stuff here
 BEGIN {
 	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
-	$options{ trace_subs }     //=  0;         # compile time / runtime option
+	$options{ frames }         //=  0;         # compile time & runtime option
+	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	# The differece when we set it compile time, we trace internal call and
 	# Module::import calls at runtime we do not see those
 	$options{ trace_load }     //=  0;         # compile time option
@@ -223,12 +225,16 @@ BEGIN { # Initialization goes here
 		my @frame =  caller( $level +1 );
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
 
-		my @frames;
 		$level =  1;
-		$level++   if $frame[ 3 ] eq 'Devel::DebugHooks::trace_subs';
-		while( my @frame =  caller( $level++ ) ) {
+		$level++   if           $frame[ 3 ] eq 'Devel::DebugHooks::trace_subs';
+
+		my @frames;
+		my $count =  $options{ frames } || -1;
+		while( $count  &&  (my @frame =  caller( $level++ )) ) {
 			last   if !@frame;
 			push @frames, [ [ @DB::args ], @frame ];
+		} continue {
+			$count--;
 		}
 
 		return @frames;
