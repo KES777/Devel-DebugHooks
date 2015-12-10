@@ -59,7 +59,8 @@ sub trace_subs {
 	print '= ' x15, "\n";
 	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
 	print "${t}SUB: $DB::sub( @$args )\n";
-	print "FROM: @{ $_ }\n"   for reverse @DB::goto_frames;
+	print "GOTO: @{ $_ }\n"   for reverse @DB::goto_frames;
+	print "FROM : @{$_}[1..4] \n"   for DB::frames();
 	# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 	# WORKAROUND: even before function call $DB::sub changes its value to DB::location
 	my $sub =  $DB::sub;
