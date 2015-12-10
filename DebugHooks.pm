@@ -227,6 +227,7 @@ BEGIN { # Initialization goes here
 
 		$level =  1;
 		$level++   if           $frame[ 3 ] eq 'Devel::DebugHooks::trace_subs';
+		$level++   if (caller($level))[ 3 ] eq 'DB::goto';
 
 		my @frames;
 		my $count =  $options{ frames } || -1;
