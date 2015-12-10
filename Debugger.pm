@@ -65,15 +65,6 @@ sub trace_subs {
 
 	print "DEEP: $DB::deep\n";
 	print '= ' x15, "\n";
-
-	if( $DB::options{ goto_callstack }  &&  $t eq 'G' ) {
-		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
-		local $" = ' - ';
-		for( DB::frames() ) {
-			my $args =  shift @$_;
-			print "@$_ ( @$args )\n";
-		}
-	}
 }
 
 
@@ -220,10 +211,12 @@ BEGIN { # Initialization goes here
 
 	sub frames {
 		my $level =  shift;
+		# Note that we should ignore our frame, so +1
 
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
 
 		my @frames;
+		$level =  1;
 		while( my @frame =  caller( $level++ ) ) {
 			last   if !@frame;
 			push @frames, [ [ @DB::args ], @frame ];
@@ -284,21 +277,22 @@ sub goto {
 	return   if $ext_call;
 
 
-	if( $options{ goto_callstack } ) {
-		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
-		local $" = ' - ';
-		for( DB::frames() ) {
-			my $args =  shift @$_;
-			print "@$_ ( @$args )\n";
-		}
-	}
-
 	if( $options{ trace_subs } ) {
 		push @DB::goto_frames, [ $DB::package, $DB::file, $DB::line, $DB::sub ];
 
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 		$dbg->trace_subs( 'G' );
+	}
+
+
+	if( $DB::options{ goto_callstack } ) {
+		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+		local $" = ' - ';
+		for( DB::frames() ) {
+			my $args =  shift @$_;
+			print "@$_ ( @$args )\n";
+		}
 	}
 };
 
