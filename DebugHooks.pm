@@ -49,36 +49,43 @@ sub trace_subs {
 
 	BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
 
-	my $level =  0;
-	$level +=  2   if $t eq 'G';
 
-	my( $args, @frame ) =  DB::frames( $level );
-
+	my $info = '';
+	my $first_frame;
 	local $" =  ' - ';
-	print "\n";
-	print '= ' x15, "\n";
-	print "CNTX: " . ($frame[5] ? 'list' : (defined $frame[5] ? 'scalar' : 'void')) ."\n";
-	print "${t}SUB: $DB::sub( @$args )\n";
 	my $gf =  \@DB::goto_frames;
 	for my $frame ( DB::frames() ) {
+		$first_frame //=  $frame;
 		if(    $gf->[0][0] == $frame->[1]
 			&& $gf->[0][1] == $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
 		) {
-			print "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf;
+			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf;
 			$gf =  $DB::goto_frames[0][4];
 		}
 
-		print "FROM: @{$frame}[1..4] \n";
+		$info .=  "FROM: @{$frame}[1..4] \n";
 	}
+
+	my $context = $first_frame->[5] ? 'list'
+			: defined $first_frame->[5] ? 'scalar' : 'void';
+
+	$info =
+	    "\n" .'= ' x15 ."\n"
+		."CNTX: $context\n"
+	    ."${t}SUB: @{ $first_frame }[4]( @{ $first_frame->[0] } )\n"
+	    .$info;
+
 
 	# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 	# WORKAROUND: even before function call $DB::sub changes its value to DB::location
 	my $sub =  $DB::sub;
-	print "TEXT: " .DB::location( $sub ) ."\n";
+	$info .=  "TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n";
 
-	print "DEEP: $DB::deep\n";
-	print '= ' x15, "\n";
+	$info .=  "DEEP: $DB::deep\n";
+	$info .=  '= ' x15 ."\n";
+
+	print $info;
 }
 
 
