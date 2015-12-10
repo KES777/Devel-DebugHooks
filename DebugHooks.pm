@@ -10,8 +10,10 @@ BEGIN {
 
 sub import {
 	my $class =  shift;
+	my %params =  @_;
 
 	$DB::dbg //=  $class;
+	@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
 }
 
 
