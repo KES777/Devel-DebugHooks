@@ -4,14 +4,14 @@ our $VERSION =  '0.01';
 
 
 BEGIN {
-	$DB::dbg =  'Devel::DebugHooks';
+	$DB::dbg //=  'Devel::DebugHooks';
 }
 
 
 sub import {
 	my $class =  shift;
 
-	$DB::dbg =  $class;
+	$DB::dbg //=  $class;
 }
 
 
@@ -108,13 +108,13 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
-	@options{ qw/ s w / }     =  ( 0, 0 );
-	$options{ trace_subs }    =  0;
-	$options{ trace_load }    =  0;
-	#options{ store_branches }
-	$options{ trace_returns } =  0;
+	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
+	$options{ trace_subs }     //=  0;
+	$options{ trace_load }     //=  0;         # compile time options
+	$options{ trace_returns }  //=  0;
 
-	$options{ goto_callstack } =  0;
+	$options{ goto_callstack } //=  0;
+	#options{ store_branches }
 
 	$DB::postponed{ 'DB::DB' } =  1;
 }
