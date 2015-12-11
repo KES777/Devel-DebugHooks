@@ -60,11 +60,12 @@ sub trace_subs {
 			&& $gf->[0][1] == $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
 		) {
+			$first_frame =  $gf->[0];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf;
 			$gf =  $DB::goto_frames[0][4];
 		}
 
-		$info .=  "FROM: @{$frame}[1..4] \n";
+		$info .=  "FROM: @{$first_frame}[0..3] \n";
 	}
 
 	my $context = $first_frame->[5] ? 'list'
