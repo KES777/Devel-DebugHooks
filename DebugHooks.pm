@@ -252,6 +252,9 @@ BEGIN { # Initialization goes here
 					print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
 					$level++;
 				}
+				else {
+					$level--;
+				}
 
 				last;
 			}
