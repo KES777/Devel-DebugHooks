@@ -132,6 +132,7 @@ our %options;
 BEGIN {
 	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
 	$options{ frames }         //=  -1;        # compile time & runtime option
+	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	# The differece when we set it compile time, we trace internal call and
 	# Module::import calls at runtime we do not see those
@@ -241,8 +242,23 @@ BEGIN { # Initialization goes here
 		return ( [ @DB::args ], caller( $level +1 ) )   if defined $level;
 
 		$level =  1;
-		1 while( $ext_call  &&  (caller($level++))[3] ne 'DB::trace_subs' );
-		$level++   if (caller($level))[ 3 ] eq 'DB::goto';
+		local $" =  ' - ';
+		while( $ext_call ) {
+			@frame =  caller($level++);
+			if( @frame[3] eq 'DB::trace_subs' ) {
+				my @gframe =  caller($level);
+				if(  @gframe[ 3 ] eq 'DB::goto' ) {
+					print "DBGF: @frame[0..3]\n"    if $options{ dbg_frames };
+					print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
+					$level++;
+				}
+
+				last;
+			}
+
+			print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
+		}
+
 
 		my @frames;
 		my $count =  $options{ frames };
