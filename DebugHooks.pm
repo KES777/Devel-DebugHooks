@@ -254,7 +254,7 @@ BEGIN { # Initialization goes here
 		if( $options{ orig_frames } ) {
 			my $lvl =  0;
 			while( my @frame =  caller( $lvl ) ) {
-				print "ORIG: @frame[0..3,5]<\n";
+				print "ORIG: @frame[0..3,5]\n";
 				$lvl++;
 			}
 
