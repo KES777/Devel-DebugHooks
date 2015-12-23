@@ -263,7 +263,7 @@ BEGIN { # Initialization goes here
 		$level =  1;
 		local $" =  ' - ';
 		while( $ext_call ) {
-			@frame =  caller($level++);
+			my @frame =  caller($level++);
 			if( @frame[3] eq 'DB::trace_subs' ) {
 				my @gframe =  caller($level);
 				if(  @gframe[ 3 ] eq 'DB::goto' ) {
