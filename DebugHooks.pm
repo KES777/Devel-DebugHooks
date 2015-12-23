@@ -78,18 +78,15 @@ sub trace_subs {
 
 	$info =
 	    "\n" .'= ' x15 ."\n"
+	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
 	    ."${t}SUB: @{ $first_frame }[4]( @{ $first_frame->[0] } )\n"
-	    .$info;
+		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
+		# NOTICE: even before function call $DB::sub changes its value to DB::location
+	    ."TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n\n"
+	    .$info
+	    .'= ' x15 ."\n";
 
-
-	# print "TEXT: " .DB::location( $DB::sub ) ."\n";
-	# WORKAROUND: even before function call $DB::sub changes its value to DB::location
-	my $sub =  $DB::sub;
-	$info .=  "TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n";
-
-	$info .=  "DEEP: $DB::deep\n";
-	$info .=  '= ' x15 ."\n";
 
 	print $info;
 }
