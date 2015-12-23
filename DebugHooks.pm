@@ -1,5 +1,10 @@
 package Devel::DebugHooks;
 
+BEGIN {
+	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
+	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
+}
+
 our $VERSION =  '0.01';
 
 
@@ -47,7 +52,7 @@ sub abreak {
 sub trace_subs {
 	my( $self, $t ) =  @_;
 
-	BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 
 
 	my $info = '';
@@ -159,8 +164,8 @@ BEGIN {
 # Also there is a problem how to pass descendant class name to 'use' it.
 # Keep this comment for history. Find this commit at 'git blame' to see what was changed
 BEGIN {
-	if( $options{ s } ) { require 'strict.pm';    strict->import();   }
-	if( $options{ w } ) { require 'warnings.pm';  warnings->import(); }
+	if( $options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
+	if( $options{ s } ) { require 'strict.pm';    'strict'->import();   }
 	# http://perldoc.perl.org/warnings.html
 	# The scope of the strict/warnings pragma is limited to the enclosing block.
 	# But this not truth.
@@ -178,7 +183,7 @@ BEGIN { # Initialization goes here
 # Hooks to Perl's internals should be first.
 # Because debugger descendants may call them
 {
-	BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+	BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
 	sub file {
 		my $filename =  shift // $DB::file;
@@ -265,6 +270,8 @@ BEGIN { # Initialization goes here
 			print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
 		}
 
+
+		BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 
 		my @frames;
 		my $count =  $options{ frames };
@@ -355,7 +362,7 @@ sub goto {
 	trace_subs( undef, 'G' );
 
 	if( $DB::options{ goto_callstack } ) {
-		BEGIN{ warnings->unimport( 'uninitialized' )   if $options{ w } }
+		BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $options{ w } }
 		local $" = ' - ';
 		for( DB::frames() ) {
 			my $args =  shift @$_;
@@ -369,7 +376,7 @@ sub goto {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	if( $ext_call ) {
-		BEGIN{ strict->unimport( 'refs' )   if $options{ s } };
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub
 	}
 
@@ -380,7 +387,7 @@ sub sub {
 
 
 	{
-		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub   if !$options{ trace_returns };
 
 
@@ -421,7 +428,7 @@ sub sub {
 
 sub lsub : lvalue {
 	if( $ext_call ) {
-		BEGIN{ strict->unimport( 'refs' )   if $options{ s } };
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } };
 		return &$DB::sub
 	}
 
@@ -433,7 +440,7 @@ sub lsub : lvalue {
 
 
 	{
-		BEGIN{ strict->unimport( 'refs' )   if $options{ s } }
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
 	}
 };
