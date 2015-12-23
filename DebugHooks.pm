@@ -254,9 +254,11 @@ BEGIN { # Initialization goes here
 		if( $options{ orig_frames } ) {
 			my $lvl =  0;
 			while( my @frame =  caller( $lvl ) ) {
-				print "ORIG: @frame[0..3]\n";
+				print "ORIG: @frame[0..3,5]<\n";
 				$lvl++;
 			}
+
+			print "\n";
 		}
 
 
@@ -287,6 +289,7 @@ BEGIN { # Initialization goes here
 		my @frames;
 		my $count =  $options{ frames };
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
+			print "$count -- @frame\n"   if $options{ orig_frames };
 			push @frames, [ [ @DB::args ], @frame ];
 		} continue {
 			$count--;
