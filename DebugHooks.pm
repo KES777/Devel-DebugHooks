@@ -287,7 +287,6 @@ BEGIN { # Initialization goes here
 		my @frames;
 		my $count =  $options{ frames };
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
-			last   if !@frame;
 			push @frames, [ [ @DB::args ], @frame ];
 		} continue {
 			$count--;
