@@ -260,7 +260,7 @@ BEGIN { # Initialization goes here
 		}
 
 
-		$level =  1;
+		$level =  0;
 		local $" =  ' - ';
 		while( $ext_call ) {
 			my @frame =  caller($level++);
