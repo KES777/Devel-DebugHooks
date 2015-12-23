@@ -70,7 +70,7 @@ sub trace_subs {
 			$gf =  $DB::goto_frames[0][4];
 		}
 
-		$info .=  "FROM: @{$first_frame}[0..3] \n";
+		$info .=  "FROM: @{$frame}[1..4] \n";
 	}
 
 	my $context = $first_frame->[5] ? 'list'
