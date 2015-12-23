@@ -60,7 +60,6 @@ sub trace_subs {
 	local $" =  ' - ';
 	my $gf =  \@DB::goto_frames;
 	for my $frame ( DB::frames() ) {
-		$first_frame //=  $frame;
 		if(    $gf->[0][0] eq $frame->[1]
 			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
@@ -71,6 +70,7 @@ sub trace_subs {
 		}
 
 		$info .=  "FROM: @{$frame}[1..4] \n";
+		$first_frame //=  $frame;
 	}
 
 	my $context = $first_frame->[6] ? 'list'
