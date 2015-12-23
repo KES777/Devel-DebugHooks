@@ -64,7 +64,7 @@ sub trace_subs {
 			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
 		) {
-			$frame =  [ undef, @{ $gf->[0] } ];
+			$frame->[4] =  $gf->[0][3];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
 			$gf =  $DB::goto_frames[0][4];
 		}
