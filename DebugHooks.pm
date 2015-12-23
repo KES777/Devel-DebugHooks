@@ -264,9 +264,9 @@ BEGIN { # Initialization goes here
 		local $" =  ' - ';
 		while( $ext_call ) {
 			my @frame =  caller($level++);
-			if( @frame[3] eq 'DB::trace_subs' ) {
+			if( $frame[3] eq 'DB::trace_subs' ) {
 				my @gframe =  caller($level);
-				if(  @gframe[ 3 ] eq 'DB::goto' ) {
+				if( $gframe[ 3 ] eq 'DB::goto' ) {
 					print "DBGF: @frame[0..3]\n"    if $options{ dbg_frames };
 					print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
 					$level++;
