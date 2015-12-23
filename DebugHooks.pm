@@ -73,8 +73,8 @@ sub trace_subs {
 		$info .=  "FROM: @{$frame}[1..4] \n";
 	}
 
-	my $context = $first_frame->[5] ? 'list'
-			: defined $first_frame->[5] ? 'scalar' : 'void';
+	my $context = $first_frame->[6] ? 'list'
+			: defined $first_frame->[6] ? 'scalar' : 'void';
 
 	$info =
 	    "\n" .'= ' x15 ."\n"
