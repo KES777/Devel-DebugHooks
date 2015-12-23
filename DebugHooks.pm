@@ -61,8 +61,8 @@ sub trace_subs {
 	my $gf =  \@DB::goto_frames;
 	for my $frame ( DB::frames() ) {
 		$first_frame //=  $frame;
-		if(    $gf->[0][0] == $frame->[1]
-			&& $gf->[0][1] == $frame->[2]
+		if(    $gf->[0][0] eq $frame->[1]
+			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
 		) {
 			$first_frame =  $gf->[0];
@@ -136,7 +136,9 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
-	@options{ qw/ s w / }      //=  ( 0, 0 );  # compile time options
+	$options{ s }              //=  0;         # compile time options
+	$options{ w }              //=  0;         # compile time options
+	$options{ orig_frames }    //=  0;         # compile time & runtime option
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
@@ -248,6 +250,15 @@ BEGIN { # Initialization goes here
 			my @frame =  caller( $level +1 );
 			return ( [ @DB::args ], @frame );
 		}
+
+		if( $options{ orig_frames } ) {
+			my $lvl =  0;
+			while( my @frame =  caller( $lvl ) ) {
+				print "ORIG: @frame[0..3]\n";
+				$lvl++;
+			}
+		}
+
 
 		$level =  1;
 		local $" =  ' - ';
