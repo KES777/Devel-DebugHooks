@@ -334,7 +334,10 @@ sub trace_subs {
 	if( $options{ trace_subs } ) {
 		my $last_frames =  shift;
 		push @DB::goto_frames,
-			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ];
+			$DB::package?
+				[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
+				[ (caller(0))[0..2], $DB::sub, $last_frames ];
+
 
 		# Any subsequent sub call inside next sub will invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
