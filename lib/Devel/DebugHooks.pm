@@ -34,16 +34,18 @@ sub import {
 sub trace_load {
 	my $self =  shift;
 
-	print "Loaded '@_'\n"
+	return "Loaded '@_'\n"
 }
 
 
 sub bbreak {
-	print "\n" .'= ' x30 ."$DB::ext_call\n";
+	my $info =  "\n" .' =' x30 ."$DB::ext_call\n";
 
 	# watch();
 
-	print "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
+	$info .=  "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
+
+	return $info;
 }
 
 
@@ -82,6 +84,7 @@ sub trace_subs {
 		$first_frame //=  $frame;
 	}
 
+
 	my $context = $first_frame->[6] ? 'list'
 			: defined $first_frame->[6] ? 'scalar' : 'void';
 
@@ -97,7 +100,7 @@ sub trace_subs {
 	    .'= ' x15 ."\n";
 
 
-	print $info;
+	return $info;
 }
 
 
