@@ -18,11 +18,17 @@ BEGIN {
 
 sub import {
 	my $class =  shift;
-	my %params =  @_;
 
 	$DB::dbg //=  $class;
-	@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
+	if( $_[0] eq 'options' ) {
+		my %params =  @_;
+		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
+	}
+	else {
+		$DB::options{ $_ } =  1   for @_;
+	}
 }
+
 
 
 sub trace_load {
