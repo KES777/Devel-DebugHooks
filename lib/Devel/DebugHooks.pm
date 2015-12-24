@@ -9,6 +9,9 @@ our $VERSION =  '0.01';
 
 
 BEGIN {
+	#FIX? warn about uninitialized $dbg
+	# Usually you do not use this module directly, so you should setup $DB::dbg
+	# to point to your module
 	$DB::dbg //=  'Devel::DebugHooks';
 }
 
@@ -133,15 +136,15 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$options{ s }              //=  0;         # compile time options
-	$options{ w }              //=  0;         # compile time options
+	$options{ s }              //=  0;         # compile time option
+	$options{ w }              //=  0;         # compile time option
 	$options{ orig_frames }    //=  0;         # compile time & runtime option
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
-	$options{ trace_subs }     //=  0;         # compile time & runtime option
-	# The differece when we set it compile time, we trace internal call and
-	# Module::import calls at runtime we do not see those
+	# The differece when we set option at compile time, we see module loadings
+	# and compilation order whereas setting up it at run time we lack that info
 	$options{ trace_load }     //=  0;         # compile time option
+	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
 
 	$options{ goto_callstack } //=  0;
