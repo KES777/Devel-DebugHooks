@@ -104,6 +104,21 @@ sub trace_subs {
 }
 
 
+
+sub trace_returns {
+	my $self =  shift;
+
+	my $info;
+	$info =  $DB::options{ trace_subs } ? '' : "\n" .' =' x15 ."\n";
+	$info .= "RETURNS:\n";
+
+	$info .=  @_ ?
+		'  ' .join "\n  ", map { defined $_ ? $_ : '&undef' } @_:
+		'>>NOTHING<<';
+
+	return $info ."\n" .' =' x15 ."\n";
+}
+
 package    # hide the package from the PAUSE indexer
     DB;
 
