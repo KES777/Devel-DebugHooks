@@ -68,7 +68,7 @@ sub trace_subs {
 
 	my $info = '';
 	my $first_frame;
-	local $" =  ' - ';
+	local $" =  ' -';
 	my $gf =  \@DB::goto_frames;
 	for my $frame ( DB::frames() ) {
 		if(    $gf->[0][0] eq $frame->[1]
@@ -80,7 +80,7 @@ sub trace_subs {
 			$gf =  $DB::goto_frames[0][4];
 		}
 
-		$info .=  "FROM: @{$frame}[1..4] \n";
+		$info .=  "FROM: @{$frame}[1..4]\n";
 		$first_frame //=  $frame;
 	}
 
@@ -89,16 +89,16 @@ sub trace_subs {
 			: defined $first_frame->[6] ? 'scalar' : 'void';
 
 	$info =
-	    "\n" .'= ' x15 ."\n"
+	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
 	    ."${t}SUB: @{ $first_frame }[4]( @{ $first_frame->[0] } )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 	    ."TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n\n"
-	    .$info
-	    .'= ' x15 ."\n";
+	    .$info;
 
+	$info .=  $DB::options{ trace_returns } ? "\n" : ' =' x15 ."\n";
 
 	return $info;
 }
@@ -287,7 +287,7 @@ BEGIN { # Initialization goes here
 
 
 		$level =  0;
-		local $" =  ' - ';
+		local $" =  ' -';
 		while( $ext_call ) {
 			my @frame =  caller($level++);
 			if( $frame[3] eq 'DB::trace_subs' ) {
