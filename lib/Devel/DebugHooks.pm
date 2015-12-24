@@ -88,11 +88,13 @@ sub trace_subs {
 	my $context = $first_frame->[6] ? 'list'
 			: defined $first_frame->[6] ? 'scalar' : 'void';
 
+	$" =  ', ';
+	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $first_frame->[0] };
 	$info =
 	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
-	    ."${t}SUB: @{ $first_frame }[4]( @{ $first_frame->[0] } )\n"
+	    ."${t}SUB: @{ $first_frame }[4]( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 	    ."TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n\n"
