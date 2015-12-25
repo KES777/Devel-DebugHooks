@@ -177,8 +177,7 @@ BEGIN {
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
 
-	$options{ goto_callstack } //=  0;
-	#options{ store_branches }
+	#options{ store_branches } # TODO: draw code path
 
 	$DB::postponed{ 'DB::DB' } =  1;
 }
@@ -406,15 +405,6 @@ sub goto {
 	return   if $ext_call;
 
 	trace_subs( undef, 'G' );
-
-	if( $DB::options{ goto_callstack } ) {
-		BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $options{ w } }
-		local $" = ' - ';
-		for( DB::frames() ) {
-			my $args =  shift @$_;
-			print "@$_ ( @$args )\n";
-		}
-	}
 };
 
 
