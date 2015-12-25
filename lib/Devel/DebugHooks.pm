@@ -70,6 +70,7 @@ sub trace_subs {
 	my $first_frame;
 	local $" =  ' -';
 	my $gf =  \@DB::goto_frames;
+	my $DB_sub =  $gf->[-1][3]; # the last goto frame hence it has the name of called sub
 	for my $frame ( DB::frames() ) {
 		if(    $gf->[0][0] eq $frame->[1]
 			&& $gf->[0][1] eq $frame->[2]
@@ -94,15 +95,15 @@ sub trace_subs {
 	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
-	    ."${t}SUB: @{ $first_frame }[4]( @args )\n"
+	    ."${t}SUB: $DB_sub( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
-	    ."TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n\n"
 		# A: Because @_ keep the reference to args. So
 		# 1. The reference to $DB::sub is saved into @_
 		# 2. The DB::location is called
 		# 3. The value of $DB::sub is changed to DB::location
 		# 4. my( $sub ) =  @_; # Here is too late to get the orig value of $DB::sub
+	    ."TEXT: " .DB::location( $DB_sub ) ."\n\n"
 	    .$info;
 
 	$info .=  $DB::options{ trace_returns } ? "\n" : ' =' x15 ."\n";
