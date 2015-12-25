@@ -280,7 +280,7 @@ BEGIN { # Initialization goes here
 			return ( [ @DB::args ], @frame );
 		}
 
-		if( $options{ orig_frames } ) {
+		if( $options{ _all_frames } ) {
 			my $lvl =  0;
 			while( my @frame =  caller( $lvl ) ) {
 				print "ORIG: @frame[0..3,5]\n";
@@ -290,6 +290,7 @@ BEGIN { # Initialization goes here
 			print "\n";
 		}
 
+		print "\n"   if $options{ orig_frames };
 
 		$level =  0;
 		local $" =  ' -';
@@ -323,6 +324,8 @@ BEGIN { # Initialization goes here
 		} continue {
 			$count--;
 		}
+
+		print "\n", ' ^'x15   if $options{ orig_frames };
 
 		return @frames;
 	}
