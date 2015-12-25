@@ -275,8 +275,8 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
-GSUB: main::t2(  )
-TEXT: -e:2-2
+GSUB: main::t1(  )
+TEXT: -e:1-1
 
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
@@ -294,8 +294,8 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
-GSUB: main::t5(  )
-TEXT: -e:5-5
+GSUB: main::t4(  )
+TEXT: -e:4-4
 
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
@@ -304,8 +304,8 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
-GSUB: main::t5(  )
-TEXT: -e:5-5
+GSUB: main::t3(  )
+TEXT: -e:3-3
 
 GOTO: main --e -4 -main::t3
 GOTO: main --e -5 -main::t4
@@ -327,8 +327,8 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 DEEP: 2
 CNTX: void
-GSUB: main::t2(  )
-TEXT: -e:2-2
+GSUB: main::t1(  )
+TEXT: -e:1-1
 
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
