@@ -441,7 +441,7 @@ FROM: main --e -6 -main::t5
 @@ TraceSubs_with_dbg_orig_frames
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
-DBGF: DB -DebugHooks.pm -383 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
 -1 -- main --e -6 -DB::trace_subs -1 - - - -256 - -
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
@@ -456,9 +456,9 @@ FROM: main --e -6 -main::t5
 
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
-DBGF: DB -DebugHooks.pm -383 -Devel::TraceRT::trace_subs
-DBGF: DB -DebugHooks.pm -410 -DB::trace_subs
-DBGF: DB -DebugHooks.pm -430 -DB::goto
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 -1 -- main --e -6 -main::t4 -1 - - - -256 - -
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
@@ -474,9 +474,9 @@ FROM: main --e -6 -main::t5
 
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
-DBGF: DB -DebugHooks.pm -383 -Devel::TraceRT::trace_subs
-DBGF: DB -DebugHooks.pm -410 -DB::trace_subs
-DBGF: DB -DebugHooks.pm -430 -DB::goto
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 -1 -- main --e -6 -main::t3 -1 - - - -256 - -
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
@@ -493,7 +493,7 @@ FROM: main --e -6 -main::t5
 
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
-DBGF: DB -DebugHooks.pm -383 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
 -1 -- main --e -3 -DB::trace_subs -1 - - - -0 - -
 -2 -- main --e -6 -main::t3 -1 - - - -256 - -
 
@@ -512,9 +512,9 @@ FROM: main --e -6 -main::t5
 
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
-DBGF: DB -DebugHooks.pm -383 -Devel::TraceRT::trace_subs
-DBGF: DB -DebugHooks.pm -410 -DB::trace_subs
-DBGF: DB -DebugHooks.pm -430 -DB::goto
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 -1 -- main --e -3 -main::t1 -1 - - - -0 - -
 -2 -- main --e -6 -main::t3 -1 - - - -256 - -
 

@@ -75,6 +75,8 @@ sub trace_subs {
 		if(    $gf->[0][0] eq $frame->[1]
 			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
+			#NOTE: we should always show goto frames. Hiding them will prevent
+			# us to complete our work - debugging
 		) {
 			$frame->[4] =  $gf->[0][3];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
