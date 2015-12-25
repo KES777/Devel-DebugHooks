@@ -193,6 +193,26 @@ is
 	,"Limit callstack tracing to 1 frame";
 
 
+$script =  << 'PERL';
+sub t1 {}
+sub t2{ goto &t1; }
+sub t3{ t2( 5 ) };
+sub t4{ goto &t3; }
+sub t5{ t4( @_ ); }
+t5( 7 );
+PERL
+
+is
+	n( `perl -I$lib -d:FramesControl=trace_subs,frames1 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames1_2 }
+	,"Limit callstack tracing to 1 frame. Test 2";
+
+is
+	n( `perl -I$lib -d:FramesControl=trace_subs,frames2 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames2 }
+	,"Limit callstack tracing to 2 frames";
+
+
 
 
 # print "ZZZZZZZZZZZZZZZ\n";
@@ -587,4 +607,104 @@ TEXT: -e:1-1
 
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames1_2
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t4( 7 )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t3( 7 )
+TEXT: -e:3-3
+
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+GSUB: main::t1( 5 )
+TEXT: -e:1-1
+
+GOTO: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames2
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t4( 7 )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t3( 7 )
+TEXT: -e:3-3
+
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+GSUB: main::t1( 5 )
+TEXT: -e:1-1
+
+GOTO: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
