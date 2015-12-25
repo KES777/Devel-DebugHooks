@@ -223,8 +223,8 @@ __DATA__
  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
 -e:1    0
 @@ TraceLoadCT
-Loaded '*main::_</lib/Devel/DebugHooks.pm'
-Loaded '*main::_</lib/Devel/TraceLoadCT.pm'
+Loaded '*main::_<DebugHooks.pm'
+Loaded '*main::_<TraceLoadCT.pm'
 Loaded '*main::_<-e'
 @@ TraceLoadCT_Empty
 Loaded '*main::_<DebugHooks.pm'
