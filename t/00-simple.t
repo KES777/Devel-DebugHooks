@@ -175,6 +175,8 @@ is
 	,"\n". $files->{ TraceGoto_deep_with_args }
 	,"Check goto frames. Deep level with args";
 
+
+# different frames test
 is
 	n( `perl -I$lib -d:TraceRT=dbg_frames,orig_frames -e '$script'` )
 	,''
@@ -184,6 +186,12 @@ is
 	n( `perl -I$lib -d:TraceRT=trace_subs,dbg_frames,orig_frames -e '$script'` )
 	,"\n". $files->{ TraceSubs_with_dbg_orig_frames }
 	,"Set 'dbg_frames' and 'orig_frames' flags";
+
+is
+	n( `perl -I$lib -d:FramesControl=trace_subs,frames1 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames1 }
+	,"Limit callstack tracing to 1 frame";
+
 
 
 
@@ -530,4 +538,53 @@ FROM: main --e -3 -main::t2
 GOTO: main --e -4 -main::t3
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames1
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+GSUB: main::t4( 7 )
+TEXT: -e:4-4
+
+GOTO: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+GSUB: main::t3( 7 )
+TEXT: -e:3-3
+
+GOTO: main --e -4 -main::t3
+GOTO: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t1( 5 )
+TEXT: -e:1-1
+
+GOTO: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
