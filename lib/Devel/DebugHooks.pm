@@ -98,6 +98,11 @@ sub trace_subs {
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 	    ."TEXT: " .DB::location( @{ $first_frame }[4] ) ."\n\n"
+		# A: Because @_ keep the reference to args. So
+		# 1. The reference to $DB::sub is saved into @_
+		# 2. The DB::location is called
+		# 3. The value of $DB::sub is changed to DB::location
+		# 4. my( $sub ) =  @_; # Here is too late to get the orig value of $DB::sub
 	    .$info;
 
 	$info .=  $DB::options{ trace_returns } ? "\n" : ' =' x15 ."\n";
