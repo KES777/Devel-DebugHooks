@@ -51,9 +51,19 @@ is
 	,"Set trace_load flag at compile time";
 
 is
+	n(`perl -I$lib -d:TraceLoadCT -e 'use Empty'`)
+	,$files->{ TraceLoadCT_Empty }
+	,"Set trace_load flag at compile time with usage";
+
+is
 	n(`perl -I$lib -d:TraceRT=trace_load -e0`)
 	,$files->{ TraceLoadRT }
 	,"Set trace_load flag at run time";
+
+is
+	n(`perl -I$lib -d:TraceRT=trace_load -e 'use Empty'`)
+	,$files->{ TraceLoadRT_Empty }
+	,"Set trace_load flag at run time with usage";
 
 
 # sub calls
@@ -178,7 +188,15 @@ __DATA__
 Loaded '*main::_</lib/Devel/DebugHooks.pm'
 Loaded '*main::_</lib/Devel/TraceLoadCT.pm'
 Loaded '*main::_<-e'
+@@ TraceLoadCT_Empty
+Loaded '*main::_<DebugHooks.pm'
+Loaded '*main::_<TraceLoadCT.pm'
+Loaded '*main::_<Empty.pm'
+Loaded '*main::_<-e'
 @@ TraceLoadRT
+Loaded '*main::_<-e'
+@@ TraceLoadRT_Empty
+Loaded '*main::_<Empty.pm'
 Loaded '*main::_<-e'
 @@ TraceSubsCT
  = = = = = = = = = = = = = = =
