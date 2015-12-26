@@ -261,6 +261,11 @@ is
 	,"\n". $files->{ TraceSubs_limit_frames2_goto }
 	,"Limit callstack tracing to 2 frames. +trace_goto";
 
+is
+	n( `perl -I$lib -d:TraceRT=trace_goto -e '$script'` )
+	,''
+	,"Tracing info without trace_subs is not avaiable. WHY?";
+
 
 
 
