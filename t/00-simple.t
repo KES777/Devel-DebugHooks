@@ -9,6 +9,13 @@ use Test::Output;
 use FindBin qw/ $Bin /;  my $lib =  "$Bin/lib";
 use Data::Section::Simple qw/ get_data_section /;
 
+use Test::Differences;
+unified_diff();
+{
+	no warnings qw/ redefine prototype /;
+	*is =  \&eq_or_diff;
+}
+
 
 
 sub n {
