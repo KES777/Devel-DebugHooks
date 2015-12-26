@@ -23,7 +23,7 @@ sub n {
 
 	s/(\(0x[\da-f]{6,}\))/(0x000000)/g;
 	s#(?:/.*?)?([^/]+\.pm)#$1#gm;
-	s#(-DebugHooks.pm -)(\d+)#$1xxx#g;
+	s#^(DBGF: .*?\.pm -)(\d+)#$1xxx#gm;
 
 	$_;
 }
