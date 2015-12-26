@@ -59,7 +59,6 @@ sub abreak {
 }
 
 
-
 sub trace_subs {
 	my( $self, $t ) =  @_;
 
@@ -80,7 +79,7 @@ sub trace_subs {
 		) {
 			$frame->[4] =  $gf->[0][3];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
-			$gf =  $DB::goto_frames[0][4];
+			$gf =  $gf->[0][4];
 		}
 
 		$info .=  "FROM: @{$frame}[1..4]\n";
