@@ -19,6 +19,9 @@ BEGIN {
 sub import {
 	my $class =  shift;
 
+	# NOTICE: If descendats has sub calls after calling to $self->SUPER::import
+	# those calls will be traced by 'trace_subs'. Localize $ext_call to disable
+	# that (see below)
 	$DB::dbg //=  $class;
 	if( $_[0] eq 'options' ) {
 		my %params =  @_;
@@ -27,6 +30,10 @@ sub import {
 	else {
 		$DB::options{ $_ } =  1   for @_;
 	}
+
+	# Disable tracing internal call
+	local $DB::ext_call =  $DB::ext_call +1;
+	DB::applyOptions();
 }
 
 
@@ -162,7 +169,8 @@ BEGIN {
 
 
 
-BEGIN {
+# This sub is called twice: at compile time and before run time of 'main' package
+sub applyOptions {
 	$^P |= 0x80   if $options{ trace_goto };
 }
 
@@ -210,6 +218,7 @@ BEGIN { # Initialization goes here
 	# If we do not we can still init them when define
 	$DB::deep     =  0;
 	$DB::ext_call =  0;
+	applyOptions();
 }
 
 
