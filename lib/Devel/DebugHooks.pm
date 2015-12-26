@@ -131,30 +131,6 @@ package    # hide the package from the PAUSE indexer
     DB;
 
 
-
-BEGIN {
-	$^P |= 0x80;
-}
-
-# $^P default values
-# 0111 0011 1111
-# |||| |||| |||^-- Debug subroutine enter/exit.
-# |||| |||| ||^--- Line-by-line debugging.
-# |||| |||| |^---- Switch off optimizations.
-# |||| |||| ^----- Preserve more data for future interactive inspections.
-# |||| ||||
-# |||| |||^------- Keep info about source lines on which a subroutine is defined.
-# |||| ||^-------- Start with single-step on.
-# |||| |^--------- Use subroutine address instead of name when reporting.
-# |||| ^---------- Report goto &subroutine as well.
-# ||||
-# |||^------------ Provide informative "file" names for evals based on the place they were compiled.
-# ||^------------- Provide informative names to anonymous subroutines based on the place they were compiled.
-# |^-------------- Save source code lines into @{"_<$filename"}.
-# ^--------------- When saving source, include evals that generate no subroutines.
-# < When saving source, include source that did not compile.
-
-
 our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
@@ -175,6 +151,7 @@ BEGIN {
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	# The differece when we set option at compile time, we see module loadings
 	# and compilation order whereas setting up it at run time we lack that info
+	$options{ trace_goto }     //=  1;         #
 	$options{ trace_load }     //=  0;         # compile time option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
@@ -183,6 +160,30 @@ BEGIN {
 
 	$DB::postponed{ 'DB::DB' } =  1;
 }
+
+
+
+BEGIN {
+	$^P |= 0x80   if $options{ trace_goto };
+}
+
+# $^P default values
+# 0111 0011 1111
+# |||| |||| |||^-- Debug subroutine enter/exit.
+# |||| |||| ||^--- Line-by-line debugging.
+# |||| |||| |^---- Switch off optimizations.
+# |||| |||| ^----- Preserve more data for future interactive inspections.
+# |||| ||||
+# |||| |||^------- Keep info about source lines on which a subroutine is defined.
+# |||| ||^-------- Start with single-step on.
+# |||| |^--------- Use subroutine address instead of name when reporting.
+# |||| ^---------- Report goto &subroutine as well.
+# ||||
+# |||^------------ Provide informative "file" names for evals based on the place they were compiled.
+# ||^------------- Provide informative names to anonymous subroutines based on the place they were compiled.
+# |^-------------- Save source code lines into @{"_<$filename"}.
+# ^--------------- When saving source, include evals that generate no subroutines.
+# < When saving source, include source that did not compile.
 
 
 
