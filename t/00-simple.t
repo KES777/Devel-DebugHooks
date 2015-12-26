@@ -138,9 +138,19 @@ t2();
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceGoto_one }
 	,"Check goto frames. One level";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	,"\n". $files->{ TraceGoto_one_goto }
+	,"Check goto frames. One level. +trace_goto";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	,"\n". $files->{ TraceGoto_one_goto }
+	,"trace_goto is enabled by default";
 
 
 $script =  << 'PERL';
@@ -153,9 +163,14 @@ t5();
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceGoto_deep }
 	,"Check goto frames. Deep level";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	,"\n". $files->{ TraceGoto_deep_goto }
+	,"Check goto frames. Deep level. +trace_goto";
 
 
 $script =  << 'PERL';
@@ -165,9 +180,14 @@ t2( 3 );
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceGoto_one_with_args }
 	,"Check goto frames. One level with args";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	,"\n". $files->{ TraceGoto_one_with_args_goto }
+	,"Check goto frames. One level with args +trace_goto";
 
 
 $script =  << 'PERL';
@@ -180,9 +200,14 @@ t5( 7 );
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceGoto_deep_with_args }
 	,"Check goto frames. Deep level with args";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	,"\n". $files->{ TraceGoto_deep_with_args_goto }
+	,"Check goto frames. Deep level with args +trace_goto";
 
 
 # different frames test
@@ -197,9 +222,14 @@ is
 	,"Set 'dbg_frames' and 'orig_frames' flags";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1 }
 	,"Limit callstack tracing to 1 frame";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto,frames=1 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames1_with_goto }
+	,"Limit callstack tracing to 1 frame +trace_goto";
 
 
 $script =  << 'PERL';
@@ -207,19 +237,29 @@ sub t1 {}
 sub t2{ goto &t1; }
 sub t3{ t2( 5 ) };
 sub t4{ goto &t3; }
-sub t5{ t4( @_ ); }
+sub t5{ t4( @_ ); } # <-- goto replaced by common call
 t5( 7 );
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1_2 }
 	,"Limit callstack tracing to 1 frame. Test 2";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames1_2_goto }
+	,"Limit callstack tracing to 1 frame. Test 2. +trace_goto";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames2 }
 	,"Limit callstack tracing to 2 frames";
+
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2 -e '$script'` )
+	,"\n". $files->{ TraceSubs_limit_frames2_goto }
+	,"Limit callstack tracing to 2 frames. +trace_goto";
 
 
 
@@ -348,6 +388,15 @@ TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
+@@ TraceGoto_one_goto
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t2(  )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
 DEEP: 1
@@ -359,6 +408,25 @@ GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5(  )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t2(  )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+@@ TraceGoto_deep_goto
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -422,6 +490,15 @@ TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
+@@ TraceGoto_one_with_args_goto
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t2( 3 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
 DEEP: 1
@@ -433,6 +510,25 @@ GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep_with_args
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+@@ TraceGoto_deep_with_args_goto
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -593,6 +689,24 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames1_with_goto
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
 GSUB: main::t4( 7 )
 TEXT: -e:4-4
 
@@ -651,6 +765,33 @@ FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 DEEP: 2
 CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames1_2_goto
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t4( 7 )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
 GSUB: main::t3( 7 )
 TEXT: -e:3-3
 
@@ -677,6 +818,35 @@ GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames2
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: main::t5( 7 )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t4( 7 )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: main::t2( 5 )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+@@ TraceSubs_limit_frames2_goto
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void

@@ -34,6 +34,12 @@ sub import {
 	# Disable tracing internal call
 	local $DB::ext_call =  $DB::ext_call +1;
 	DB::applyOptions();
+
+	# We set default here because setting it at DB::BEGIN block will cause us
+	# see third party module's gotos. Settig option to 0 at DB::BEGIN will
+	# confuse us here, because we do not know it is disabled at DB::BEGIN or
+	# descendant module
+	$DB::options{ trace_goto } //=  1;
 }
 
 
@@ -81,8 +87,6 @@ sub trace_subs {
 		if(    $gf->[0][0] eq $frame->[1]
 			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
-			#NOTE: we should always show goto frames. Hiding them will prevent
-			# us to complete our work - debugging. Also see the 0x80 at $^P
 		) {
 			$frame->[4] =  $gf->[0][3];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
@@ -157,21 +161,24 @@ BEGIN {
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	# The differece when we set option at compile time, we see module loadings
 	# and compilation order whereas setting up it at run time we lack that info
-	$options{ trace_goto }     //=  1;         #
 	$options{ trace_load }     //=  0;         # compile time option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
 
 	#options{ store_branches } # TODO: draw code path
-
 	$DB::postponed{ 'DB::DB' } =  1;
+
+	#NOTE: we should always trace goto frames. Hiding them will prevent
+	# us to complete our work - debugging.
+	# But we still allow to control this behaviou at compiletime & runtime
+	$options{ trace_goto };    #see DH:import  # compile time & runtime option
+	$^P |= 0x80;
 }
 
 
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
-	$^P |= 0x80   if $options{ trace_goto };
 }
 
 # $^P default values
@@ -417,6 +424,7 @@ sub trace_subs {
 
 
 sub goto {
+	return   unless $options{ trace_goto };
 	return   if $ext_call;
 
 	trace_subs( undef, 'G' );
