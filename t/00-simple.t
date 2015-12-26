@@ -248,10 +248,22 @@ Loaded '*main::_<-e'
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
+CSUB: Devel::TraceSubsCT::import( Devel::TraceSubsCT )
+TEXT: TraceSubsCT.pm:5-7
+
+FROM: main --e -0 -Devel::TraceSubsCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
 CSUB: Devel::DebugHooks::import( Devel::TraceSubsCT )
 TEXT: /lib/Devel/DebugHooks.pm:19-30
 
-FROM: main --e -0 -Devel::DebugHooks::import
+FROM: Devel::TraceSubsCT -TraceSubsCT.pm -6 -Devel::DebugHooks::import
+FROM: main --e -0 -Devel::TraceSubsCT::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =

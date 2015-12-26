@@ -2,6 +2,10 @@ package Devel::TraceSubsCT;
 
 
 
+sub import {
+	shift->SUPER::import( @_ );
+}
+
 BEGIN {
 	$DB::dbg //=  __PACKAGE__;
 	$DB::options{ trace_subs }  //=  1;
