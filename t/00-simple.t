@@ -196,7 +196,7 @@ is
 	,"Set 'dbg_frames' and 'orig_frames' flags";
 
 is
-	n( `perl -I$lib -d:FramesControl=trace_subs,frames1 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1 }
 	,"Limit callstack tracing to 1 frame";
 
@@ -211,12 +211,12 @@ t5( 7 );
 PERL
 
 is
-	n( `perl -I$lib -d:FramesControl=trace_subs,frames1 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1_2 }
 	,"Limit callstack tracing to 1 frame. Test 2";
 
 is
-	n( `perl -I$lib -d:FramesControl=trace_subs,frames2 -e '$script'` )
+	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames2 }
 	,"Limit callstack tracing to 2 frames";
 
