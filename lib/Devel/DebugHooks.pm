@@ -76,7 +76,7 @@ sub trace_subs {
 			&& $gf->[0][1] eq $frame->[2]
 			&& $gf->[0][2] == $frame->[3]
 			#NOTE: we should always show goto frames. Hiding them will prevent
-			# us to complete our work - debugging
+			# us to complete our work - debugging. Also see the 0x80 at $^P
 		) {
 			$frame->[4] =  $gf->[0][3];
 			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
@@ -499,8 +499,9 @@ ${ "::_<$filename" } - $filename
 @{ "::_<$filename" } - source lines. Line in compare to 0 shows trapnessability
 %{ "::_<$filename" } - traps keyed by line number ***
 $DB::sub - the current sub
-%DB::sub - the sub definition
+%DB::sub - the location of sub definition
 @DB::args - ref to the @_ at the given level at caller(N)
+if the sub returns the @DB::args becomes dirty and we can not access its values
 &DB::goto, &DB::sub, &DB::lsub, &DB::postponed - called at appropriate events
 $^P - flags to control behaviour
 $DB::postponed{subname} - trace sub loads        ***
@@ -517,11 +518,9 @@ Which data is preserved by forth bit of $^P?
 
 How to debug lvalue subs?
 
-+
-"segmentation fault when 'print @_'" (30 lines) at http://paste.scsys.co.uk/502490
-
 The DOC must describe that DB::sub should have :lvalue attribute
-if DB::lsub is not defined
+if DB::lsub is not defined. Whithout that the:
+'falling back to &DB::sub (args).' is not possible
 
 
 
@@ -546,18 +545,22 @@ BEGIN {
 } # The DB::postpone( 'DB::DB' ) is not called
 
 
-Write test that checks that Devel::Debugger is loaded first
-
-
 
 Why the DB::DB is called twice for:
 print "@{[ (caller(0))[0..2] ]}\n";
 but only one for this:
 print sb();
+A: It is called once for caller(0) and second for whole line.
+It is called once for each statement at line, maybe.
 
 
 use should have args. and the caller called from DB:: namespace should set @DB::args
 at compile time 'caller' also does not fill @DB::args
 BEGIN {
 	print caller, @DB::args
+}
+A: Try, to ensure the DB::args used after the call ot caller
+BEGIN {
+	@caller =  caller
+	print @caller, @DB::args
 }
