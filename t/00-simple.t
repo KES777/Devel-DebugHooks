@@ -139,17 +139,17 @@ PERL
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
-	,"\n". $files->{ TraceGoto_one }
+	,"\n". $files->{ TraceSubs_one }
 	,"Check goto frames. One level";
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
-	,"\n". $files->{ TraceGoto_one_goto }
+	,"\n". $files->{ TraceGoto_one }
 	,"Check goto frames. One level. +trace_goto";
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
-	,"\n". $files->{ TraceGoto_one_goto }
+	,"\n". $files->{ TraceGoto_one }
 	,"trace_goto is enabled by default";
 
 
@@ -164,12 +164,12 @@ PERL
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
-	,"\n". $files->{ TraceGoto_deep }
+	,"\n". $files->{ TraceSubs_deep }
 	,"Check goto frames. Deep level";
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
-	,"\n". $files->{ TraceGoto_deep_goto }
+	,"\n". $files->{ TraceGoto_deep }
 	,"Check goto frames. Deep level. +trace_goto";
 
 
@@ -181,12 +181,12 @@ PERL
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
-	,"\n". $files->{ TraceGoto_one_with_args }
+	,"\n". $files->{ TraceSubs_one_with_args }
 	,"Check goto frames. One level with args";
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
-	,"\n". $files->{ TraceGoto_one_with_args_goto }
+	,"\n". $files->{ TraceGoto_one_with_args }
 	,"Check goto frames. One level with args +trace_goto";
 
 
@@ -201,12 +201,12 @@ PERL
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
-	,"\n". $files->{ TraceGoto_deep_with_args }
+	,"\n". $files->{ TraceSubs_deep_with_args }
 	,"Check goto frames. Deep level with args";
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
-	,"\n". $files->{ TraceGoto_deep_with_args_goto }
+	,"\n". $files->{ TraceGoto_deep_with_args }
 	,"Check goto frames. Deep level with args +trace_goto";
 
 
@@ -389,7 +389,7 @@ RETURNS:
   HASH(0x000000)
   &undef
  = = = = = = = = = = = = = = =
-@@ TraceGoto_one
+@@ TraceSubs_one
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -398,7 +398,7 @@ TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
-@@ TraceGoto_one_goto
+@@ TraceGoto_one
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -417,7 +417,7 @@ TEXT: -e:1-1
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
-@@ TraceGoto_deep
+@@ TraceSubs_deep
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -436,7 +436,7 @@ TEXT: -e:2-2
 FROM: main --e -3 -main::t2
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
-@@ TraceGoto_deep_goto
+@@ TraceGoto_deep
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -491,7 +491,7 @@ GOTO: main --e -4 -main::t3
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
-@@ TraceGoto_one_with_args
+@@ TraceSubs_one_with_args
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -500,7 +500,7 @@ TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
-@@ TraceGoto_one_with_args_goto
+@@ TraceGoto_one_with_args
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -519,7 +519,7 @@ TEXT: -e:1-1
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
-@@ TraceGoto_deep_with_args
+@@ TraceSubs_deep_with_args
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
@@ -538,7 +538,7 @@ TEXT: -e:2-2
 FROM: main --e -3 -main::t2
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
-@@ TraceGoto_deep_with_args_goto
+@@ TraceGoto_deep_with_args
  = = = = = = = = = = = = = = =
 DEEP: 0
 CNTX: void
