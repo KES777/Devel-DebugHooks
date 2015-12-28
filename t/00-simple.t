@@ -264,7 +264,12 @@ is
 is
 	n( `perl -I$lib -d:TraceRT=trace_goto -e '$script'` )
 	,''
-	,"Tracing info without trace_subs is not avaiable. WHY?";
+	,"Tracing goto frames without trace_subs is useless";
+
+is
+	n( `perl -I$lib -d:TraceGotoCT=trace_subs -e0` )
+	,"\n". $files->{ TraceGotoCT }
+	,"Trace gotos at compile time";
 
 
 
@@ -903,4 +908,39 @@ GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
 GOTO: main --e -4 -main::t3
 FROM: main --e -5 -main::t4
+ = = = = = = = = = = = = = = =
+@@ TraceGotoCT
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: Devel::TraceGotoCT::import( Devel::TraceGotoCT, trace_subs )
+TEXT: TraceGotoCT.pm:xx-xx
+
+FROM: main --e -0 -Devel::TraceGotoCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: Devel::DebugHooks::import( Devel::TraceGotoCT, trace_subs )
+TEXT: DebugHooks.pm:xx-xx
+
+FROM: Devel::TraceGotoCT -TraceGotoCT.pm -6 -Devel::DebugHooks::import
+FROM: main --e -0 -Devel::TraceGotoCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+GSUB: Devel::TraceGotoCT::test( Devel::TraceGotoCT, trace_subs )
+TEXT: TraceGotoCT.pm:xx-xx
+
+GOTO: DB -DebugHooks.pm -430 -Devel::TraceGotoCT::test
+FROM: main --e -0 -Devel::TraceGotoCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
