@@ -272,6 +272,10 @@ is
 	,"\n". $files->{ TraceGotoCT }
 	,"Trace gotos at compile time";
 
+is
+	n( `perl -I$lib -d:TraceRT=trace_subs,trace_load -e0` )
+	,$files->{ TraceRT_internals }
+	,"Do not trace internal calls";
 
 
 
@@ -295,6 +299,8 @@ Loaded '*main::_<-e'
 Loaded '*main::_<-e'
 @@ TraceLoadRT_Empty
 Loaded '*main::_<Empty.pm'
+Loaded '*main::_<-e'
+@@ TraceRT_internals
 Loaded '*main::_<-e'
 @@ TraceSubsCT
  = = = = = = = = = = = = = = =
