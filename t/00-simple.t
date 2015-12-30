@@ -282,6 +282,12 @@ is
 	,"Do not trace internal calls";
 
 
+###
+is
+	n( `perl -I$lib -d:AutoInit -e0` )
+	,'Devel::AutoInit'
+	,"Check auto initialization of \$DB::dbg";
+
 
 # print "ZZZZZZZZZZZZZZZ\n";
 # print n `perl -I$lib -d:TraceRT=trace_subs -e '$script'`;

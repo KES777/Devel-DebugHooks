@@ -9,10 +9,21 @@ our $VERSION =  '0.01';
 
 
 BEGIN {
-	#FIX? warn about uninitialized $dbg
-	# Usually you do not use this module directly, so you should setup $DB::dbg
-	# to point to your module
-	$DB::dbg //=  'Devel::DebugHooks';
+	unless( defined $DB::dbg ) {
+		my $level =  0;
+		while( my @frame =  caller($level++) ) {
+			$DB::dbg =  $frame[0]   if $frame[0] =~ /^Devel::/;
+		}
+		# ISSUE: We can not make 'main' package as descendant of 'Devel::DebugHooks'
+		# because of broken info from 'caller', so I restrict pkg_names to 'Devel::'
+		# TODO: Ask #p5p about that 'caller' shows strange file:line for (eval)
+		# https://rt.perl.org/Public/Bug/Display.html?id=127083
+
+		unless( defined $DB::dbg ) {
+			$DB::dbg =  'Devel::DebugHooks';
+
+		}
+	}
 }
 
 
