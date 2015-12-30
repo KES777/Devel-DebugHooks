@@ -29,7 +29,14 @@ sub import {
 		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
 	}
 	else {
-		$DB::options{ $_ } =  1   for @_;
+		for( @_ ) {
+			if( /^(\w+)=([\w\d]+)/ ) {
+				$DB::options{ $1 } =  $2;
+			}
+			else {
+				$DB::options{ $_ } =  1;
+			}
+		}
 	}
 
 	# Disable tracing internal call

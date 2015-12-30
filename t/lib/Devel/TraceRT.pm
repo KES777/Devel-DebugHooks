@@ -10,10 +10,6 @@ BEGIN {
 sub import {
 	my $self =  shift;
 
-	for( @_ ) {
-		$DB::options{ $1 } =  $2   if /^(\w+)=([\w\d]+)/;
-	}
-
 	$self->SUPER::import( @_ );
 }
 
