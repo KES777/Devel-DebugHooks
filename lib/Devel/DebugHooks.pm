@@ -354,7 +354,10 @@ BEGIN { # Initialization goes here
 
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
-	$dbg->trace_load( @_ )   if $options{ trace_load };
+	if( $options{ trace_load } ) {
+		local $ext_call =  $ext_call +1;
+		$dbg->trace_load( @_ );
+	}
 }
 
 
