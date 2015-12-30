@@ -8,6 +8,15 @@ BEGIN {
 our $VERSION =  '0.01';
 
 
+# We should init $DB::dbg as soon as possible, because if trace_subs/load are
+# enabled at compile time (at the BEGIN block) the DB:: module will make call
+# to $dbg->trace_subs/load. Also these subs should be declared before the
+# 'use Devel::DebugHooks' in other case you will get:
+# 'Call to undefined sub YourModule::trace_subs/load is made...'
+# That is because perl internals make calls to DB::* as soon as the subs in it
+# are compiled even whole file is not processed yet.
+# Also do not forget to 'push @ISA, "YourModule"' if you set these options at
+# compile time: trace_load, trace_subs,
 BEGIN {
 	unless( defined $DB::dbg ) {
 		my $level =  0;
@@ -51,6 +60,7 @@ sub import {
 	}
 
 	# Disable tracing internal call
+	# TODO: implement $DB::options{ trace_internals }
 	local $DB::ext_call =  $DB::ext_call +1;
 	DB::applyOptions();
 
