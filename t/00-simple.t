@@ -48,6 +48,17 @@ my $files =  normalize( get_data_section() );
 
 use_ok( 'Devel::DebugHooks', 'use Devel::DebugHooks' );
 
+my $script =  <<'PERL';
+sub t1{ return 7; };
+sub t2{ goto &t1 };
+$x =  t2( 5, 'str' );
+$x++;
+PERL
+is
+	n( `perl -I$lib -d:DebugHooks -e '$script'` )
+	, $files->{ VerboseBehaviour }
+	, "Check verbose behaviour for demo purpose";
+
 
 # Debug zero value
 is `perl -I$lib -d:DZV -e0`, "\n". $files->{ dzv }, "Debug zero value";
@@ -114,7 +125,6 @@ is
 
 
 # return values
-my $script;
 $script =  'sub test{ return [], {}, undef };  test();';
 is
 	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
@@ -293,6 +303,57 @@ is
 # print n `perl -I$lib -d:TraceRT=trace_subs -e '$script'`;
 
 __DATA__
+@@ VerboseBehaviour
+Loaded '*main::_<DebugHooks.pm'
+
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: void
+CSUB: Devel::DebugHooks::import( Devel::DebugHooks )
+TEXT: DebugHooks.pm:xx-xx
+
+FROM: main --e -0 -Devel::DebugHooks::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+RETURNS:
+>>NOTHING<<
+ = = = = = = = = = = = = = = =
+Loaded '*main::_<-e'
+
+ = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
+-e:3    $x =  t2( 5, str );
+
+ = = = = = = = = = = = = = = =
+DEEP: 0
+CNTX: scalar
+CSUB: main::t2( 5, str )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
+-e:2    sub t2{ goto &t1 };
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: scalar
+GSUB: main::t1( 5, str )
+TEXT: -e:1-1
+
+GOTO: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
+-e:1    sub t1{ return 7; };
+RETURNS:
+  7
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
+-e:4    $x++;
 @@ dzv
  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
 -e:1    0

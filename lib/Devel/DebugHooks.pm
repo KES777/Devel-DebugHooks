@@ -145,7 +145,7 @@ sub trace_subs {
 	    ."TEXT: " .DB::location( $DB_sub ) ."\n\n"
 	    .$info;
 
-	$info .=  $DB::options{ trace_returns } ? "\n" : ' =' x15 ."\n";
+	$info .=  ' =' x15 ."\n";
 
 	return $info;
 }
