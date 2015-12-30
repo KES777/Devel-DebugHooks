@@ -29,8 +29,8 @@ BEGIN {
 		# https://rt.perl.org/Public/Bug/Display.html?id=127083
 
 		unless( defined $DB::dbg ) {
-			$DB::dbg =  'Devel::DebugHooks';
-
+			$DB::dbg =  'Devel::DebugHooks::Verbose';
+			@DB::options{ qw/ trace_load trace_subs trace_returns / } = ( 1, 1, 1 );
 		}
 	}
 }
@@ -165,6 +165,39 @@ sub trace_returns {
 
 	return $info ."\n" .' =' x15 ."\n";
 }
+
+
+package    # hide the package from the PAUSE indexer
+	Devel::DebugHooks::Verbose;
+
+BEGIN {
+	push @ISA, 'Devel::DebugHooks';
+}
+
+sub trace_load {
+	my $self =  shift;
+
+	print $self->SUPER::trace_load( @_ );
+}
+
+sub trace_subs {
+	my $self =  shift;
+
+	print $self->SUPER::trace_subs( @_ );
+}
+
+sub trace_returns {
+	my $self =  shift;
+
+	print $self->SUPER::trace_returns( @_ );
+}
+
+sub bbreak {
+	my $self =  shift;
+
+	print $self->SUPER::bbreak( @_ );
+}
+
 
 package    # hide the package from the PAUSE indexer
     DB;
