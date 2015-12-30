@@ -316,7 +316,7 @@ FROM: main --e -0 -Devel::DebugHooks::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
-RETURNS:
+Devel::DebugHooks::import RETURNS:
 >>NOTHING<<
  = = = = = = = = = = = = = = =
 Loaded '*main::_<-e'
@@ -348,7 +348,7 @@ FROM: main --e -3 -main::t2
 
  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
 -e:1    sub t1{ return 7; };
-RETURNS:
+main::t2 RETURNS:
   7
  = = = = = = = = = = = = = = =
 
@@ -452,17 +452,17 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceReturns_void
  = = = = = = = = = = = = = = =
-RETURNS:
+ RETURNS:
 >>NOTHING<<
  = = = = = = = = = = = = = = =
 @@ TraceReturns_scalar
  = = = = = = = = = = = = = = =
-RETURNS:
+ RETURNS:
   &undef
  = = = = = = = = = = = = = = =
 @@ TraceReturns_list
  = = = = = = = = = = = = = = =
-RETURNS:
+ RETURNS:
   ARRAY(0x000000)
   HASH(0x000000)
   &undef

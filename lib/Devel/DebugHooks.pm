@@ -156,7 +156,7 @@ sub trace_returns {
 
 	my $info;
 	$info =  $DB::options{ trace_subs } ? '' : "\n" .' =' x15 ."\n";
-	$info .= "RETURNS:\n";
+	$info .= $DB::goto_frames[0][3] ." RETURNS:\n";
 
 	$info .=  @_ ?
 		'  ' .join "\n  ", map { defined $_ ? $_ : '&undef' } @_:
