@@ -1,10 +1,6 @@
-package Devel::DZV;
+package Devel::DZVii; # initialized by import
 
-BEGIN {
-	$DB::dbg //=  __PACKAGE__;
-	push @ISA, 'Devel::DebugHooks';
-}
-
+push @ISA, 'Devel::DebugHooks';
 
 sub bbreak {
 	my $self =  shift;

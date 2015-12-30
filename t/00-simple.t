@@ -51,6 +51,10 @@ use_ok( 'Devel::DebugHooks', 'use Devel::DebugHooks' );
 
 # Debug zero value
 is `perl -I$lib -d:DZV -e0`, "\n". $files->{ dzv }, "Debug zero value";
+is
+	`perl -I$lib -d:DZVii -e0`
+	, "\n". $files->{ dzv }
+	, "Debug zero value. Default initialization";
 
 
 # Test flags for tracing messages

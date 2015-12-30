@@ -22,7 +22,8 @@ sub import {
 	# NOTICE: If descendats has sub calls after calling to $self->SUPER::import
 	# those calls will be traced by 'trace_subs'. Localize $ext_call to disable
 	# that (see below)
-	$DB::dbg //=  $class;
+
+	$DB::dbg =  $class; #   if $DB::dbg eq __PACKAGE__;
 	if( $_[0] eq 'options' ) {
 		my %params =  @_;
 		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
