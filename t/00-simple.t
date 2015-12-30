@@ -23,7 +23,7 @@ sub n {
 
 	s/(\(0x[\da-f]{6,}\))/(0x000000)/g;
 	s#(?:/.*?)?([^/]+\.pm)#$1#gm;
-	s#^(DBGF: .*?\.pm -)(\d+)#$1xxx#gm;
+	s#^(\w{4}: .*?\.pm -)(\d+)#$1xxx#gm;
 	s#(\.pm:)(\d+)-(\d+)$#$1xx-xx#gm;
 
 	$_;
@@ -240,6 +240,7 @@ sub t4{ goto &t3; }
 sub t5{ t4( @_ ); } # <-- goto replaced by common call
 t5( 7 );
 PERL
+
 
 is
 	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
