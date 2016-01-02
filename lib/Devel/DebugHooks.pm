@@ -43,7 +43,7 @@ sub import {
 	# those calls will be traced by 'trace_subs'. Localize $ext_call to disable
 	# that (see below)
 
-	if( $_[0] eq 'options' ) {
+	if( $_[0]  and  $_[0] eq 'options' ) {
 		my %params =  @_;
 		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
 	}
@@ -169,6 +169,8 @@ sub trace_returns {
 package    # hide the package from the PAUSE indexer
 	Devel::DebugHooks::Verbose;
 
+our @ISA;
+
 BEGIN {
 	push @ISA, 'Devel::DebugHooks';
 }
@@ -232,7 +234,7 @@ BEGIN {
 	#NOTE: we should always trace goto frames. Hiding them will prevent
 	# us to complete our work - debugging.
 	# But we still allow to control this behaviou at compiletime & runtime
-	$options{ trace_goto };    #see DH:import  # compile time & runtime option
+	# $options{ trace_goto };    #see DH:import  # compile time & runtime option
 	$^P |= 0x80;
 }
 
