@@ -295,28 +295,30 @@ BEGIN { # Initialization goes here
 # Hooks to Perl's internals should be first.
 # Because debugger descendants may call them
 {
-	BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+	{
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
-	sub file {
-		my $filename =  shift // $DB::file;
+		sub file {
+			my $filename =  shift // $DB::file;
 
-		return ${ "::_<$filename" };
-	}
-
-
-
-	sub source {
-		my $filename =  shift // $DB::file;
-
-		return \@{ "::_<$filename" };
-	}
+			return ${ "::_<$filename" };
+		}
 
 
 
-	sub traps {
-		my $filename =  shift // $DB::file;
+		sub source {
+			my $filename =  shift // $DB::file;
 
-		return \%{ "::_<$filename" };
+			return \@{ "::_<$filename" };
+		}
+
+
+
+		sub traps {
+			my $filename =  shift // $DB::file;
+
+			return \%{ "::_<$filename" };
+		}
 	}
 
 
@@ -411,7 +413,7 @@ BEGIN { # Initialization goes here
 
 		return @frames;
 	}
-}
+} # end of provided DB::API
 
 
 
