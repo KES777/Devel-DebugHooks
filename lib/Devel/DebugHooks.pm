@@ -82,8 +82,6 @@ sub trace_load {
 sub bbreak {
 	my $info =  "\n" .' =' x30 ."$DB::ext_call\n";
 
-	# watch();
-
 	$info .=  "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
 
 	return $info;
@@ -697,3 +695,11 @@ BEGIN {
 	@caller =  caller
 	print @caller, @DB::args
 }
+
+
+
+How 'the first non-DB piece of code' is calculated for the 'eval'?
+
+
+
+#BUG? I can ${ '!@#$' } =  3, but can not my ${ '!@#$' }
