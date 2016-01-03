@@ -319,6 +319,18 @@ BEGIN { # Initialization goes here
 
 			return \%{ "::_<$filename" };
 		}
+
+
+
+		sub can_break {
+			my( $file, $line ) =  @_;
+
+			($file, $line) =  split ':', $file
+				unless defined $line;
+
+			return defined ${ "::_<$file" }  &&  $line <= $#{ "::_<$file" }
+				&& ${ "::_<$file" }[ $line ] != 0;
+		}
 	}
 
 
@@ -338,18 +350,6 @@ BEGIN { # Initialization goes here
 
 		my $re =  shift;
 		return grep { /$re/ } keys %DB::sub;
-	}
-
-
-
-	sub can_break {
-		my( $file, $line ) =  @_;
-
-		($file, $line) =  split ':', $file
-			unless defined $line;
-
-		return defined ${ "::_<$file" }  &&  $line <= $#{ "::_<$file" }
-			&& ${ "::_<$file" }[ $line ] != 0;
 	}
 
 
@@ -414,6 +414,8 @@ BEGIN { # Initialization goes here
 		return @frames;
 	}
 } # end of provided DB::API
+
+
 
 
 
