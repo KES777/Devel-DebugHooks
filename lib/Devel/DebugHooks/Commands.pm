@@ -13,6 +13,15 @@ $DB::commands =  {
 		1;
 	},
 
+	# Because of $DB::single is localazed before sub call it were restored
+	# after the current sub returns. Therefore DB::DB will be called at the
+	# first OP followed this sub call
+	,r => sub {
+		$DB::single =  0;
+
+		return;
+	}
+
 	,s => sub {
 		$DB::single =  1;
 
