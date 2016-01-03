@@ -333,6 +333,13 @@ BEGIN { # Initialization goes here
 		}
 	}
 
+	sub eval {
+		my $package; # BUG: PadWalker does not show DB::eval's lexicals
+		# BUG? It is better that PadWalker return undef instead of warn
+
+		$package =  $#_ > 1 ? shift : $DB::package;
+		eval "package $package; $_[0]";
+	}
 
 
 	sub location {
