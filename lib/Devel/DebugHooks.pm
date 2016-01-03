@@ -551,32 +551,37 @@ sub sub {
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+		# BUG: without +0 the localized value is broken
+		local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 		return &$DB::sub   if !$options{ trace_returns };
 
 
 		if( wantarray ) {                             # list context
+			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			my @ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
-			local $DB::single =  0;
+			$DB::single =  0;
 			$dbg->trace_returns( @ret );
 
 			return @ret;
 		}
 		elsif( defined wantarray ) {                  # scalar context
+			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			my $ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
-			local $DB::single =  0;
+			$DB::single =  0;
 			$dbg->trace_returns( $ret );
 
 			return $ret;
 		}
 		else {                                        # void context
+			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			&$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
-			local $DB::single =  0;
+			$DB::single =  0;
 			$dbg->trace_returns();
 
 			return;
