@@ -400,22 +400,24 @@ BEGIN { # Initialization goes here
 		# The $ext_call is an internal variable of DB:: module. If it is true
 		# then we know that debugger frames are exists. In other case no sense
 		# to check callstask
-		while( $ext_call ) {
-			my @frame =  caller($level++);
-			if( $frame[3] eq 'DB::trace_subs' ) {
-				my @gframe =  caller($level);
-				if( @gframe  &&  $gframe[ 3 ] eq 'DB::goto' ) {
-					print "DBGF: @frame[0..3]\n"    if $options{ dbg_frames };
-					print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
-					$level++;
-				}
-				else {
-					$level--;
+		if( $ext_call ) {
+			while( my @frame =  caller($level++) ) {
+				if( $frame[3] eq 'DB::trace_subs' ) {
+					my @gframe =  caller($level);
+					if( @gframe  &&  $gframe[ 3 ] eq 'DB::goto' ) {
+						print "DBGF: @frame[0..3]\n"    if $options{ dbg_frames };
+						print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
+						$level++;
+					}
+					else {
+						$level--;
+					}
+
+					last;
 				}
 
-				last;
+				print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
 			}
-			print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
 		}
 
 
