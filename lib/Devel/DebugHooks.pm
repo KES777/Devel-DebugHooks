@@ -545,8 +545,8 @@ sub sub {
 
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
-	trace_subs( $root, 'C' );
 	local $DB::deep =  $DB::deep +1;
+	trace_subs( $root, 'C' );
 
 
 	{

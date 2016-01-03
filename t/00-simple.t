@@ -307,7 +307,7 @@ __DATA__
 Loaded '*main::_<DebugHooks.pm'
 
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: Devel::DebugHooks::import( Devel::DebugHooks )
 TEXT: DebugHooks.pm:xx-xx
@@ -325,7 +325,7 @@ Loaded '*main::_<-e'
 -e:3    $x =  t2( 5, str );
 
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: scalar
 CSUB: main::t2( 5, str )
 TEXT: -e:2-2
@@ -375,7 +375,7 @@ Loaded '*main::_<-e'
 Loaded '*main::_<-e'
 @@ TraceSubsCT
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: Devel::TraceSubsCT::import( Devel::TraceSubsCT )
 TEXT: TraceSubsCT.pm:5-7
@@ -386,7 +386,7 @@ FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: Devel::DebugHooks::import( Devel::TraceSubsCT )
 TEXT: /lib/Devel/DebugHooks.pm:19-30
@@ -398,7 +398,7 @@ FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::test(  )
 TEXT: -e:1-1
@@ -407,7 +407,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubsRT
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::test(  )
 TEXT: -e:1-1
@@ -416,7 +416,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubs_args
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::test( str, 7, ARRAY(0x000000), HASH(0x000000), &undef )
 TEXT: -e:1-1
@@ -425,7 +425,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubs_call_void
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::test(  )
 TEXT: -e:1-1
@@ -434,7 +434,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubs_call_scalar
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: scalar
 CSUB: main::test(  )
 TEXT: -e:1-1
@@ -443,7 +443,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubs_call_list
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: list
 CSUB: main::test(  )
 TEXT: -e:1-1
@@ -469,7 +469,7 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceSubs_one
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t2(  )
 TEXT: -e:2-2
@@ -478,7 +478,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceGoto_one
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t2(  )
 TEXT: -e:2-2
@@ -497,7 +497,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_deep
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5(  )
 TEXT: -e:5-5
@@ -506,7 +506,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2(  )
 TEXT: -e:2-2
@@ -516,7 +516,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5(  )
 TEXT: -e:5-5
@@ -546,7 +546,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2(  )
 TEXT: -e:2-2
@@ -571,7 +571,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 @@ TraceSubs_one_with_args
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t2( 3 )
 TEXT: -e:2-2
@@ -580,7 +580,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceGoto_one_with_args
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t2( 3 )
 TEXT: -e:2-2
@@ -599,7 +599,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_deep_with_args
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -608,7 +608,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -618,7 +618,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep_with_args
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -648,7 +648,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -679,7 +679,7 @@ DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -732,7 +732,7 @@ DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -766,7 +766,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames1
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -775,7 +775,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -784,7 +784,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames1_with_goto
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -814,7 +814,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -833,7 +833,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames1_2
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -842,7 +842,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t4( 7 )
 TEXT: -e:4-4
@@ -851,7 +851,7 @@ FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 2
+DEEP: 3
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -860,7 +860,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames1_2_goto
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -869,7 +869,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t4( 7 )
 TEXT: -e:4-4
@@ -888,7 +888,7 @@ FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 2
+DEEP: 3
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -907,7 +907,7 @@ FROM: main --e -3 -main::t2
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames2
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -916,7 +916,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t4( 7 )
 TEXT: -e:4-4
@@ -926,7 +926,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 2
+DEEP: 3
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -936,7 +936,7 @@ FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames2_goto
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
@@ -945,7 +945,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: main::t4( 7 )
 TEXT: -e:4-4
@@ -966,7 +966,7 @@ FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 2
+DEEP: 3
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
@@ -989,7 +989,7 @@ FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 @@ TraceGotoCT
  = = = = = = = = = = = = = = =
-DEEP: 0
+DEEP: 1
 CNTX: void
 CSUB: Devel::TraceGotoCT::import( Devel::TraceGotoCT, trace_subs )
 TEXT: TraceGotoCT.pm:xx-xx
@@ -1000,7 +1000,7 @@ FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
 
  = = = = = = = = = = = = = = =
-DEEP: 1
+DEEP: 2
 CNTX: void
 CSUB: Devel::DebugHooks::import( Devel::TraceGotoCT, trace_subs )
 TEXT: DebugHooks.pm:xx-xx
