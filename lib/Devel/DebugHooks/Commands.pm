@@ -55,6 +55,8 @@ $DB::commands =  {
 
 		if( $type & 4 ) {
 			my $stash =  Package::Stash->new( $DB::package )->get_all_symbols();
+			# Show only user defined variables
+			# TODO? implement verbose flag
 			if( $DB::package eq 'main' ) {
 				for( keys %$stash ) {
 					delete $stash->{ $_ }   if /::$/;
@@ -70,6 +72,7 @@ $DB::commands =  {
 				delete @$stash{ qw# ! @ ? # };
 			}
 			delete $stash->{ sub }   if $DB::package eq 'DB';
+
 			print "\nGLOBAL:\n", Data::Dump::pp( $stash ), "\n";
 		}
 
@@ -86,6 +89,7 @@ $DB::commands =  {
 
 		if( $type & 16 ) {
 			print "\nCLOSED OVER:\n";
+
 			if( !defined $DB::sub ) {
 				print "Not in a sub\n";
 			}
