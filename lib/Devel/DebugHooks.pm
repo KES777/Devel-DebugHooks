@@ -417,6 +417,7 @@ BEGIN { # Initialization goes here
 				}
 
 				print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
+				last   if $frame[3] eq 'DB::DB';
 			}
 		}
 
