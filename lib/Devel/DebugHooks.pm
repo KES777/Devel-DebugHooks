@@ -576,7 +576,6 @@ sub sub {
 
 
 		if( wantarray ) {                             # list context
-			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			my @ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
@@ -586,7 +585,6 @@ sub sub {
 			return @ret;
 		}
 		elsif( defined wantarray ) {                  # scalar context
-			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			my $ret =  &$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
@@ -596,7 +594,6 @@ sub sub {
 			return $ret;
 		}
 		else {                                        # void context
-			local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 			&$DB::sub;
 
 			local $ext_call   =  $ext_call +1;
