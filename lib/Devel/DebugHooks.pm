@@ -345,6 +345,8 @@ BEGIN { # Initialization goes here
 	sub location {
 		my $subname =  shift;
 
+		return   unless $subname;
+
 		# The subs from DB::* are not placed here. Why???
 		# A? Maybe they are placed after module loaded?
 		return $DB::sub{ $subname } || ">>$subname<<";
