@@ -211,6 +211,7 @@ our $line;           # current line number
 our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
+our $commands;       # hash of commands to interact user with debugger
 our %options;
 
 
@@ -445,7 +446,30 @@ sub DB {
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 
 	$dbg->bbreak();
-	$dbg->interact();
+
+
+	# interact() should return defined value to keep interaction
+	while( defined ( my $str =  $dbg->interact() ) ) {
+		my( $cmd, $args ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
+
+		if( $cmd  and  exists $DB::commands->{ $cmd } ) {
+			# The command also should return defined value to keep interaction
+			if( defined $DB::commands->{ $cmd }( $args ) ) {
+				next;
+			}
+			else {
+				last;
+			}
+		}
+		# else no such command exists the entered string will be evaluated
+		# in context of current __FILE__:__LINE__ of a debugged script
+		DB::eval( $str );
+		warn "ERROR: $@"   if $@;
+
+		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
+		print "\n";
+	}
+
 	$dbg->abreak();
 }
 
