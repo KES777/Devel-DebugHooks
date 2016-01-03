@@ -13,21 +13,28 @@ $DB::commands =  {
 		1;
 	},
 
-	# Because of $DB::single is localazed before sub call it were restored
-	# after the current sub returns. Therefore DB::DB will be called at the
-	# first OP followed this sub call
+	# In compare to 's' and 'n' commands we will not stop at each OP. The
+	# true value of $DB::single will be restored at DB::sub when this sub returns
+	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		$DB::single =  0;
 
 		return;
 	}
 
+	# Actually nothing is changed. We stop at each OP in the script.
+	# Only one important thing: if 'n' was called before we change the
+	# $DB::single value from 2 to 1.
 	,s => sub {
 		$DB::single =  1;
 
 		return;
 	}
 
+	# As for the 's' command we stop at each OP in the script. But when the
+	# sub is called we turn off debugging for that sub at DB::sub. Because of
+	# $DB::single localizing its value will be restored after that sub returns.
+	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		$DB::single =  2;
 
