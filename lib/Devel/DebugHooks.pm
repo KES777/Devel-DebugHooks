@@ -440,6 +440,12 @@ sub postponed {
 sub DB {
 	init();
 
+	# Do not stop if breakpoint condition evaluated to false value
+	return   if
+		exists DB::traps->{ $DB::line }
+		&& !DB::eval( DB::traps->{ $DB::line }{ condition } );
+
+
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 
