@@ -91,7 +91,7 @@ sub bbreak {
 
 
 
-sub process {
+sub interact {
 }
 
 
@@ -432,8 +432,9 @@ sub DB {
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
+
 	$dbg->bbreak();
-	$dbg->process();
+	$dbg->interact();
 	$dbg->abreak();
 }
 
@@ -631,6 +632,7 @@ BEGIN {
 
 
 
++
 Why the DB::DB is called twice for:
 print "@{[ (caller(0))[0..2] ]}\n";
 but only one for this:
@@ -639,6 +641,7 @@ A: It is called once for caller(0) and second for whole line.
 It is called once for each statement at line, maybe.
 
 
++
 use should have args. and the caller called from DB:: namespace should set @DB::args
 at compile time 'caller' also does not fill @DB::args
 BEGIN {
