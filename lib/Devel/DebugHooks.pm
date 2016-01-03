@@ -202,6 +202,17 @@ package    # hide the package from the PAUSE indexer
     DB;
 
 
+# Used perl internal variables:
+# ${ ::_<filename }
+# @{ ::_<filename }
+# %{ ::_<filename }
+# $DB::single
+# $DB::signal
+# $DB::trace
+# $DB::sub
+# %DB::sub
+# %DB::postponed
+
 our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
@@ -386,6 +397,9 @@ BEGIN { # Initialization goes here
 
 		$level =  0;
 		local $" =  ' -';
+		# The $ext_call is an internal variable of DB:: module. If it is true
+		# then we know that debugger frames are exists. In other case no sense
+		# to check callstask
 		while( $ext_call ) {
 			my @frame =  caller($level++);
 			if( $frame[3] eq 'DB::trace_subs' ) {
@@ -401,7 +415,6 @@ BEGIN { # Initialization goes here
 
 				last;
 			}
-
 			print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
 		}
 
@@ -450,7 +463,6 @@ sub DB {
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 
 	$dbg->bbreak();
-
 
 	# interact() should return defined value to keep interaction
 	while( defined ( my $str =  $dbg->interact() ) ) {
