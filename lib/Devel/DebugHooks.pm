@@ -312,6 +312,21 @@ BEGIN { # Initialization goes here
 }
 
 
+
+## Utility subs
+sub _all_frames {
+	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
+
+	my $lvl =  1;
+	while( my @frame =  caller( $lvl ) ) {
+		print "ORIG: @frame[0..3,5]\n";
+		$lvl++;
+	}
+
+	print "\n";
+}
+
+
 # Hooks to Perl's internals should be first.
 # Because debugger descendants may call them
 {
@@ -393,15 +408,9 @@ BEGIN { # Initialization goes here
 			return ( [ @DB::args ], @frame );
 		}
 
-		if( $options{ _all_frames } ) {
-			my $lvl =  0;
-			while( my @frame =  caller( $lvl ) ) {
-				print "ORIG: @frame[0..3,5]\n";
-				$lvl++;
-			}
 
-			print "\n";
-		}
+		_all_frames()   if $options{ _all_frames };
+
 
 		print "\n"   if $options{ orig_frames };
 
