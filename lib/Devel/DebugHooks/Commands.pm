@@ -131,6 +131,13 @@ $DB::commands =  {
 	,go => sub {
 		$DB::single =  0;
 
+		# The $DB::single will be restored when sub returns. So we set this flag
+		# to continue ignoring debugger traps
+		$DB::options{ NonStop } =  1;
+		# TODO: implement testcase
+		# $script = 'sub t{ #go }; t(); my $x';
+		# Stopped at 'my $x' w/o NonStop
+
 		return;
 	}
 
