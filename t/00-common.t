@@ -1022,7 +1022,7 @@ CNTX: void
 GSUB: Devel::TraceGotoCT::test( Devel::TraceGotoCT, trace_subs )
 TEXT: TraceGotoCT.pm:xx-xx
 
-GOTO: DB -DebugHooks.pm -430 -Devel::TraceGotoCT::test
+GOTO:  - - -Devel::TraceGotoCT::test
 FROM: main --e -0 -Devel::TraceGotoCT::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
