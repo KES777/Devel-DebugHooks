@@ -456,10 +456,17 @@ sub postponed {
 sub DB {
 	init();
 
-	# Do not stop if breakpoint condition evaluated to false value
-	return   if
-		exists DB::traps->{ $DB::line }
-		&& !DB::eval( DB::traps->{ $DB::line }{ condition } );
+	if( exists DB::traps->{ $DB::line } ) {
+		# Do not stop if breakpoint condition evaluated to false value
+		return   unless DB::eval( DB::traps->{ $DB::line }{ condition } );
+
+		# We should stop when meet breakpoint with "true" condition
+		delete $DB::options{ NonStop };
+	}
+	# Ignoring debugger traps in NonStop mode (see also 'go' command)
+	elsif( $DB::options{ NonStop } ) {
+		return;
+	}
 
 
 	local $ext_call =  $ext_call +1;
