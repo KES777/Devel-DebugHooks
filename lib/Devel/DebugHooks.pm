@@ -415,8 +415,8 @@ BEGIN { # Initialization goes here
 				if( $frame[3] eq 'DB::trace_subs' ) {
 					my @gframe =  caller($level);
 					if( @gframe  &&  $gframe[ 3 ] eq 'DB::goto' ) {
-						print "DBGF: @frame[0..3]\n"    if $options{ dbg_frames };
-						print "DBGF: @gframe[0..3]\n"   if $options{ dbg_frames };
+						print "DBGF: @frame[0..3,5]\n"    if $options{ dbg_frames };
+						print "DBGF: @gframe[0..3,5]\n"   if $options{ dbg_frames };
 						$level++;
 					}
 					else {
@@ -426,7 +426,7 @@ BEGIN { # Initialization goes here
 					last;
 				}
 
-				print "DBGF: @frame[0..3]\n"   if $options{ dbg_frames };
+				print "DBGF: @frame[0..3,5]\n"   if $options{ dbg_frames };
 				last   if $frame[3] eq 'DB::DB';
 			}
 		}
@@ -437,7 +437,7 @@ BEGIN { # Initialization goes here
 		my @frames;
 		my $count =  $options{ frames };
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
-			print "$count -- @frame\n"   if $options{ orig_frames };
+			print "$count -- @frame[0..3,5]\n"   if $options{ orig_frames };
 			push @frames, [ [ @DB::args ], @frame ];
 		} continue {
 			$count--;
