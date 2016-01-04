@@ -231,6 +231,8 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
+	$options{ _debug }           =  0;
+
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
 	$options{ orig_frames }    //=  0;         # compile time & runtime option
@@ -480,6 +482,8 @@ sub postponed {
 sub DB {
 	init();
 
+	print "DB::DB called\n"   if $DB::options{ _debug };
+
 	if( exists DB::traps->{ $DB::line } ) {
 		# Do not stop if breakpoint condition evaluated to false value
 		return   unless DB::eval( DB::traps->{ $DB::line }{ condition } );
@@ -573,7 +577,7 @@ sub trace_subs {
 # 2 sub sb {
 # 3    goto &t;  # << The DB::goto is called from here
 # 4 }
-# 5 sub sb( a => 3 )
+# 5 sb( a => 3 )
 
 # But caller called form DB::goto return next info:
 # main - t3.pl - 5 - DB::goto - 1 -  -  -  - 256 -  -  -- >><<
@@ -582,6 +586,10 @@ sub trace_subs {
 # I mean the (caller(0))[2] should be 3 instead of 5
 #        the (caller(0))[5] shold be 1 instead of undef (The value of caller(1)[5])
 # Becase @list = goto &sub is useless at any case
+
+# Another stacktrace:
+# DB - DebugHooks.pm - 652 - DB::goto
+# main - -e - 5 - main::t
 
 
 sub goto {
@@ -599,6 +607,7 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub
 	}
+	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
