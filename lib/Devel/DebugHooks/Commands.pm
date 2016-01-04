@@ -5,6 +5,7 @@ package Devel::DebugHooks::Commands;
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
 # }
 
+my $cmd_f;
 
 $DB::commands =  {
 	'.' => sub {
@@ -139,6 +140,35 @@ $DB::commands =  {
 		# Stopped at 'my $x' w/o NonStop
 
 		return;
+	}
+
+	,f => sub {
+		# return {
+		# 	expr => '\%INC'
+		# 	,code => sub {
+				my( $args, $expr ) =  @_;
+
+				# Set current file to selected one:
+				if( @$cmd_f  &&  $args =~ /^\d+$/  &&  $#$cmd_f >= $args ) {
+					$DB::file =  $cmd_f->[ $args ];
+					print "$DB::file\n";
+					return 1;
+				}
+
+				# List available files
+				$cmd_f   =  [];
+				my $line =  0;
+				for( sort $0, values %INC ) {
+				# for( sort $0, keys %$expr ) {
+					if( /(?:$args)/ ) {
+						push @$cmd_f, $_;
+						print $line++ ." $_\n";
+					}
+				}
+
+				1;
+		# 	}
+		# }
 	}
 
 };
