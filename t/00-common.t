@@ -678,6 +678,7 @@ FROM: main --e -6 -main::t5
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
+DBGF: main --e -6 -DB::trace_subs -
 -1 -- main --e -6 -DB::trace_subs -
 
  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
@@ -730,6 +731,7 @@ FROM: main --e -6 -main::t5
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
+DBGF: main --e -3 -DB::trace_subs -
 -1 -- main --e -3 -DB::trace_subs -
 -2 -- main --e -6 -main::t3 -
 

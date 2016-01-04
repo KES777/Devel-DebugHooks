@@ -412,10 +412,11 @@ BEGIN { # Initialization goes here
 		# to check callstask
 		if( $ext_call ) {
 			while( my @frame =  caller($level++) ) {
+				print "DBGF: @frame[0..3,5]\n"   if $options{ dbg_frames };
+
 				if( $frame[3] eq 'DB::trace_subs' ) {
 					my @gframe =  caller($level);
 					if( @gframe  &&  $gframe[ 3 ] eq 'DB::goto' ) {
-						print "DBGF: @frame[0..3,5]\n"    if $options{ dbg_frames };
 						print "DBGF: @gframe[0..3,5]\n"   if $options{ dbg_frames };
 						$level++;
 					}
@@ -426,7 +427,6 @@ BEGIN { # Initialization goes here
 					last;
 				}
 
-				print "DBGF: @frame[0..3,5]\n"   if $options{ dbg_frames };
 				last   if $frame[3] eq 'DB::DB';
 			}
 		}
