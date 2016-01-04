@@ -213,6 +213,10 @@ package    # hide the package from the PAUSE indexer
 # %DB::sub
 # %DB::postponed
 
+# Perl sets up $DB::single to 1 after the 'script.pl' is loaded, so we are able
+# to debug it from first OP. In NonStop mode we should clear $DB::single to run
+# script until breakpoint
+
 our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
@@ -247,6 +251,12 @@ BEGIN {
 	# $options{ trace_goto };    #see DH:import  # compile time & runtime option
 	$^P |= 0x80;
 }
+
+# TODO: describe qw/ orig_frames frames dbg_frames trace_load trace_subs
+# trace_returns / options
+
+# $options{ NonStop } - Ignore debugger traps. This flag
+# force the script run onward despite on $DB::single, $DB::signal, $DB::trace
 
 
 
@@ -470,6 +480,11 @@ sub DB {
 	}
 	# Ignoring debugger traps in NonStop mode (see also 'go' command)
 	elsif( $DB::options{ NonStop } ) {
+		# Doing this gives us some speed benefit: the perl does not call
+		# DB::DB for each debugged script's line. w/o this debugger works in
+		# same manner with the remark above
+		$DB::single =  0;
+
 		return;
 	}
 
