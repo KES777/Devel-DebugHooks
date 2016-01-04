@@ -516,11 +516,23 @@ sub DB {
 
 	# interact() should return defined value to keep interaction
 	while( defined ( my $str =  $dbg->interact() ) ) {
-		my( $cmd, $args ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
+		my( $cmd, $args_str ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
 
 		if( $cmd  and  exists $DB::commands->{ $cmd } ) {
 			# The command also should return defined value to keep interaction
-			if( defined $DB::commands->{ $cmd }( $args ) ) {
+			if( defined (my $result =  $DB::commands->{ $cmd }( $args_str )) ) {
+				next   unless ref $result;
+
+				# Allow commands to evluate $expr at a debugged script context
+				if( ref( $result ) eq 'HASH' ) {
+					$result =  $result->{ code }->(
+						$args_str
+						,DB::eval( $result->{ expr } )
+					);
+
+					defined $result ? next : last ;
+				}
+
 				next;
 			}
 			else {
