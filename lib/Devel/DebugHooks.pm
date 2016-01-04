@@ -552,7 +552,8 @@ sub trace_subs {
 		push @DB::goto_frames,
 			$_[0] eq 'G'?
 				# [ (caller(1))[0..2], $DB::sub, $last_frames ];
-				# WORKAROUND: for broken frame. See description at DB::goto
+				# WORKAROUND: for broken frame
+				# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
 				[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
 				[ (caller(0))[0..2], $DB::sub, $last_frames ];
 
@@ -570,28 +571,6 @@ sub trace_subs {
 	}
 }
 
-
-
-# HERE we get unexpected results about 'caller'
-# EXPECTED: the line number where 'goto' called from
-
-# 1 sub t { }
-# 2 sub sb {
-# 3    goto &t;  # << The DB::goto is called from here
-# 4 }
-# 5 sb( a => 3 )
-
-# But caller called form DB::goto return next info:
-# main - t3.pl - 5 - DB::goto - 1 -  -  -  - 256 -  -  -- >><<
-# main - t3.pl - 5 - main::t - 1 - 1 -  -  - 256 -  -  -- >>a - 3<<
-# Because the DB::goto is called as ordinary sub. So its call frame should be right
-# I mean the (caller(0))[2] should be 3 instead of 5
-#        the (caller(0))[5] shold be 1 instead of undef (The value of caller(1)[5])
-# Becase @list = goto &sub is useless at any case
-
-# Another stacktrace:
-# DB - DebugHooks.pm - 652 - DB::goto
-# main - -e - 5 - main::t
 
 
 sub goto {
