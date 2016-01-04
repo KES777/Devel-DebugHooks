@@ -231,6 +231,8 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
+	$options{ _debug }           =  0;
+
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
 	$options{ orig_frames }    //=  0;         # compile time & runtime option
@@ -480,6 +482,8 @@ sub postponed {
 sub DB {
 	init();
 
+	print "DB::DB called\n"   if $DB::options{ _debug };
+
 	# Do not stop if breakpoint condition evaluated to false value
 	# return   if
 	# 	exists DB::traps->{ $DB::line }
@@ -608,6 +612,7 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub
 	}
+	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
