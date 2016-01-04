@@ -578,7 +578,7 @@ sub trace_subs {
 # 2 sub sb {
 # 3    goto &t;  # << The DB::goto is called from here
 # 4 }
-# 5 sub sb( a => 3 )
+# 5 sb( a => 3 )
 
 # But caller called form DB::goto return next info:
 # main - t3.pl - 5 - DB::goto - 1 -  -  -  - 256 -  -  -- >><<
@@ -587,6 +587,10 @@ sub trace_subs {
 # I mean the (caller(0))[2] should be 3 instead of 5
 #        the (caller(0))[5] shold be 1 instead of undef (The value of caller(1)[5])
 # Becase @list = goto &sub is useless at any case
+
+# Another stacktrace:
+# DB - DebugHooks.pm - 652 - DB::goto
+# main - -e - 5 - main::t
 
 
 sub goto {
