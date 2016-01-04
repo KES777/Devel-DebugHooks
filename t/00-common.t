@@ -291,6 +291,16 @@ is
 	,$files->{ TraceRT_internals }
 	,"Do not trace internal calls";
 
+# TODO: implement testcase
+# is
+# 	n( `perl -I$lib -d:Interact='cmds=b 2/go' -e '$script' )
+# EXPECTED: GOTO: main -- -4 -main::t3
+# but the DB::goto frame is broken so information is wrong
+# The broken info also located at
+# @@ TraceGotoCT
+# GOTO:  - - -Devel::TraceGotoCT::test
+# ------^^^^ It is undefined because of WARKAROUND (see DB::trace_subs)
+
 
 ###
 is
