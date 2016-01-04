@@ -437,6 +437,11 @@ BEGIN { # Initialization goes here
 		my @frames;
 		my $count =  $options{ frames };
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
+			# The call to DB::trace_subs replaces right sub name of last call
+			# We fix that here:
+			$frame[3] =  $goto_frames[-1][3]
+				if $count == -1  && $frame[3] eq 'DB::trace_subs';
+
 			print "$count -- @frame[0..3,5]\n"   if $options{ orig_frames };
 			push @frames, [ [ @DB::args ], @frame ];
 		} continue {
