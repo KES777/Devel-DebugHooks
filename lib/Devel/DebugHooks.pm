@@ -238,7 +238,7 @@ BEGIN {
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
 
-	#options{ store_branches } # TODO: draw code path
+	#options{ save_path } # TODO: save code path for displaying by graphviz
 	$DB::postponed{ 'DB::DB' } =  1;
 
 	#NOTE: we should always trace goto frames. Hiding them will prevent
