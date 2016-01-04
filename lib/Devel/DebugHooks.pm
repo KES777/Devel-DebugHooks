@@ -413,6 +413,9 @@ sub _all_frames {
 
 
 		print "\n"   if $options{ orig_frames };
+		# For uninitialized values in frames
+		# $wantarray is undefined in void context, for example
+		BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 
 		$level =  0;
 		local $" =  ' -';
@@ -439,9 +442,6 @@ sub _all_frames {
 				last   if $frame[3] eq 'DB::DB';
 			}
 		}
-
-
-		BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 
 		my @frames;
 		my $count =  $options{ frames };
