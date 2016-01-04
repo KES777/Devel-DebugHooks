@@ -535,7 +535,9 @@ sub trace_subs {
 	if( $options{ trace_subs } ) {
 		my $last_frames =  shift;
 		push @DB::goto_frames,
-			$DB::package?
+			$_[0] eq 'G'?
+				# [ (caller(1))[0..2], $DB::sub, $last_frames ];
+				# WORKAROUND: for broken frame. See description at DB::goto
 				[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
 				[ (caller(0))[0..2], $DB::sub, $last_frames ];
 
