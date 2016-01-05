@@ -541,7 +541,7 @@ CSUB: main::t2(  )
 TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
-FROM: main --e -6 -main::t5
+FROM: main --e -6 -main::t3
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep
  = = = = = = = = = = = = = = =
@@ -643,7 +643,7 @@ CSUB: main::t2( 5 )
 TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
-FROM: main --e -6 -main::t5
+FROM: main --e -6 -main::t3
  = = = = = = = = = = = = = = =
 @@ TraceGoto_deep_with_args
  = = = = = = = = = = = = = = =
@@ -946,7 +946,7 @@ CSUB: main::t2( 5 )
 TEXT: -e:2-2
 
 FROM: main --e -3 -main::t2
-FROM: main --e -5 -main::t4
+FROM: main --e -5 -main::t3
  = = = = = = = = = = = = = = =
 @@ TraceSubs_limit_frames2_goto
  = = = = = = = = = = = = = = =
