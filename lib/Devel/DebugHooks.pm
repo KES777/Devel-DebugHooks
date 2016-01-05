@@ -98,8 +98,15 @@ sub abreak {
 }
 
 
+
+my %frame_name =  (
+    G => 'GOTO',
+    D => 'DBGF',
+    C => 'FROM',
+);
+
 sub trace_subs {
-	my( $self, $t ) =  @_;
+	my( $self ) =  @_;
 
 	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 
@@ -119,19 +126,19 @@ sub trace_subs {
 			$gf =  $gf->[0][4];
 		}
 
-		$info .=  "FROM: @{$frame}[1..4]\n";
+		$info .=  $frame_name{ $frame->[0] } .": @$frame[2..5]\n";
 	}
 
-	my $context = $frames[0][6] ? 'list'
-			: defined $frames[0][6] ? 'scalar' : 'void';
+	my $context = $frames[0][7] ? 'list'
+			: defined $frames[0][7] ? 'scalar' : 'void';
 
 	$" =  ', ';
-	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $frames[0][0] };
+	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $frames[0][1] };
 	$info =
 	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
-	    ."${t}SUB: $DB_sub( @args )\n"
+	    .$ff_type ."SUB: $DB_sub( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 		# A: Because @_ keep the reference to args. So
@@ -474,13 +481,15 @@ sub _all_frames {
 		}
 
 		my $count =  $options{ frames };
+		my $ogf =  my $gf =  \@DB::goto_frames;
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
 			# The call to DB::trace_subs replaces right sub name of last call
 			# We fix that here:
 			$frame[3] =  $goto_frames[-1][3]
 				if $count == -1  && $frame[3] eq 'DB::trace_subs';
 
-			push @frames, [ [ @DB::args ], @frame ];
+			my $args =  [ @DB::args ];
+			push @frames, [ $ogf->[0][5], $args, @frame ];
 		} continue {
 			$count--;
 		}
@@ -594,8 +603,8 @@ sub trace_subs {
 			# [ (caller(1))[0..2], $DB::sub, $last_frames ];
 			# WORKAROUND: for broken frame
 			# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
-			[ (caller(0))[0..2], $DB::sub, $last_frames ];
+			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ]:
+			[ (caller(0))[0..2], $DB::sub, $last_frames, $_[0] ];
 
 	if( $options{ trace_subs } ) {
 
