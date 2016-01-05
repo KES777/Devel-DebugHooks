@@ -577,15 +577,16 @@ sub init {
 
 
 sub trace_subs {
+	my $last_frames =  shift;
+	push @DB::goto_frames,
+		$_[0] eq 'G'?
+			# [ (caller(1))[0..2], $DB::sub, $last_frames ];
+			# WORKAROUND: for broken frame
+			# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
+			[ (caller(0))[0..2], $DB::sub, $last_frames ];
+
 	if( $options{ trace_subs } ) {
-		my $last_frames =  shift;
-		push @DB::goto_frames,
-			$_[0] eq 'G'?
-				# [ (caller(1))[0..2], $DB::sub, $last_frames ];
-				# WORKAROUND: for broken frame
-				# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-				[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames ]:
-				[ (caller(0))[0..2], $DB::sub, $last_frames ];
 
 
 		# Any subsequent sub call inside next sub will invoke DB::sub again
