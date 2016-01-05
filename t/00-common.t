@@ -701,94 +701,77 @@ GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 @@ TraceSubs_with_dbg_orig_frames
-DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
-DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
-DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
-DBGF: main --e -6 -DB::trace_subs -
--1 -- main --e -6 -main::t5 -
-
- ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
 CSUB: main::t5( 7 )
 TEXT: -e:5-5
 
+DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
+DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: main --e -6 -DB::trace_subs
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
-DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
-DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
-DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
-DBGF: DB -DebugHooks.pm -412 -DB::trace_subs -
-DBGF: DB -DebugHooks.pm -432 -DB::goto -
--1 -- main --e -6 -main::t4 -
-
- ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
 GSUB: main::t4( 7 )
 TEXT: -e:4-4
 
+DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
+DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
-DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
-DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
-DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
-DBGF: DB -DebugHooks.pm -412 -DB::trace_subs -
-DBGF: DB -DebugHooks.pm -432 -DB::goto -
--1 -- main --e -6 -main::t3 -
-
- ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
 GSUB: main::t3( 7 )
 TEXT: -e:3-3
 
+DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
+DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -4 -main::t3
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
-DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
-DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
-DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
-DBGF: main --e -3 -DB::trace_subs -
--1 -- main --e -3 -main::t2 -
--2 -- main --e -6 -main::t3 -
-
- ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
 DEEP: 2
 CNTX: void
 CSUB: main::t2( 5 )
 TEXT: -e:2-2
 
+DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
+DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: main --e -3 -DB::trace_subs
 FROM: main --e -3 -main::t2
 GOTO: main --e -4 -main::t3
 GOTO: main --e -5 -main::t4
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
 
-DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames -1
-DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs -1
-DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs -
-DBGF: DB -DebugHooks.pm -412 -DB::trace_subs -
-DBGF: DB -DebugHooks.pm -432 -DB::goto -
--1 -- main --e -3 -main::t1 -
--2 -- main --e -6 -main::t3 -
-
- ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
  = = = = = = = = = = = = = = =
 DEEP: 2
 CNTX: void
 GSUB: main::t1( 5 )
 TEXT: -e:1-1
 
+DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
+DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
+DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
+DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -2 -main::t1
 FROM: main --e -3 -main::t2
 GOTO: main --e -4 -main::t3
