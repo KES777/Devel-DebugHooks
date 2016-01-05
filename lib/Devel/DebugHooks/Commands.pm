@@ -6,6 +6,12 @@ package Devel::DebugHooks::Commands;
 # }
 
 my $cmd_f;
+my %cmd_T = (
+	G => '&',
+	C => '=',
+	D => 'D',
+	L => 'L',
+);
 
 $DB::commands =  {
 	'.' => sub {
@@ -169,6 +175,29 @@ $DB::commands =  {
 				1;
 		# 	}
 		# }
+	}
+
+	# TODO: give names to ANON
+	,T => sub {
+		my $deep =  $DB::deep;
+		for my $frame ( DB::frames ) {
+			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : '.';
+			my $type    =  $cmd_T{ $frame->[0] };
+			my $subname =  $frame->[5];
+			my $args    =  $frame->[1]   if $frame->[6];
+			my $file    =  $frame->[3];
+			my $line    =  $frame->[4];
+
+			$type =  '&'   unless $frame->[6];
+
+			if( $args ) {
+				$args =  join ', ', map{ defined $_ ? $_ : '&undef' } @$args;
+				$args = "($args)";
+			}
+
+			print "$deep $context $type $subname$args <--  $file:$line\n";
+			$deep--  if $frame->[0] ne 'G';
+		}
 	}
 
 };
