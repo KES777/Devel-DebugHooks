@@ -65,7 +65,7 @@ sub import {
 
 	# We set default here because setting it at DB::BEGIN block will cause us
 	# see third party module's gotos. Settig option to 0 at DB::BEGIN will
-	# confuse us here, because we do not know it is disabled at DB::BEGIN or
+	# confuse us here, because we do not know is it disabled at DB::BEGIN or
 	# descendant module
 	$DB::options{ trace_goto } //=  1;
 }
@@ -215,6 +215,7 @@ package    # hide the package from the PAUSE indexer
 # $DB::sub
 # %DB::sub
 # %DB::postponed
+# @DB::args
 
 # Perl sets up $DB::single to 1 after the 'script.pl' is loaded, so we are able
 # to debug it from first OP. In NonStop mode we should clear $DB::single to run
@@ -576,6 +577,7 @@ sub trace_subs {
 	my $last_frames =  shift;
 	push @DB::goto_frames,
 		$_[0] eq 'G'?
+			# TODO: check goto context, args, flags etc
 			# [ (caller(1))[0..2], $DB::sub, $last_frames ];
 			# WORKAROUND: for broken frame
 			# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
