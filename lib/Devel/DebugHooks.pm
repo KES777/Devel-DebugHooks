@@ -115,16 +115,19 @@ sub trace_subs {
 	local $" =  ' -';
 	my $gf =  \@DB::goto_frames;
 	my $DB_sub =  $gf->[-1][3]; # the last goto frame hence it has the name of called sub
-	my @frames =  DB::frames();
-	for my $frame ( @frames ) {
+	my( $first_frame, $ff_type );
+	for my $frame ( DB::frames() ) {
+		$ff_type     //=  $frame->[0]   if $frame->[0] ne 'D';
+		$first_frame //=  $frame        if $frame->[0] ne 'D'  &&  $frame->[0] ne 'G';
+
 		$info .=  $frame_name{ $frame->[0] } .": @$frame[2..5]\n";
 	}
 
-	my $context = $frames[0][7] ? 'list'
-			: defined $frames[0][7] ? 'scalar' : 'void';
+	my $context = $first_frame->[7] ? 'list'
+			: defined $first_frame->[7] ? 'scalar' : 'void';
 
 	$" =  ', ';
-	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $frames[0][1] };
+	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $first_frame->[1] };
 	$info =
 	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
