@@ -486,7 +486,7 @@ sub _all_frames {
 			# The call to DB::trace_subs replaces right sub name of last call
 			# We fix that here:
 			$frame[3] =  $goto_frames[-1][3]
-				if $count == -1  && $frame[3] eq 'DB::trace_subs';
+				if $count == $options{ frames }  && $frame[3] eq 'DB::trace_subs';
 
 			my $args =  [ @DB::args ];
 			push @frames, [ $ogf->[0][5], $args, @frame ];
