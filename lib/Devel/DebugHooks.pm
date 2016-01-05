@@ -117,15 +117,6 @@ sub trace_subs {
 	my $DB_sub =  $gf->[-1][3]; # the last goto frame hence it has the name of called sub
 	my @frames =  DB::frames();
 	for my $frame ( @frames ) {
-		if(    $gf->[0][0] eq $frame->[1]
-			&& $gf->[0][1] eq $frame->[2]
-			&& $gf->[0][2] == $frame->[3]
-		) {
-			$frame->[4] =  $gf->[0][3];
-			$info .=  "GOTO: @{ $_ }[0..3]\n"   for reverse @$gf[ 1..$#$gf ];
-			$gf =  $gf->[0][4];
-		}
-
 		$info .=  $frame_name{ $frame->[0] } .": @$frame[2..5]\n";
 	}
 
@@ -489,6 +480,17 @@ sub _all_frames {
 				if $count == $options{ frames }  && $frame[3] eq 'DB::trace_subs';
 
 			my $args =  [ @DB::args ];
+			if( $options{ trace_goto }
+				&& $gf->[0][0] eq $frame[0]
+				&& $gf->[0][1] eq $frame[1]
+				&& $gf->[0][2] == $frame[2]
+			) {
+				$frame[3] =  $gf->[0][3];
+				push @frames, [ $_->[5], $args, @$_[0..3] ]   for @$gf[ reverse 1..$#$gf ];
+				$ogf =  $gf;
+				$gf  =  $gf->[0][4];
+			}
+
 			push @frames, [ $ogf->[0][5], $args, @frame ];
 		} continue {
 			$count--;
