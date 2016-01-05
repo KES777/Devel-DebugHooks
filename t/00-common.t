@@ -465,17 +465,17 @@ FROM: main --e -1 -main::test
  = = = = = = = = = = = = = = =
 @@ TraceReturns_void
  = = = = = = = = = = = = = = =
- RETURNS:
+main::test RETURNS:
 >>NOTHING<<
  = = = = = = = = = = = = = = =
 @@ TraceReturns_scalar
  = = = = = = = = = = = = = = =
- RETURNS:
+main::test RETURNS:
   &undef
  = = = = = = = = = = = = = = =
 @@ TraceReturns_list
  = = = = = = = = = = = = = = =
- RETURNS:
+main::test RETURNS:
   ARRAY(0x000000)
   HASH(0x000000)
   &undef
