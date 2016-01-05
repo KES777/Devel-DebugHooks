@@ -156,7 +156,8 @@ sub trace_returns {
 	$info =  $DB::options{ trace_subs } ? '' : "\n" .' =' x15 ."\n";
 	# FIX: uninitializind value while 'n'
 	# A: Can not reproduce...
-	$info .= $DB::goto_frames[0][3] ." RETURNS:\n";
+	$info .= join '->', map { $_->[3] } @DB::goto_frames;
+	$info .= " RETURNS:\n";
 
 	$info .=  @_ ?
 		'  ' .join "\n  ", map { defined $_ ? $_ : '&undef' } @_:
