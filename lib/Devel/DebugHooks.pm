@@ -113,26 +113,24 @@ sub trace_subs {
 
 	my $info = '';
 	local $" =  ' -';
-	my $gf =  \@DB::goto_frames;
-	my $DB_sub =  $gf->[-1][3]; # the last goto frame hence it has the name of called sub
-	my( $first_frame, $ff_type );
+	my( $orig_frame, $last_frame );
 	for my $frame ( DB::frames() ) {
-		$ff_type     //=  $frame->[0]   if $frame->[0] ne 'D';
-		$first_frame //=  $frame        if $frame->[0] ne 'D'  &&  $frame->[0] ne 'G';
+		$last_frame //=  $frame   if $frame->[0] ne 'D';
+		$orig_frame //=  $frame   if $frame->[0] ne 'D'  &&  $frame->[0] ne 'G';
 
 		$info .=  $frame_name{ $frame->[0] } .": @$frame[2..5]\n";
 	}
 
-	my $context = $first_frame->[7] ? 'list'
-			: defined $first_frame->[7] ? 'scalar' : 'void';
+	my $context = $orig_frame->[7] ? 'list'
+			: defined $orig_frame->[7] ? 'scalar' : 'void';
 
 	$" =  ', ';
-	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $first_frame->[1] };
+	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $orig_frame->[1] };
 	$info =
 	    "\n" .' =' x15 ."\n"
 	    ."DEEP: $DB::deep\n"
 		."CNTX: $context\n"
-	    .$ff_type ."SUB: $DB_sub( @args )\n"
+	    .$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 		# A: Because @_ keep the reference to args. So
@@ -140,7 +138,7 @@ sub trace_subs {
 		# 2. The DB::location is called
 		# 3. The value of $DB::sub is changed to DB::location
 		# 4. my( $sub ) =  @_; # Here is too late to get the orig value of $DB::sub
-	    ."TEXT: " .DB::location( $DB_sub ) ."\n\n"
+	    ."TEXT: " .DB::location( $last_frame->[5] ) ."\n\n"
 	    .$info;
 
 	$info .=  ' =' x15 ."\n";
