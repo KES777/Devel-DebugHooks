@@ -143,6 +143,12 @@ is
 	,"\n". $files->{ TraceReturns_list }
 	,"Check return values from sub call at list context";
 
+$script =  'sub t1{} sub t2{} sub t3{ @_ ? goto &t1 : goto &t2; } t3(); t3(1);';
+is
+	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
+	,"\n". $files->{ TraceReturns_goto }
+	,"Check right subnames while returning from goto subs";
+
 
 # goto frames
 $script =  << 'PERL';
@@ -359,7 +365,7 @@ FROM: main --e -3 -main::t2
 
  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
 -e:1    sub t1{ return 7; };
-main::t2 RETURNS:
+main::t2->main::t1 RETURNS:
   7
  = = = = = = = = = = = = = = =
 
@@ -479,6 +485,16 @@ main::test RETURNS:
   ARRAY(0x000000)
   HASH(0x000000)
   &undef
+ = = = = = = = = = = = = = = =
+@@ TraceReturns_goto
+ = = = = = = = = = = = = = = =
+main::t3->main::t2 RETURNS:
+>>NOTHING<<
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+main::t3->main::t1 RETURNS:
+>>NOTHING<<
  = = = = = = = = = = = = = = =
 @@ TraceSubs_one
  = = = = = = = = = = = = = = =
