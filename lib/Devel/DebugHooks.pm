@@ -228,6 +228,8 @@ our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
+our @stack;          # array of hashes that alias DB:: ours of current frame
+                     # This allows us to spy the DB:: values for the given frame
 our %options;
 
 
@@ -639,6 +641,11 @@ sub sub {
 	}
 	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
+	# save context
+	$#DB::stack =  $DB::deep;
+	$DB::stack[-1] =  { single => \$DB::single, sub => $DB::sub };
+
+
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
@@ -798,3 +805,60 @@ How 'the first non-DB piece of code' is calculated for the 'eval'?
 
 
 #BUG? I can ${ '!@#$' } =  3, but can not my ${ '!@#$' }
+
+
+BUG?
+The localization of $DB::single works fine, but the reference to it does not work:
+	{
+		$DB::single =  7; my $x =  \$DB::single;
+		print "Before: ". \$DB::single ." <<$x $$x\n";
+		local $DB::single =  0;
+		print "After: ". \$DB::single ." <<$x $$x\n";
+	}
+
+The output:
+Before: SCALAR(0x10f8310) <<SCALAR(0x10f8310) 7
+After: SCALAR(0x110cbc8) <<SCALAR(0x10f8310) 0
+
+Where as works fine:
+	{
+		$DB::z =  7; my $x =  \$DB::z;
+		print "Before: ". \$DB::z ." <<$x $$x\n";
+		local $DB::z =  0;
+		print "After: ". \$DB::z ." <<$x $$x\n";
+	}
+The output:
+Before: SCALAR(0x134d398) <<SCALAR(0x134d398) 7
+After: SCALAR(0x1239bc8) <<SCALAR(0x134d398) 7
+
+We see that in *first* example the new variable is created: The new address of $DB::single is SCALAR(0x110cbc8)
+but when assigning to $DB::single the value by old reference (SCALAR(0x10f8310) changed too.
+In *second* example we see that addressing works in same manner, but value 7 is preserved as expected.
+
+Why the value of $DB::single is not preserved?
+
+	# my $y =  \$DB::single;
+	# # Can not use weaken. See error at 'reports/readline' file
+	# use Scalar::Util 'weaken';
+	# weaken $y;
+	# Because of $DB::single magic we can not access to old value by reference
+	# The localization is broken if we save a reference to $DB::single
+	# {
+	# 	my $x =  $DB::single;
+	# 	print "Before: ". \$DB::single ." <<$DB::single $x >$y $$y\n"; # $$x == 0
+	# 	local $DB::single =  $DB::single +1;
+	# 	print "After: ". \$DB::single ." <<$DB::single $x >$y $$y\n";  # $$x == 1, not 0
+	# }
+	# print "OUT: ". \$DB::single ." <<$DB::single - $x - $$x >$y\n";
+
+	# {
+	# 	print "BEFORE: $DB::single\n";
+	# 	local $DB::single =  7;
+	# 	print "AFTER $DB::single\n";
+	# }
+	# print "OUT $DB::single\n";
+
+	# BUG: The perl goes tracing if you uncomment this
+	# { local $DB::trace =  1; }
+	# # But it shows us the value 0 but internally it is 1
+	# die $DB::trace   if $DB::trace != 0;

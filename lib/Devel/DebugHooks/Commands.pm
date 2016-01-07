@@ -20,10 +20,15 @@ $DB::commands =  {
 		1;
 	},
 
-	# In compare to 's' and 'n' commands we will not stop at each OP. The
+	# In compare to 's' and 'n' commands 'r' will not stop at each OP. The
 	# true value of $DB::single will be restored at DB::sub when this sub returns
 	# Therefore DB::DB will be called at the first OP followed this sub call
+	# BUG: If we come to the current OP not step-by-step ( We set breakpoint
+	# and come to it, for example) then the localized values of outer sub's
+	# $DB::single is 0
 	,r => sub {
+		# BUG: We can't save reference to $DB::single. see desc at the end of DH
+		${ $DB::stack[-1]{ single } } =  1;
 		$DB::single =  0;
 
 		return;
