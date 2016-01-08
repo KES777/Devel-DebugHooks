@@ -25,8 +25,12 @@ $DB::commands =  {
 	# true value of $DB::single will be restored at DB::sub when this sub returns
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
-		my( $frames_out ) =  shift =~ m/^(\d+)$/;
+		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(^)?$/;
 		$frames_out //=  1;
+
+		# TODO: implement testcase r 5^
+		$frames_out =   $DB::deep -$frames_out +1   if $sharp;
+
 		# TODO: implement testcase when $frames_out >= $DB::deep
 		$frames_out =  $frames_out >= $DB::deep ? $DB::deep : $frames_out;
 
