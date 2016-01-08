@@ -36,7 +36,7 @@ $DB::commands =  {
 		# TODO: implement testcase
 		# go into sub by breakpoint, then check r, r 1, r N works fine
 
-		$#DB::stack =  $DB::deep -1;
+		# $#DB::stack =  $DB::deep -1;
 		$DB::stack[ -$frames_out ]{ single } =  1;
 
 		$_->{ single } =  0   for @DB::stack[ - --$frames_out .. -1 ];
@@ -57,7 +57,7 @@ $DB::commands =  {
 		# sub t1{ 1; } sub t2{ t1(); #n t1(); } sub t3{ t2(); 2; } t3() #b 2;go
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
-		$#DB::stack =  $DB::deep -1;
+		# $#DB::stack =  $DB::deep -1;
 		$DB::stack[ -1 ]{ single } =  1;
 
 		return;
@@ -73,7 +73,7 @@ $DB::commands =  {
 		# sub t1{ 1; #s } sub t2{ t1(); 1; } sub t3{ t2(); 2; } t3() #b 1;go
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
-		$#DB::stack =  $DB::deep -1;
+		# $#DB::stack =  $DB::deep -1;
 		$DB::stack[ -1 ]{ single } =  2;
 
 		return;
