@@ -9,9 +9,10 @@ my $cmd_f;
 my %cmd_T = (
 	G => '&',
 	C => '=',
-	D => 'D',
-	L => 'L',
+	D => '-',
+	L => '\\',
 );
+
 
 $DB::commands =  {
 	'.' => sub {
@@ -193,15 +194,14 @@ $DB::commands =  {
 			my $file    =  $frame->[3];
 			my $line    =  $frame->[4];
 
-			$type =  '&'   unless $frame->[6];
-
 			if( $args ) {
 				$args =  join ', ', map{ defined $_ ? $_ : '&undef' } @$args;
 				$args = "($args)";
 			}
 
-			print "$deep $context $type $subname$args <--  $file:$line\n";
-			$deep--  if $frame->[0] ne 'G';
+			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
+			print "$d $type $context $subname$args <--  $file:$line\n";
+			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
 		}
 	}
 
