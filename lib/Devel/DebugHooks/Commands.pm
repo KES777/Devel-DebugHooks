@@ -24,12 +24,23 @@ $DB::commands =  {
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. The
 	# true value of $DB::single will be restored at DB::sub when this sub returns
 	# Therefore DB::DB will be called at the first OP followed this sub call
-	# BUG: If we come to the current OP not step-by-step ( We set breakpoint
-	# and come to it, for example) then the localized values of outer sub's
-	# $DB::single is 0
 	,r => sub {
-		# BUG: We can't save reference to $DB::single. see desc at the end of DH
-		${ $DB::stack[-1]{ single } } =  1;
+		my( $frames_out ) =  shift =~ m/^(\d+)$/;
+		$frames_out //=  1;
+		# TODO: implement testcase when $frames_out >= $DB::deep
+		$frames_out =  $frames_out >= $DB::deep ? $DB::deep : $frames_out;
+
+		# TODO: implement testcase and feature
+		# (r > $DB::deep) should run until end of programm
+
+		# TODO: implement testcase
+		# go into sub by breakpoint, then check r, r 1, r N works fine
+
+		$#DB::stack =  $DB::deep -1;
+		$DB::stack[ -$frames_out ]{ single } =  1;
+
+		$_->{ single } =  0   for @DB::stack[ - --$frames_out .. -1 ];
+
 		$DB::single =  0;
 
 		return;
