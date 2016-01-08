@@ -674,11 +674,9 @@ sub sub {
 	local $DB::deep =  $DB::deep +1;
 	trace_subs( $root, 'C' );
 
-
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		# BUG: without +0 the localized value is broken
-		local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
+		$DB::single =  0   if $DB::single & 2;
 		return &$DB::sub   if !$options{ trace_returns };
 
 
@@ -885,3 +883,10 @@ Why the value of $DB::single is not preserved?
 	# { local $DB::trace =  1; }
 	# # But it shows us the value 0 but internally it is 1
 	# die $DB::trace   if $DB::trace != 0;
+
+
+
+sub sub {
+	...
+	# BUG: without +0 the localized value is broken
+	local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
