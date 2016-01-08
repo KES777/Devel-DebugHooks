@@ -633,17 +633,28 @@ sub goto {
 
 
 
+use Hook::Scope;
+sub sub_returns {
+	if( defined $DB::deep ) {
+		$#DB::stack =  $DB::deep;
+		$DB::single =  $DB::stack[-1]{ single };
+	}
+}
+
+
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
-	if( $ext_call ) {
+	if( $ext_call  ||  $DB::sub eq 'DB::sub_returns' ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub
 	}
 	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
-	# save context
+
+	# manual localizing
+	Hook::Scope::POST( \&sub_returns );
 	$#DB::stack =  $DB::deep;
-	$DB::stack[-1] =  { single => \$DB::single, sub => $DB::sub };
+	$DB::stack[-1] =  { single => $DB::single, sub => $DB::sub };
 
 
 	my $root =  \@DB::goto_frames;
