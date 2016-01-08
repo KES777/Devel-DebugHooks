@@ -33,8 +33,8 @@ $DB::commands =  {
 		# TODO: implement testcase r 5^
 		$frames_out =   $DB::deep -$frames_out +1   if $sharp;
 
-		# TODO: implement testcase when $frames_out >= $DB::deep
-		$frames_out =  $frames_out >= $DB::deep ? $DB::deep : $frames_out;
+		# TODO: implement testcase when $frames_out > $DB::deep
+		$frames_out =  $frames_out > $DB::deep ? $DB::deep+1 : $frames_out;
 
 		# TODO: implement testcase and feature
 		# (r > $DB::deep) should run until end of programm
