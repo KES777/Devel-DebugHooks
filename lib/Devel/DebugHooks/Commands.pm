@@ -132,11 +132,21 @@ $DB::commands =  {
 
 	,b => sub {
 		my( $line, $condition ) =  shift =~ m/^([\d]+|\.)(?:\s+(.*))?$/;
-		$condition //=  1;
-
-		return   unless $line;
-
 		my $traps =  DB::traps();
+
+
+		# list all breakpoints
+		unless( $line ) {
+			for( sort keys %$traps ) {
+				print "$_: ". $traps->{ $_ }{ condition } ."\n";
+				warn "The breakpoint at $_ is zero and should be deleted"
+					if $traps->{ $_ } == 0;
+			}
+
+			return 1;
+		}
+
+
 		# set or delete breakpoint
 		$traps->{ $line }?
 			# BUG? deleting a key does not remove a breakpoint for that line
