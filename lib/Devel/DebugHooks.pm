@@ -236,7 +236,7 @@ our %options;
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$options{ _debug }           =  0;
+	$options{ _debug }         //=  0;
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
@@ -521,9 +521,14 @@ sub postponed {
 sub DB {
 	init();
 
-	print "DB::DB called\n"   if $DB::options{ _debug };
+	print "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
+	if( $DB::options{ _debug } ) {
+		local $ext_call =  $ext_call +1;
+		$DB::commands->{ 'T' }->();
+	}
 
 	if( exists DB::traps->{ $DB::line } ) {
+		print "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 		# Do not stop if breakpoint condition evaluated to false value
 		return   unless DB::eval( DB::traps->{ $DB::line }{ condition } );
 
@@ -532,6 +537,7 @@ sub DB {
 	}
 	# Ignoring debugger traps in NonStop mode (see also 'go' command)
 	elsif( $DB::options{ NonStop } ) {
+		print "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug };
 		# Doing this gives us some speed benefit: the perl does not call
 		# DB::DB for each debugged script's line. w/o this debugger works in
 		# same manner with the remark above
@@ -540,6 +546,7 @@ sub DB {
 		return;
 	}
 
+	print "Stopped\n"   if $DB::options{ _debug };
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
@@ -637,6 +644,11 @@ use Hook::Scope;
 sub sub_returns {
 	if( defined $DB::deep ) {
 		$#DB::stack =  $DB::deep;
+		if( $DB::options{ _debug } ) {
+			print "Returning from " .$DB::stack[-1]{ sub } ." to level $DB::deep\n";
+			print "DB::single state changed " . $DB::single ."->" .$DB::stack[-1]{ single };
+			print "\n";
+		}
 		$DB::single =  $DB::stack[-1]{ single };
 	}
 }
