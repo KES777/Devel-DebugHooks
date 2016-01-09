@@ -705,7 +705,7 @@ sub sub {
 	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 
-	# manual localizing
+	# manual localization
 	Hook::Scope::POST( \&sub_returns );
 	# TODO: implement testcase
 	# after retruning from level 1 to 0 the @DB::stack should be empty
@@ -756,7 +756,20 @@ sub lsub : lvalue {
 		return &$DB::sub
 	}
 
-	local @DB::goto_frames;
+
+	# manual localization
+	Hook::Scope::POST( \&sub_returns );
+	push @DB::stack, {
+		single      =>  $DB::single,
+		sub         =>  $DB::sub,
+		goto_frames =>  \@DB::goto_frames,
+	};
+
+	no warnings 'experimental::refaliasing';
+	use feature 'refaliasing';
+	\@DB::goto_frames =  [];
+
+
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
