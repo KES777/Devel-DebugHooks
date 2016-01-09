@@ -694,9 +694,9 @@ sub sub {
 	local $DB::deep =  $DB::deep +1;
 	trace_subs( 'C' );
 
+	$DB::single =  0   if $DB::single & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		$DB::single =  0   if $DB::single & 2;
 		return &$DB::sub   if !$options{ trace_returns };
 
 
