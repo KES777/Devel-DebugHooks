@@ -211,7 +211,7 @@ package    # hide the package from the PAUSE indexer
 # $DB::single
 # $DB::signal
 # $DB::trace
-# $DB::sub
+# $DB::sub  # NOTICE: this maybe the reference to sub, not just the name of it
 # %DB::sub
 # %DB::postponed
 # @DB::args
