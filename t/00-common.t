@@ -731,6 +731,7 @@ TEXT: -e:5-5
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -xxx -DB::mcall
 DBGF: main --e -6 -DB::trace_subs
 FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
@@ -744,6 +745,7 @@ TEXT: -e:4-4
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -xxx -DB::mcall
 DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
 DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -5 -main::t4
@@ -759,6 +761,7 @@ TEXT: -e:3-3
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -xxx -DB::mcall
 DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
 DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -4 -main::t3
@@ -775,6 +778,7 @@ TEXT: -e:2-2
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -xxx -DB::mcall
 DBGF: main --e -3 -DB::trace_subs
 FROM: main --e -3 -main::t2
 GOTO: main --e -4 -main::t3
@@ -791,6 +795,7 @@ TEXT: -e:1-1
 DBGF: Devel::DebugHooks -DebugHooks.pm -73 -DB::frames
 DBGF: Devel::TraceRT -TraceRT.pm -19 -Devel::DebugHooks::trace_subs
 DBGF: DB -DebugHooks.pm -385 -Devel::TraceRT::trace_subs
+DBGF: DB -DebugHooks.pm -xxx -DB::mcall
 DBGF: DB -DebugHooks.pm -412 -DB::trace_subs
 DBGF: DB -DebugHooks.pm -432 -DB::goto
 GOTO: main --e -2 -main::t1

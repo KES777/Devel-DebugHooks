@@ -502,6 +502,44 @@ sub _all_frames {
 
 		return @frames;
 	}
+
+
+	sub mcall {
+		$ext_call--; # $ext_call++ before mcall prevents reenterance to DB::sub
+
+		# Any subroutine call invoke DB::sub again
+		# The right way is to turn off 'Debug subroutine enter/exit'
+		# local $^P =  $^P & ~1;      # But this works at compile time only.
+		# So prevent infinite DB::sub reentrance manually. One way to compete this:
+		# my $stub = sub { &$DB::sub };
+		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
+		# Another:
+		local $ext_call   =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
+
+
+		my $method =  shift;
+		my $context =  $_[0];
+		my $sub =  $context->can( $method );
+
+		$sub->( @_ );
+
+	}
+
+
+
+	sub scall {
+		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
+
+		local $ext_call   =  $ext_call +1;
+		local $DB::single =  0;     # Prevent debugging for next call
+
+		return shift->( @_ );
+
+		# my $method =  shift;
+		# my $context =  shift;
+		# &{ "$context::$method" }( @_ );
+	}
 } # end of provided DB::API
 
 
@@ -511,8 +549,7 @@ sub _all_frames {
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	if( $options{ trace_load } ) {
-		local $ext_call =  $ext_call +1;
-		$dbg->trace_load( @_ );
+		$ext_call++; mcall( 'trace_load', $dbg, @_ );
 	}
 }
 
@@ -523,8 +560,7 @@ sub DB {
 
 	print "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
 	if( $DB::options{ _debug } ) {
-		local $ext_call =  $ext_call +1;
-		$DB::commands->{ 'T' }->();
+		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
 	if( exists DB::traps->{ $DB::line } ) {
@@ -550,6 +586,8 @@ sub DB {
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
+	# Actually to make things same we should call 'scall' here, despite on
+	# $DB::single has no effect
 
 	$dbg->bbreak();
 
@@ -626,18 +664,7 @@ sub trace_subs {
 		[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ];
 
 	if( $options{ trace_subs } ) {
-
-
-		# Any subsequent sub call inside next sub will invoke DB::sub again
-		# The right way is to turn off 'Debug subroutine enter/exit'
-		# local $^P =  $^P & ~1;      # But this works at compile time only.
-		# So prevent infinite reentrance manually. One way to compete this:
-		# my $stub = sub { &$DB::sub };
-		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
-		# Another:
-		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
-		$dbg->trace_subs( @_ );
+		$ext_call++; mcall( 'trace_subs', $dbg, @_ );
 	}
 }
 
@@ -702,29 +729,17 @@ sub sub {
 
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
-
-			local $ext_call   =  $ext_call +1;
-			$DB::single =  0;
-			$dbg->trace_returns( @ret );
-
+			$ext_call++; mcall( 'trace_returns', $dbg, @ret );
 			return @ret;
 		}
 		elsif( defined wantarray ) {                  # scalar context
 			my $ret =  &$DB::sub;
-
-			local $ext_call   =  $ext_call +1;
-			$DB::single =  0;
-			$dbg->trace_returns( $ret );
-
+			$ext_call++; mcall( 'trace_returns', $dbg, $ret );
 			return $ret;
 		}
 		else {                                        # void context
 			&$DB::sub;
-
-			local $ext_call   =  $ext_call +1;
-			$DB::single =  0;
-			$dbg->trace_returns();
-
+			$ext_call++; mcall( 'trace_returns', $dbg );
 			return;
 		}
 	}
