@@ -603,7 +603,9 @@ sub init {
 
 
 sub trace_subs {
-	my $last_frames =  shift;
+	my $last_frames =  $_[0] ne 'G'?
+		$DB::stack[ -1 ]{ goto_frames }:
+		undef;
 
 	# TODO: implement testcase
 	# We we run script in NonStop mode the $DB::package/file/line are not updated
@@ -648,7 +650,7 @@ sub goto {
 	# TODO: implement testcase
 	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go;
 	$DB::single =  0   if $DB::single & 2;
-	trace_subs( undef, 'G' );
+	trace_subs( 'G' );
 };
 
 
@@ -688,10 +690,9 @@ sub sub {
 		goto_frames =>  \@DB::goto_frames,
 	};
 
-	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
-	trace_subs( $root, 'C' );
+	trace_subs( 'C' );
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -740,10 +741,9 @@ sub lsub : lvalue {
 		return &$DB::sub
 	}
 
-	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
 	# HERE TOO client's code 'caller' return wrong info
-	trace_subs( $root, 'L' );
+	trace_subs( 'L' );
 	local $DB::deep =  $DB::deep +1;
 
 
