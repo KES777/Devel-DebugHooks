@@ -669,8 +669,11 @@ sub sub {
 	# manual localizing
 	Hook::Scope::POST( \&sub_returns );
 	$#DB::stack =  $DB::deep;
-	$DB::stack[-1] =  { single => $DB::single, sub => $DB::sub };
-
+	$DB::stack[-1] = { # TODO: does it better to push/pop?
+		single      =>  $DB::single,
+		sub         =>  $DB::sub,
+		goto_frames =>  \@DB::goto_frames,
+	};
 
 	my $root =  \@DB::goto_frames;
 	local @DB::goto_frames;
