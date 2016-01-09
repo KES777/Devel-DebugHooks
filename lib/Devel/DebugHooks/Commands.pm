@@ -31,13 +31,13 @@ $DB::commands =  {
 		$frames_out //=  1;
 
 		# TODO: implement testcase r 5^
-		$frames_out =   $DB::deep -$frames_out +1   if $sharp;
+		$frames_out =   @DB::stack -$frames_out +1   if $sharp;
 
-		# TODO: implement testcase when $frames_out > $DB::deep
-		$frames_out =  $frames_out > $DB::deep ? $DB::deep+1 : $frames_out;
+		# TODO: implement testcase when $frames_out > @DB::stack
+		$frames_out =  $frames_out > @DB::stack ? @DB::stack+1 : $frames_out;
 
 		# TODO: implement testcase and feature
-		# (r > $DB::deep) should run until end of programm
+		# (r > @DB::stack) should run until end of programm
 
 		# TODO: implement testcase
 		# go into sub by breakpoint, then check r, r 1, r N works fine
@@ -47,11 +47,11 @@ $DB::commands =  {
 		$DB::single =  0;
 
 		# ... skip N next frames
-		# $#DB::stack =  $DB::deep -1;
+		# $#DB::stack =  @DB::stack -1;
 		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];
 
 		# and stop only at this one
-		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= $DB::deep;
+		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= @DB::stack;
 
 		return;
 	}
@@ -236,7 +236,7 @@ $DB::commands =  {
 
 	# TODO: give names to ANON
 	,T => sub {
-		my $deep =  $DB::deep;
+		my $deep =  @DB::stack;
 		for my $frame ( DB::frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : '.';
 			my $type    =  $cmd_T{ $frame->[0] };

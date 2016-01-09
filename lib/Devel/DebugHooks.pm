@@ -128,7 +128,7 @@ sub trace_subs {
 	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $orig_frame->[1] };
 	$info =
 	    "\n" .' =' x15 ."\n"
-	    ."DEEP: $DB::deep\n"
+	    ."DEEP: ". @DB::stack ."\n"
 		."CNTX: $context\n"
 	    .$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
@@ -224,7 +224,6 @@ our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
 our $line;           # current line number
-our $deep;           # watch the calling stack depth
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
@@ -312,7 +311,6 @@ BEGIN {
 BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
-	$DB::deep     =  0;
 	$DB::ext_call =  0;
 	applyOptions();
 }
@@ -683,21 +681,18 @@ sub goto {
 
 use Hook::Scope;
 sub sub_returns {
-	if( defined $DB::deep ) {
-		my $last =  pop @DB::stack;
-
-		if( $DB::options{ _debug } ) {
-			print "Returning from " .$last->{ sub } ." to level $DB::deep\n";
-			print "DB::single state changed " . $DB::single ."->" .$last->{ single };
-			print "\n";
-		}
-
-		no warnings 'experimental::refaliasing';
-		use feature 'refaliasing';
-		\@DB::goto_frames =  $last->{ goto_frames };
-
-		$DB::single =  $last->{ single };
+	my $last =  pop @DB::stack;
+	if( $DB::options{ _debug } ) {
+		print "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
+		print "DB::single state changed " . $DB::single ."->" .$last->{ single };
+		print "\n";
 	}
+
+	no warnings 'experimental::refaliasing';
+	use feature 'refaliasing';
+	\@DB::goto_frames =  $last->{ goto_frames };
+
+	$DB::single =  $last->{ single };
 }
 
 
@@ -720,7 +715,6 @@ sub sub {
 		goto_frames =>  \@DB::goto_frames,
 	};
 
-	local $DB::deep =  $DB::deep +1;
 	no warnings 'experimental::refaliasing';
 	use feature 'refaliasing';
 	\@DB::goto_frames =  [];
@@ -765,7 +759,6 @@ sub lsub : lvalue {
 	local @DB::goto_frames;
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
-	local $DB::deep =  $DB::deep +1;
 
 
 	{
