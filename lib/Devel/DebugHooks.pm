@@ -604,14 +604,24 @@ sub init {
 
 sub trace_subs {
 	my $last_frames =  shift;
+
+	# TODO: implement testcase
+	# We we run script in NonStop mode the $DB::package/file/line are not updated
+	# because of &DB::DB is not called. If we update them here the GOTO frames
+	# will get more actual info about that from which place the GOTO was done
+	# $DB::package/file/line will be more closer to that place
+
+	# TODO: check goto context, args, flags etc
+	# [ (caller(1))[0..2], $DB::sub, $last_frames ];
+	# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+	# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+	# Most actual info we get when we trace script step-by-step so these vars
+	# has sharp last opcode location.
+	( $DB::package, $DB::file, $DB::line ) =  (caller(0))[0..2]
+		if $_[0] ne 'G';
+
 	push @DB::goto_frames,
-		$_[0] eq 'G'?
-			# TODO: check goto context, args, flags etc
-			# [ (caller(1))[0..2], $DB::sub, $last_frames ];
-			# WORKAROUND: for broken frame
-			# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-			[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ]:
-			[ (caller(0))[0..2], $DB::sub, $last_frames, $_[0] ];
+		[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ];
 
 	if( $options{ trace_subs } ) {
 
