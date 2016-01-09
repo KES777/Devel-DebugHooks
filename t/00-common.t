@@ -320,6 +320,13 @@ is
 
 __DATA__
 @@ VerboseBehaviour
+Loaded '*main::_<strict.pm'
+Loaded '*main::_<register.pm'
+Loaded '*main::_<warnings.pm'
+Loaded '*main::_<vars.pm'
+Loaded '*main::_<Scope.pm'
+Loaded '*main::_<Config.pm'
+Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 
@@ -375,11 +382,25 @@ main::t2->main::t1 RETURNS:
  = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =1
 -e:1    0
 @@ TraceLoadCT
+Loaded '*main::_<strict.pm'
+Loaded '*main::_<register.pm'
+Loaded '*main::_<warnings.pm'
+Loaded '*main::_<vars.pm'
+Loaded '*main::_<Scope.pm'
+Loaded '*main::_<Config.pm'
+Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 Loaded '*main::_<TraceLoadCT.pm'
 Loaded '*main::_<-e'
 @@ TraceLoadCT_Empty
+Loaded '*main::_<strict.pm'
+Loaded '*main::_<register.pm'
+Loaded '*main::_<warnings.pm'
+Loaded '*main::_<vars.pm'
+Loaded '*main::_<Scope.pm'
+Loaded '*main::_<Config.pm'
+Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 Loaded '*main::_<TraceLoadCT.pm'
