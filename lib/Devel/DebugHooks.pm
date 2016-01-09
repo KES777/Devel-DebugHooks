@@ -692,6 +692,10 @@ sub sub_returns {
 			print "\n";
 		}
 
+		no warnings 'experimental::refaliasing';
+		use feature 'refaliasing';
+		\@DB::goto_frames =  $last->{ goto_frames };
+
 		$DB::single =  $last->{ single };
 	}
 }
@@ -708,7 +712,6 @@ sub sub {
 
 	# manual localizing
 	Hook::Scope::POST( \&sub_returns );
-	# @DB::goto_frames =  ();
 	# TODO: implement testcase
 	# after retruning from level 1 to 0 the @DB::stack should be empty
 	push @DB::stack, {
@@ -717,8 +720,11 @@ sub sub {
 		goto_frames =>  \@DB::goto_frames,
 	};
 
-	local @DB::goto_frames;
 	local $DB::deep =  $DB::deep +1;
+	no warnings 'experimental::refaliasing';
+	use feature 'refaliasing';
+	\@DB::goto_frames =  [];
+
 	trace_subs( 'C' );
 
 	$DB::single =  0   if $DB::single & 2;
