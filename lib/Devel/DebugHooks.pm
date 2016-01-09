@@ -642,17 +642,18 @@ sub goto {
 };
 
 
-
 use Hook::Scope;
 sub sub_returns {
 	if( defined $DB::deep ) {
-		$#DB::stack =  $DB::deep;
+		my $last =  pop @DB::stack;
+
 		if( $DB::options{ _debug } ) {
-			print "Returning from " .$DB::stack[-1]{ sub } ." to level $DB::deep\n";
-			print "DB::single state changed " . $DB::single ."->" .$DB::stack[-1]{ single };
+			print "Returning from " .$last->{ sub } ." to level $DB::deep\n";
+			print "DB::single state changed " . $DB::single ."->" .$last->{ single };
 			print "\n";
 		}
-		$DB::single =  $DB::stack[-1]{ single };
+
+		$DB::single =  $last->{ single };
 	}
 }
 
@@ -668,8 +669,10 @@ sub sub {
 
 	# manual localizing
 	Hook::Scope::POST( \&sub_returns );
-	$#DB::stack =  $DB::deep;
-	$DB::stack[-1] = { # TODO: does it better to push/pop?
+	# @DB::goto_frames =  ();
+	# TODO: implement testcase
+	# after retruning from level 1 to 0 the @DB::stack should be empty
+	push @DB::stack, {
 		single      =>  $DB::single,
 		sub         =>  $DB::sub,
 		goto_frames =>  \@DB::goto_frames,
