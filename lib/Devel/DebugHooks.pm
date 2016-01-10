@@ -567,6 +567,13 @@ sub DB {
 		# Do not stop if breakpoint condition evaluated to false value
 		return   unless DB::eval( $traps->{ $DB::line }{ condition } );
 
+		# TODO: Implement on_stop event
+
+		# Delete temporary breakpoint
+		if( $traps->{ $DB::line }{ tmp } ) {
+			$ext_call++; scall( $DB::commands->{ b }, $DB::line );
+		}
+
 		# We should stop when meet breakpoint with "true" condition
 		delete $DB::options{ NonStop };
 	}
