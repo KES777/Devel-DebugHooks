@@ -561,10 +561,11 @@ sub DB {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
-	if( exists DB::traps->{ $DB::line } ) {
+	my $traps =  DB::traps();
+	if( exists $traps->{ $DB::line } ) {
 		print "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 		# Do not stop if breakpoint condition evaluated to false value
-		return   unless DB::eval( DB::traps->{ $DB::line }{ condition } );
+		return   unless DB::eval( $traps->{ $DB::line }{ condition } );
 
 		# We should stop when meet breakpoint with "true" condition
 		delete $DB::options{ NonStop };
