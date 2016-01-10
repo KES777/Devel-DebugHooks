@@ -71,6 +71,8 @@ sub list {
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
 		elsif( my( $subname ) =   $arg =~ m/^([\w:]+)$/ ) {
+			$subname =  "${ DB::package }::${ subname }"
+				if $subname !~ m/::/;
 
 			# The location format is 'file:from-to'
 			my $location =  DB::location( $subname );
