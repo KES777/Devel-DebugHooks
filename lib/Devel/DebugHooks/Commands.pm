@@ -68,7 +68,9 @@ $DB::commands =  {
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
 		# $#DB::stack =  $DB::deep -1;
-		$DB::stack[ -1 ]{ single } =  1;
+		# TODO: implement testcase for case when we 's' in main script before
+		# any sub call. At this moment the $DB::stack has no frames at all.
+		$DB::stack[ -1 ]{ single } =  1   if exists $DB::stack[ -1 ];
 
 		return;
 	}
@@ -84,7 +86,7 @@ $DB::commands =  {
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
 		# $#DB::stack =  $DB::deep -1;
-		$DB::stack[ -1 ]{ single } =  2;
+		$DB::stack[ -1 ]{ single } =  2   if exists $DB::stack[ -1 ];
 
 		return;
 	}
