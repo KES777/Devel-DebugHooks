@@ -169,6 +169,7 @@ $DB::commands =  {
 
 	,b => sub {
 		my( $line, $condition ) =  shift =~ m/^([\d]+|\.)(?:\s+(.*))?$/;
+		$line =  $DB::line   if $line eq '.';
 		my $traps =  DB::traps();
 
 
