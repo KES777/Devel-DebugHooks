@@ -385,10 +385,11 @@ sub _all_frames {
 		my $subname =  shift;
 
 		return   unless $subname;
+		return   ">>$subname<<"   if ref $subname; # The subname maybe a coderef
 
 		# The subs from DB::* are not placed here. Why???
 		# A? Maybe they are placed after module loaded?
-		return $DB::sub{ $subname } || ">>$subname<<";
+		return $DB::sub{ $subname };
 	}
 
 
