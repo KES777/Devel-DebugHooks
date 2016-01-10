@@ -532,7 +532,7 @@ sub _all_frames {
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
 
-		return shift->( @_ );
+		return shift->( @_[ 1..$#_ ] );
 
 		# my $method =  shift;
 		# my $context =  shift;
