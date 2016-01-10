@@ -17,12 +17,19 @@ my %cmd_T = (
 # TODO: make variables global/configurable
 my $lines_before =  8;
 my $lines_after  =  12;
+my $line_cursor;
+my $old_DB_line;
 sub list {
 	my $source =  DB::source();
 	my $traps  =  DB::traps();
 
+	if( $old_DB_line != $DB::line ) {
+		$old_DB_line =  $DB::line;
+		$line_cursor =  $DB::line;
+	}
 
-	my $from =  $DB::line -$lines_before;
+
+	my $from =  $line_cursor -$lines_before;
 	$from    =  0   if $from < 0; # TODO: testcase
 	my $to   =  $from +$lines_before +$lines_after;
 	$to      =  $#$source   if $to > $#$source;
@@ -40,6 +47,8 @@ sub list {
 
 		print "$line: " .$source->[ $line ];
 	}
+
+	$line_cursor =  $to +$lines_before +1;
 }
 
 
