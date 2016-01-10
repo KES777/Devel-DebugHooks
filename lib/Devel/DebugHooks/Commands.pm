@@ -14,6 +14,35 @@ my %cmd_T = (
 );
 
 
+# TODO: make variables global/configurable
+my $lines_before =  8;
+my $lines_after  =  12;
+sub list {
+	my $source =  DB::source();
+	my $traps  =  DB::traps();
+
+
+	my $from =  $DB::line -$lines_before;
+	$from    =  0   if $from < 0; # TODO: testcase
+	my $to   =  $from +$lines_before +$lines_after;
+	$to      =  $#$source   if $to > $#$source;
+
+	for my $line ( $from..$to ) {
+		if( exists $traps->{ $line } ) {
+			print exists $traps->{ $line }{ action    }? 'a' : ' ';
+			print exists $traps->{ $line }{ condition }? 'b' : ' ';
+		}
+		else {
+			print '  ';
+		}
+
+		print $line == $DB::line ? '>>' : '  ';
+
+		print "$line: " .$source->[ $line ];
+	}
+}
+
+
 $DB::commands =  {
 	'.' => sub {
 		print "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
@@ -279,6 +308,7 @@ $DB::commands =  {
 		}
 	}
 
+	,l => \&list,
 };
 
 1;
