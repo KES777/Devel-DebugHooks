@@ -70,6 +70,14 @@ sub list {
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
+		elsif( my( $subname ) =   $arg =~ m/^([\w:]+)$/ ) {
+
+			# The location format is 'file:from-to'
+			my $location =  DB::location( $subname );
+			if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
+				_list( $2, $3, $1 );
+			}
+		}
 		else {
 			print "Unknown paramenter: $arg\n";
 
