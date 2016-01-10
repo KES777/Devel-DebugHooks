@@ -184,6 +184,12 @@ $DB::commands =  {
 		}
 
 
+		unless( DB::can_break( $DB::file, $line ) ) {
+			print "This line is not breakable\n";
+			return -1;
+		}
+
+
 		# set or delete breakpoint
 		$traps->{ $line }?
 			# BUG? deleting a key does not remove a breakpoint for that line
