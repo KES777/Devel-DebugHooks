@@ -14,25 +14,16 @@ my %cmd_T = (
 );
 
 
-# TODO: make variables global/configurable
-my $lines_before =  8;
-my $lines_after  =  12;
-my $line_cursor;
-my $old_DB_line;
-sub list {
-	my $source =  DB::source();
-	my $traps  =  DB::traps();
 
-	if( $old_DB_line != $DB::line ) {
-		$old_DB_line =  $DB::line;
-		$line_cursor =  $DB::line;
-	}
+sub _list {
+	my( $from, $to, $file ) =  @_;
 
 
-	my $from =  $line_cursor -$lines_before;
-	$from    =  0   if $from < 0; # TODO: testcase
-	my $to   =  $from +$lines_before +$lines_after;
-	$to      =  $#$source   if $to > $#$source;
+	my $source =  DB::source( $file );
+	my $traps  =  DB::traps( $file );
+
+	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
+	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
 	for my $line ( $from..$to ) {
 		if( exists $traps->{ $line } ) {
@@ -47,8 +38,29 @@ sub list {
 
 		print "$line: " .$source->[ $line ];
 	}
+}
 
-	$line_cursor =  $to +$lines_before +1;
+
+# TODO: make variables global/configurable
+my $lines_before =  8;
+my $lines_after  =  12;
+my $line_cursor;
+my $old_DB_line  =  -1;
+sub list {
+	shift   if @_ == 1  &&   !defined $_[0];
+
+	unless( @_ ) {
+		if( $old_DB_line != $DB::line ) {
+			$old_DB_line =  $DB::line;
+			$line_cursor =  $DB::line;
+		}
+
+		_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
+
+		$line_cursor +=  $lines_after +1 +$lines_before;
+	}
+
+	1;
 }
 
 
