@@ -616,7 +616,7 @@ sub DB {
 		}
 		# else no such command exists the entered string will be evaluated
 		# in context of current __FILE__:__LINE__ of a debugged script
-		DB::eval( $str );
+		print DB::eval( $str );
 		warn "ERROR: $@"   if $@;
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
@@ -634,7 +634,6 @@ sub init {
 	die "'$DB::file' ne '" .file( $DB::file ) ."'"
 		if $DB::file ne file( $DB::file );
 }
-
 
 
 
