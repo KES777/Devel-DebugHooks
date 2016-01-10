@@ -202,6 +202,20 @@ $DB::commands =  {
 	}
 
 	,go => sub {
+		my( $line, $file ) =  shift =~ m/^(\d+)(?:\s+(.+))?$/;
+
+		if( $file =~ m/^\d+$/ ) {
+			$file =  $cmd_f->[ $file ]   if exists $cmd_f->[ $file ];
+		}
+
+		if( defined $line ) {
+			$DB::file =  $file   if defined $file;
+			return 1   if 0 > $DB::commands->{ b }->( $line );
+			DB::traps()->{ $line }{ tmp } =  1;
+
+		}
+
+
 		$DB::single =  0;
 
 		# The $DB::single will be restored when sub returns. So we set this flag
