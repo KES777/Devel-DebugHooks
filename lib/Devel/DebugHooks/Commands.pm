@@ -60,6 +60,22 @@ sub list {
 		$line_cursor +=  $lines_after +1 +$lines_before;
 	}
 
+
+	if( @_ == 1 ) {
+		my $arg =  shift;
+		if( ( $line_cursor ) =  $arg =~ m/^(\d+)$/ ) {
+			_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
+
+			$line_cursor +=  $lines_after +1 +$lines_before;
+		}
+		else {
+			print "Unknown paramenter: $arg\n";
+
+			return 1;
+		}
+	}
+
+
 	1;
 }
 
