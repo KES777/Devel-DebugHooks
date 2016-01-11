@@ -330,6 +330,7 @@ Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<feature.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
+Loaded '*main::_<CmdProcessor.pm'
 
  = = = = = = = = = = = = = = =
 DEEP: 1
@@ -393,6 +394,7 @@ Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<feature.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
+Loaded '*main::_<CmdProcessor.pm'
 Loaded '*main::_<TraceLoadCT.pm'
 Loaded '*main::_<-e'
 @@ TraceLoadCT_Empty
@@ -406,6 +408,7 @@ Loaded '*main::_<DynaLoader.pm'
 Loaded '*main::_<feature.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
+Loaded '*main::_<CmdProcessor.pm'
 Loaded '*main::_<TraceLoadCT.pm'
 Loaded '*main::_<Empty.pm'
 Loaded '*main::_<-e'

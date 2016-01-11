@@ -94,6 +94,14 @@ sub interact {
 
 
 
+eval 'require ' .$DB::options{ cmd_processor };
+sub process {
+	BEGIN{ 'strict'->unimport( 'refs' )   if $DB::options{ s } }
+	&{ $DB::options{ cmd_processor } .'::process' }( @_ );
+}
+
+
+
 sub abreak {
 }
 
@@ -555,10 +563,6 @@ sub postponed {
 }
 
 
-BEGIN {
-	eval 'require ' .$DB::options{ cmd_processor } .';'
-		.$DB::options{ cmd_processor } ."->import()";
-}
 
 sub DB {
 	init();
@@ -582,6 +586,7 @@ sub DB {
 		}
 
 		# We should stop when meet breakpoint with "true" condition
+		# MUST TAKE EFFECT ONLY AT INIT TIME
 		delete $DB::options{ NonStop };
 	}
 	# Ignoring debugger traps in NonStop mode (see also 'go' command)
@@ -606,8 +611,7 @@ sub DB {
 
 	# interact() should return defined value to keep interaction
 	while( defined ( my $str =  $dbg->interact() ) ) {
-
-		my $result =  process( $str );
+		my $result =  $dbg->process( $str );
 		last   unless defined $result;
 		next   if $result;
 
