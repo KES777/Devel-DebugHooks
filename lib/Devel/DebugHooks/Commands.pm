@@ -46,8 +46,9 @@ my $lines_before =  8;
 my $lines_after  =  12;
 my $line_cursor;
 my $old_DB_line  =  -1;
+# TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
 sub list {
-	shift   if @_ == 1  &&   !defined $_[0];
+	shift   if @_ == 1  &&   (!defined $_[0] || $_[0] eq '');
 
 	unless( @_ ) {
 		if( $old_DB_line != $DB::line ) {
@@ -211,7 +212,7 @@ $DB::commands =  {
 				delete @$stash{ qw# STDERR stderr STDIN stdin STDOUT stdout # };
 				delete @$stash{ qw# SIG INC F ] ENV ; > < ) ( $ " _ # }; # a b
 				delete @$stash{ qw# - + ` & ' #, 0..99 };
-				delete @$stash{ qw# ARGV ARGVOUT , . / \ | # };
+				delete @$stash{ qw# ARGV ARGVOUT \, . / \\ | # };
 				delete @$stash{ qw# % - : = ^ ~ # };
 				delete @$stash{ qw# ! @ ? # };
 			}
