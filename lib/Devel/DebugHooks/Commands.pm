@@ -283,7 +283,7 @@ $DB::commands =  {
 	,go => sub {
 		my( $line, $file ) =  shift =~ m/^(\d+)(?:\s+(.+))?$/;
 
-		if( $file =~ m/^\d+$/ ) {
+		if( $file  &&  $file =~ m/^\d+$/ ) {
 			$file =  $cmd_f->[ $file ]   if exists $cmd_f->[ $file ];
 		}
 
