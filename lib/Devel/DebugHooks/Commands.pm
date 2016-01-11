@@ -355,6 +355,8 @@ $DB::commands =  {
 			print "$d $type $context $subname$args <--  $file:$line\n";
 			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
 		}
+
+		return 1;
 	}
 
 	,l => \&list,
