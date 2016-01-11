@@ -342,7 +342,7 @@ $DB::commands =  {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : '.';
 			my $type    =  $cmd_T{ $frame->[0] };
 			my $subname =  $frame->[5];
-			my $args    =  $frame->[1]   if $frame->[6];
+			my $args    =  $frame->[6] ? $frame->[1] : '';
 			my $file    =  $frame->[3];
 			my $line    =  $frame->[4];
 
