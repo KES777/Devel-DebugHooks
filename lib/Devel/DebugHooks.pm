@@ -405,10 +405,10 @@ sub _all_frames {
 
 	sub frames {
 		my $level =  shift;
-		# Note that we should ignore our frame, so +1
 
 		if( defined $level ) {
 			# https://rt.perl.org/Public/Bug/Display.html?id=126872#txn-1380132
+			# Note that we should ignore our frame, so +1
 			my @frame =  caller( $level +1 );
 			return ( [ @DB::args ], @frame );
 		}
@@ -676,6 +676,8 @@ sub trace_subs {
 
 
 
+# TODO: Before run the programm we could deparse sources and insert some code
+# in the place of 'goto'. This code may save __FILE__:__LINE__ into DB::
 sub goto {
 	return   unless $options{ trace_goto };
 	return   if $ext_call;
