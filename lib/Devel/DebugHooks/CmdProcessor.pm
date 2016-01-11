@@ -9,6 +9,7 @@ sub import {
 
 sub process {
 	my( $cmd, $args_str ) =  shift =~ m/^([\w.]+)(?:\s+(.*))?$/;
+	$args_str //=  '';
 
 	return 0   unless  $cmd and exists $DB::commands->{ $cmd };
 
