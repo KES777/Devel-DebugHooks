@@ -247,6 +247,8 @@ BEGIN {
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
 
+	$options{ cmd_processor }  //=  'Devel::DebugHooks::CmdProcessor';
+
 	#options{ save_path } # TODO: save code path for displaying by graphviz
 	$DB::postponed{ 'DB::DB' } =  1;
 
@@ -553,6 +555,10 @@ sub postponed {
 }
 
 
+BEGIN {
+	eval 'require ' .$DB::options{ cmd_processor } .';'
+		.$DB::options{ cmd_processor } ."->import()";
+}
 
 sub DB {
 	init();
@@ -600,29 +606,12 @@ sub DB {
 
 	# interact() should return defined value to keep interaction
 	while( defined ( my $str =  $dbg->interact() ) ) {
-		my( $cmd, $args_str ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
 
-		if( $cmd  and  exists $DB::commands->{ $cmd } ) {
-			# The command also should return defined value to keep interaction
-			if( defined (my $result =  $DB::commands->{ $cmd }( $args_str )) ) {
-				next   unless ref $result;
+		my $result =  process( $str );
+		last   unless defined $result;
+		next   if $result;
 
-				# Allow commands to evluate $expr at a debugged script context
-				if( ref( $result ) eq 'HASH' ) {
-					$result =  $result->{ code }->(
-						$args_str
-						,DB::eval( $result->{ expr } )
-					);
 
-					defined $result ? next : last ;
-				}
-
-				next;
-			}
-			else {
-				last;
-			}
-		}
 		# else no such command exists the entered string will be evaluated
 		# in context of current __FILE__:__LINE__ of a debugged script
 		print DB::eval( $str );
