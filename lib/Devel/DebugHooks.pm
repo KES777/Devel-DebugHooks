@@ -644,8 +644,10 @@ sub DB {
 sub init {
 	( $DB::package, $DB::file, $DB::line ) = caller(1);
 
-	die "'$DB::file' ne '" .file( $DB::file ) ."'"
-		if $DB::file ne file( $DB::file );
+	# Commented out because of:
+	# https://rt.perl.org/Ticket/Display.html?id=127249
+	# die ">$DB::file< ne >" .file( $DB::file ) ."<"
+	# 	if $DB::file ne file( $DB::file );
 }
 
 
