@@ -82,8 +82,8 @@ $loop->listen(
 	# path   =>  'file.sock',
 	family   =>  'inet',
 	socktype =>  'stream',
-	host     =>  'keswork',
-	service  =>  9001,
+	host     =>  '127.0.0.1',
+	service  =>  9000,
 	on_resolve_error =>  sub { die "Cannot resolve - $_[1] <<< @_\n"; },
 	on_listen_error  =>  sub { die "Cannot listen  - $_[1] <<< @_\n"; },
 	on_listen        =>  sub {
@@ -151,7 +151,7 @@ sub import {
 
 
 
-use Devel::DebugHooks();
+use Devel::DebugHooks( 'trace_subs=0' );
 
 my $last_input;
 sub interact {
@@ -172,6 +172,6 @@ sub interact {
 }
 
 
-$loop->loop_once;
+#$loop->loop_once;
 
 1;
