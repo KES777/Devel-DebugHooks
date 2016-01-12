@@ -582,6 +582,8 @@ sub DB {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
+	# TODO: Do tracing here
+
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
@@ -596,19 +598,18 @@ sub DB {
 		}
 
 		# We should stop when meet breakpoint with "true" condition
-		# MUST TAKE EFFECT ONLY AT INIT TIME
 		delete $DB::options{ NonStop };
 	}
-	# Ignoring debugger traps in NonStop mode (see also 'go' command)
+	# Should ignore only first debugger's trap in NonStop mode
 	elsif( $DB::options{ NonStop } ) {
-		print $DB::OUT "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug };
-		# Doing this gives us some speed benefit: the perl does not call
-		# DB::DB for each debugged script's line. w/o this debugger works in
-		# same manner with the remark above
+		print $DB::OUT "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug } || 1;
+
+		delete $DB::options{ NonStop };
 		$DB::single =  0;
 
 		return;
 	}
+
 
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
