@@ -97,6 +97,8 @@ sub interact {
 eval 'require ' .$DB::options{ cmd_processor };
 sub process {
 	BEGIN{ 'strict'->unimport( 'refs' )   if $DB::options{ s } }
+	# TODO: if we set trap on sub that loaded at CT, this will FAIL
+	# move require here
 	&{ $DB::options{ cmd_processor } .'::process' }( @_ );
 }
 
@@ -107,11 +109,14 @@ sub abreak {
 
 
 
-my %frame_name =  (
-    G => 'GOTO',
-    D => 'DBGF',
-    C => 'FROM',
-);
+my %frame_name;
+BEGIN {
+	%frame_name =  (
+		G => 'GOTO',
+		D => 'DBGF',
+		C => 'FROM',
+	);
+}
 
 sub trace_subs {
 	my( $self ) =  @_;
@@ -342,7 +347,7 @@ sub _all_frames {
 
 
 # Hooks to Perl's internals should be first.
-# Because debugger descendants may call them
+# Because debugger or its descendants may call them at compile time
 {
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
