@@ -630,7 +630,7 @@ sub DB {
 		# else no such command exists the entered string will be evaluated
 		# in context of current __FILE__:__LINE__ of a debugged script
 		print $DB::OUT DB::eval( $str );
-		warn "ERROR: $@"   if $@;
+		print $DB::OUT "ERROR: $@"   if $@;
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 		print $DB::OUT "\n";
