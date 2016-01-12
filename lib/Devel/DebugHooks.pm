@@ -701,9 +701,7 @@ sub sub_returns {
 		print $DB::OUT "\n";
 	}
 
-	no warnings 'experimental::refaliasing';
-	use feature 'refaliasing';
-	\@DB::goto_frames =  $last->{ goto_frames };
+	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
 	$DB::single =  $last->{ single };
 }
@@ -725,12 +723,10 @@ sub sub {
 	push @DB::stack, {
 		single      =>  $DB::single,
 		sub         =>  $DB::sub,
-		goto_frames =>  \@DB::goto_frames,
+		goto_frames =>  [ @DB::goto_frames ],
 	};
 
-	no warnings 'experimental::refaliasing';
-	use feature 'refaliasing';
-	\@DB::goto_frames =  [];
+	@DB::goto_frames =  ();
 
 	trace_subs( 'C' );
 
@@ -775,12 +771,10 @@ sub lsub : lvalue {
 	push @DB::stack, {
 		single      =>  $DB::single,
 		sub         =>  $DB::sub,
-		goto_frames =>  \@DB::goto_frames,
+		goto_frames =>  [ @DB::goto_frames ],
 	};
 
-	no warnings 'experimental::refaliasing';
-	use feature 'refaliasing';
-	\@DB::goto_frames =  [];
+	@DB::goto_frames =  ();
 
 
 	# HERE TOO client's code 'caller' return wrong info
