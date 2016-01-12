@@ -23,6 +23,7 @@ sub handle_write_error {
 
 
 sub handle_closed {
+	$DB::OUT =  \*STDOUT;
 	undef $stream;
 	warn "Session closed";
 }
@@ -65,6 +66,8 @@ sub start_dbg_session {
 		,on_closed        =>  \&handle_closed
 		,autoflush        =>  1
 	);
+
+	$DB::OUT =  $stream->read_handle();
 
 	$loop->add( $stream );
 }
@@ -154,7 +157,7 @@ my $last_input;
 sub interact {
 	my $self =  shift;
 
-	print "DBG>"; # flush buffers
+	print $DB::OUT "DBG>"; # flush buffers
 	my $line =  &readline();
 	chomp $line;
 	if( $line ne '' ) {

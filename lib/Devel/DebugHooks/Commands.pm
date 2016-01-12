@@ -27,16 +27,16 @@ sub _list {
 
 	for my $line ( $from..$to ) {
 		if( exists $traps->{ $line } ) {
-			print exists $traps->{ $line }{ action    }? 'a' : ' ';
-			print exists $traps->{ $line }{ condition }? 'b' : ' ';
+			print $DB::out exists $traps->{ $line }{ action    }? 'a' : ' ';
+			print $DB::out exists $traps->{ $line }{ condition }? 'b' : ' ';
 		}
 		else {
 			print '  ';
 		}
 
-		print $line == $DB::line ? '>>' : '  ';
+		print $DB::out $line == $DB::line ? '>>' : '  ';
 
-		print "$line: " .$source->[ $line ];
+		print $DB::out "$line: " .$source->[ $line ];
 	}
 }
 
@@ -82,7 +82,7 @@ sub list {
 			}
 		}
 		else {
-			print "Unknown paramenter: $arg\n";
+			print $DB::out "Unknown paramenter: $arg\n";
 
 			return 1;
 		}
@@ -95,7 +95,7 @@ sub list {
 
 $DB::commands =  {
 	'.' => sub {
-		print "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
+		print $DB::out "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
 
 		1;
 	},
@@ -191,11 +191,11 @@ $DB::commands =  {
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
 		if( $type & 1 ) {
-			print "\nMY:\n", Data::Dump::pp( PadWalker::peek_my( 2 ) ), "\n";
+			print $DB::out "\nMY:\n", Data::Dump::pp( PadWalker::peek_my( 2 ) ), "\n";
 		}
 
 		if( $type & 2 ) {
-			print "\nOUR:\n", Data::Dump::pp( PadWalker::peek_our( 2 ) ), "\n";
+			print $DB::out "\nOUR:\n", Data::Dump::pp( PadWalker::peek_our( 2 ) ), "\n";
 		}
 
 		if( $type & 4 ) {
@@ -218,28 +218,28 @@ $DB::commands =  {
 			}
 			delete $stash->{ sub }   if $DB::package eq 'DB';
 
-			print "\nGLOBAL:\n", Data::Dump::pp( $stash ), "\n";
+			print $DB::out "\nGLOBAL:\n", Data::Dump::pp( $stash ), "\n";
 		}
 
 		if( $type & 8 ) {
-			print "\nUSED:\n";
+			print $DB::out "\nUSED:\n";
 
 			if( !defined $DB::sub ) {
-				print "Not in a sub\n";
+				print $DB::out "Not in a sub\n";
 			}
 			else {
-				print Data::Dump::pp( PadWalker::peek_sub( \&$DB::sub ) ), "\n";
+				print $DB::out Data::Dump::pp( PadWalker::peek_sub( \&$DB::sub ) ), "\n";
 			}
 		}
 
 		if( $type & 16 ) {
-			print "\nCLOSED OVER:\n";
+			print $DB::out "\nCLOSED OVER:\n";
 
 			if( !defined $DB::sub ) {
-				print "Not in a sub\n";
+				print $DB::out "Not in a sub\n";
 			}
 			else {
-				print Data::Dump::pp( (PadWalker::closed_over( \&$DB::sub ))[0] ), "\n";
+				print $DB::out Data::Dump::pp( (PadWalker::closed_over( \&$DB::sub ))[0] ), "\n";
 			}
 		}
 
@@ -255,7 +255,7 @@ $DB::commands =  {
 		# list all breakpoints
 		unless( $line ) {
 			for( sort keys %$traps ) {
-				print "$_: ". $traps->{ $_ }{ condition } ."\n";
+				print $DB::out "$_: ". $traps->{ $_ }{ condition } ."\n";
 				warn "The breakpoint at $_ is zero and should be deleted"
 					if $traps->{ $_ } == 0;
 			}
@@ -265,7 +265,7 @@ $DB::commands =  {
 
 
 		unless( DB::can_break( $DB::file, $line ) ) {
-			print "This line is not breakable\n";
+			print $DB::out "This line is not breakable\n";
 			return -1;
 		}
 
@@ -316,7 +316,7 @@ $DB::commands =  {
 				# Set current file to selected one:
 				if( @$cmd_f  &&  $args =~ /^\d+$/  &&  $#$cmd_f >= $args ) {
 					$DB::file =  $cmd_f->[ $args ];
-					print "$DB::file\n";
+					print $DB::out "$DB::file\n";
 					return 1;
 				}
 
@@ -327,7 +327,7 @@ $DB::commands =  {
 				# for( sort $0, keys %$expr ) {
 					if( /(?:$args)/ ) {
 						push @$cmd_f, $_;
-						print $line++ ." $_\n";
+						print $DB::out $line++ ." $_\n";
 					}
 				}
 
@@ -353,7 +353,7 @@ $DB::commands =  {
 			}
 
 			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
-			print "$d $type $context $subname$args <--  $file:$line\n";
+			print $DB::out "$d $type $context $subname$args <--  $file:$line\n";
 			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
 		}
 

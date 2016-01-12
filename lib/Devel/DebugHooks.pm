@@ -191,25 +191,25 @@ BEGIN {
 sub trace_load {
 	my $self =  shift;
 
-	print $self->SUPER::trace_load( @_ );
+	print $DB::OUT $self->SUPER::trace_load( @_ );
 }
 
 sub trace_subs {
 	my $self =  shift;
 
-	print $self->SUPER::trace_subs( @_ );
+	print $DB::OUT $self->SUPER::trace_subs( @_ );
 }
 
 sub trace_returns {
 	my $self =  shift;
 
-	print $self->SUPER::trace_returns( @_ );
+	print $DB::OUT $self->SUPER::trace_returns( @_ );
 }
 
 sub bbreak {
 	my $self =  shift;
 
-	print $self->SUPER::bbreak( @_ );
+	print $DB::OUT $self->SUPER::bbreak( @_ );
 }
 
 
@@ -242,12 +242,17 @@ our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that alias DB:: ours of current frame
                      # This allows us to spy the DB:: values for the given frame
+our $IN;
+our $OUT;
 our %options;
 
 
 
 # Do DB:: configuration stuff here
 BEGIN {
+	$IN                        //= \*STDIN;
+	$OUT                       //= \*STDOUT;
+
 	$options{ _debug }         //=  0;
 
 	$options{ s }              //=  0;         # compile time option
@@ -338,11 +343,11 @@ sub _all_frames {
 
 	my $lvl =  1;
 	while( my @frame =  caller( $lvl ) ) {
-		print "ORIG: @frame[0..3,5]\n";
+		print $DB::OUT "ORIG: @frame[0..3,5]\n";
 		$lvl++;
 	}
 
-	print "\n";
+	print $DB::OUT "\n";
 }
 
 
@@ -572,14 +577,14 @@ sub postponed {
 sub DB {
 	init();
 
-	print "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
+	print $DB::OUT "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
 	if( $DB::options{ _debug } ) {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
-		print "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
+		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 		# Do not stop if breakpoint condition evaluated to false value
 		return   unless DB::eval( $traps->{ $DB::line }{ condition } );
 
@@ -596,7 +601,7 @@ sub DB {
 	}
 	# Ignoring debugger traps in NonStop mode (see also 'go' command)
 	elsif( $DB::options{ NonStop } ) {
-		print "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug };
+		print $DB::OUT "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug };
 		# Doing this gives us some speed benefit: the perl does not call
 		# DB::DB for each debugged script's line. w/o this debugger works in
 		# same manner with the remark above
@@ -605,7 +610,7 @@ sub DB {
 		return;
 	}
 
-	print "Stopped\n"   if $DB::options{ _debug };
+	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
@@ -623,11 +628,11 @@ sub DB {
 
 		# else no such command exists the entered string will be evaluated
 		# in context of current __FILE__:__LINE__ of a debugged script
-		print DB::eval( $str );
+		print $DB::OUT DB::eval( $str );
 		warn "ERROR: $@"   if $@;
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
-		print "\n";
+		print $DB::OUT "\n";
 	}
 
 	$dbg->abreak();
@@ -691,9 +696,9 @@ use Hook::Scope;
 sub sub_returns {
 	my $last =  pop @DB::stack;
 	if( $DB::options{ _debug } ) {
-		print "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
-		print "DB::single state changed " . $DB::single ."->" .$last->{ single };
-		print "\n";
+		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
+		print $DB::OUT "DB::single state changed " . $DB::single ."->" .$last->{ single };
+		print $DB::OUT "\n";
 	}
 
 	no warnings 'experimental::refaliasing';
@@ -710,7 +715,7 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub
 	}
-	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
+	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 
 	# manual localization
