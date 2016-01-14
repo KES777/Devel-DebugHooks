@@ -65,11 +65,14 @@ sub start_dbg_session {
 		,on_write_error   =>  \&handle_write_error
 		,on_closed        =>  \&handle_closed
 		,autoflush        =>  1
+		,write_all        =>  1
 	);
 
-	$DB::OUT =  $stream->read_handle();
-
 	$loop->add( $stream );
+
+
+	$DB::OUT =  $stream->read_handle();
+	print $DB::OUT "DBG>";
 }
 
 
@@ -132,7 +135,8 @@ my $last_input;
 sub interact {
 	my $self =  shift;
 
-	print $DB::OUT "DBG>"; # flush buffers
+	printflush $DB::OUT "DBG>"; # TODO: print promt only when session is active
+
 	my $line =  &readline();
 	chomp $line;
 	if( $line ne '' ) {
