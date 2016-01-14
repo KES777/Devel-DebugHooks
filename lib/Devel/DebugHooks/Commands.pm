@@ -174,6 +174,7 @@ $DB::commands =  {
 
 	,vars => sub {
 		my $type =  0;
+		my $level =  0;
 		for( split " ", shift ) {
 			$type |= ~0   if /^a|all$/;
 			$type |= 1    if /^m|my$/;
@@ -182,20 +183,23 @@ $DB::commands =  {
 			$type |= 8    if /^u|used$/;
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;
+
+			$level =  $1  if /^(\d+)$/;
 		}
 
 		$type ||= 7;
+		$level +=  4; # The first client frame
 
 		require 'PadWalker.pm';
 		require 'Data/Dump.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
 		if( $type & 1 ) {
-			print $DB::OUT "\nMY:\n", Data::Dump::pp( PadWalker::peek_my( 2 ) ), "\n";
+			print $DB::OUT "\nMY:\n", Data::Dump::pp( PadWalker::peek_my( $level ) ), "\n";
 		}
 
 		if( $type & 2 ) {
-			print $DB::OUT "\nOUR:\n", Data::Dump::pp( PadWalker::peek_our( 2 ) ), "\n";
+			print $DB::OUT "\nOUR:\n", Data::Dump::pp( PadWalker::peek_our( $level ) ), "\n";
 		}
 
 		if( $type & 4 ) {
@@ -212,6 +216,7 @@ $DB::commands =  {
 				delete @$stash{ qw# STDERR stderr STDIN stdin STDOUT stdout # };
 				delete @$stash{ qw# SIG INC F ] ENV ; > < ) ( $ " _ # }; # a b
 				delete @$stash{ qw# - + ` & ' #, 0..99 };
+				# BUG? warning still exists despite on explicit escaping of ','
 				delete @$stash{ qw# ARGV ARGVOUT \, . / \\ | # };
 				delete @$stash{ qw# % - : = ^ ~ # };
 				delete @$stash{ qw# ! @ ? # };
