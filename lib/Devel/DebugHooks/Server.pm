@@ -133,7 +133,7 @@ sub readline {
 
 
 # ... define another utilities that can be called at CT
-my $last_input;
+my $last_input =  's';
 sub interact {
 	my $self =  shift;
 
