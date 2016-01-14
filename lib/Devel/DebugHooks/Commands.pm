@@ -170,7 +170,7 @@ $DB::commands =  {
 		return;
 	}
 
-	,q => sub { exit; }
+	,q => sub { $DB::single =  0; exit; }
 
 	,vars => sub {
 		my $type =  0;
