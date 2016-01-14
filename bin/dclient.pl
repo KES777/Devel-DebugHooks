@@ -26,13 +26,13 @@ $timer = IO::Async::Timer::Periodic->new(
     interval       =>  5,
 
     on_tick        =>  sub {
-        warn ">>@_<<<< Retrying";
+        # warn ">>@_<<<< Retrying";
         my $self =  shift;
 
         unless( $session_stream  &&  $session_stream->loop ) {
             create_dbg_session( $loop, $host, $port );
         } else {
-            warn "Stopping the timer";
+            # warn "Stopping the timer";
             $self->stop;
         }
     },
@@ -91,6 +91,7 @@ sub handle_closed {
 }
 
 
+# Why this is called after 'handle_closed'?
 sub handle_read_eof {
     warn "Read EOF: >>@_<<";
 }
@@ -110,7 +111,7 @@ sub handle_read {
     }
 
     if( $eof ) {
-        warn "SESSION $self EOF";
+        warn "GOT EOF at $self";
         $self->close_when_empty();
     }
 
@@ -160,8 +161,8 @@ sub create_dbg_session {
         service  =>  $port,
         socktype =>  'stream',
 
-        on_resolve_error => sub { die "Cannot resolve - $_[0]\n"; },
-        on_connect_error => sub { warn "Cannot connect\n"; },
+        on_resolve_error => sub { die "Cannot resolve - >>@_<<\n"; },
+        on_connect_error => sub { 0  &&  warn "Cannot connect\n"; },
 
         # Успешное подключение
         on_stream =>  \&on_dbg_session
