@@ -41,7 +41,7 @@ sub read_command {
 	warn "Text '$$buffref' is left in buffer"   if $$buffref;
 
 	if( $eof ) {
-		warn "DBG $self EOF";
+		warn "TTYIN EOF";
 		$self->close_when_empty();
 	}
 
@@ -56,6 +56,8 @@ sub start_dbg_session {
 		return;
 	}
 
+
+	warn "New client connected";
 	( $stream ) =  @_;
 
 	$stream->configure(

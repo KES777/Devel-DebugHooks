@@ -11,7 +11,7 @@ sub process {
 	$args_str //=  '';
 
 
-	return 0   unless  $cmd and exists $DB::commands->{ $cmd };
+	return 0   unless  $cmd  &&  exists $DB::commands->{ $cmd };
 
 	# The command also should return defined value to keep interaction
 	if( defined (my $result =  $DB::commands->{ $cmd }( $args_str )) ) {

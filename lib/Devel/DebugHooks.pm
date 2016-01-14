@@ -242,6 +242,7 @@ our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that alias DB:: ours of current frame
                      # This allows us to spy the DB:: values for the given frame
+# TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
 our %options;
