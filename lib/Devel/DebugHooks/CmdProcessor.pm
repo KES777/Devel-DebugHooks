@@ -14,7 +14,10 @@ sub process {
 	return 0   unless  $cmd  &&  exists $DB::commands->{ $cmd };
 
 	# The command also should return defined value to keep interaction
-	if( defined (my $result =  $DB::commands->{ $cmd }( $args_str )) ) {
+	my $result =  eval { $DB::commands->{ $cmd }( $args_str ) };
+	do{ print $DB::OUT "'$cmd' command died: $@"; return 1; }   if $@;
+
+	if( defined $result ) {
 		return $result   unless ref $result;
 
 		# Allow commands to evaluate $expr at a debugged script context
