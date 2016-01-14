@@ -135,3 +135,33 @@ sub create_dbg_session {
 $timer->start;
 $loop->add( $timer );
 $loop->run;
+
+
+__END__
+
+
+# Devel::Caller - like 'caller'
+# PadWalker <- debug statements
+# Package::Stash - shows package variables
+# View op tree: B::Concise
+# B::Deparse - deparse CODEREF
+#     $deparse = B::Deparse->new("-p", "-sC");
+#     print $deparse->coderef2text( \&DB::process );
+# B::DeparseTree
+# Devel::Size - занятое пространство под переменную
+# http://search.cpan.org/~abigail/perl-5.23.5/pod/perldebguts.pod#Using_$ENV{PERL_DEBUG_MSTATS}
+# http://www.foo.be/docs/tpj/issues/vol3_2/tpj0302-0011.html
+# Devel::Peek - shows info about variables as it exists at internals
+# # Module::Reloader
+# use Smart::Comments - clever thins at comments
+# Devel::Cover - качество покрытия программы тестами
+
+Devel::Spy
+Devel::Refactor
+Devel::PL_origargv
+Devel::Peek
+Devel::LeakTrace
+Devel::DollarAt
+Devel::Cycle
+Devel::CoverReport
+Devel::Cover
