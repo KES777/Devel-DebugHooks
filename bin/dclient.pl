@@ -105,10 +105,8 @@ sub handle_read_error {
 sub handle_read {
     my( $self, $buffref, $eof ) =  @_;
 
-
-    while( $$buffref =~ s/^(.*)(\n)// ) {
-        on_data( "$1$2" );
-    }
+    on_data( $$buffref );
+    $$buffref =  '';
 
     if( $eof ) {
         warn "GOT EOF at $self";
