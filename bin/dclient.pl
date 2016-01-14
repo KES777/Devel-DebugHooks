@@ -87,7 +87,9 @@ sub handle_write_error {
 sub handle_closed {
     warn "Closed >>@_<<$session_stream<<";
 
-    $timer->start;
+    # Q: It is so restrictive... I think, it sould be enough just warn about
+    # that timer is already running, because that is not so critical
+    $timer->start   unless $timer->is_running;
 }
 
 
