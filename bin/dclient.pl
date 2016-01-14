@@ -11,12 +11,17 @@ my ( $host, $port ) =  @ARGV[ 1, 2 ];
 $host //=  '127.0.0.1';
 $port //=  9000;
 
+my $loop;
+my $timer;
+my $tty;
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 use IO::Async::Loop;
-my $loop = IO::Async::Loop->new;
+$loop = IO::Async::Loop->new;
 
 use IO::Async::Timer::Periodic;
-my $timer = IO::Async::Timer::Periodic->new(
+$timer = IO::Async::Timer::Periodic->new(
     first_interval =>  0,
     interval       =>  5,
 
@@ -35,7 +40,40 @@ my $timer = IO::Async::Timer::Periodic->new(
 
 
 
-# - - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+use IO::Async::Stream;
+$tty =  IO::Async::Stream->new(
+    read_handle  =>  \*STDIN,
+    write_handle =>  \*STDOUT,
+    on_read      =>  \&tty_read,
+);
+
+
+sub tty_read {
+    my ( $self, $buffref, $eof ) = @_;
+
+    if( $session_stream  &&  $session_stream->loop ) {
+        $session_stream->write( $$buffref );
+    }
+    else {
+        $tty->write( "No debug session is active\n" );
+    }
+
+    $$buffref =  '';
+
+    if( $eof ) {
+        warn "STDIN EOF";
+    }
+
+
+    return 0;
+}
+
+$loop->add( $tty );
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 sub handle_write_eof {
     warn "Write EOF: >>@_<<";
 }
@@ -82,12 +120,12 @@ sub handle_read {
 
 
 sub on_data {
-    print @_;
+    $tty->write( @_ );
 }
 
 
 
-# - - - -
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 sub on_dbg_session {
     ( $session_stream ) =  @_;
 
@@ -130,8 +168,9 @@ sub create_dbg_session {
     );
 }
 
-# - - - - -
 
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 $timer->start;
 $loop->add( $timer );
 $loop->run;
