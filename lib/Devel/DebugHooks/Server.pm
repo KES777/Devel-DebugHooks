@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 
-
+# We should define utility subs first...
 ## IO::Async stuff
 # global DATA
 my $loop;
@@ -127,7 +127,28 @@ sub readline {
 
 
 
+# ... define another utilities that can be called at CT
+my $last_input;
+sub interact {
+	my $self =  shift;
 
+	print $DB::OUT "DBG>"; # flush buffers
+	my $line =  &readline();
+	chomp $line;
+	if( $line ne '' ) {
+		$last_input =  $line;
+	}
+	else {
+		$line =  $last_input;
+	}
+
+
+	return $line;
+}
+
+
+
+# ... now we can use DebugHooks
 our @ISA;
 
 BEGIN {
@@ -152,26 +173,5 @@ sub import {
 
 
 use Devel::DebugHooks( 'trace_subs=0' );
-
-my $last_input;
-sub interact {
-	my $self =  shift;
-
-	print $DB::OUT "DBG>"; # flush buffers
-	my $line =  &readline();
-	chomp $line;
-	if( $line ne '' ) {
-		$last_input =  $line;
-	}
-	else {
-		$line =  $last_input;
-	}
-
-
-	return $line;
-}
-
-
-#$loop->loop_once;
 
 1;
