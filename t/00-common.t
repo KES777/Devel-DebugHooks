@@ -327,25 +327,6 @@ Loaded '*main::_<vars.pm'
 Loaded '*main::_<Scope.pm'
 Loaded '*main::_<Config.pm'
 Loaded '*main::_<DynaLoader.pm'
-Loaded '*main::_<feature.pm'
-
- = = = = = = = = = = = = = = =
-DEEP: 1
-CNTX: void
-CSUB: feature::__common( 1, refaliasing )
-TEXT: feature.pm:xx-xx
-
-FROM: feature -feature.pm -xxx -feature::__common
-FROM: DB -DebugHooks.pm -xxx -feature::import
-FROM: main -DebugHooks.pm -xxx -DB::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
-FROM: main --e -0 -(eval)
-FROM: main -DebugHooks.pm -xxx -main::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
- = = = = = = = = = = = = = = =
-feature::__common RETURNS:
->>NOTHING<<
- = = = = = = = = = = = = = = =
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 Loaded '*main::_<CmdProcessor.pm'
@@ -409,7 +390,6 @@ Loaded '*main::_<vars.pm'
 Loaded '*main::_<Scope.pm'
 Loaded '*main::_<Config.pm'
 Loaded '*main::_<DynaLoader.pm'
-Loaded '*main::_<feature.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 Loaded '*main::_<CmdProcessor.pm'
@@ -423,7 +403,6 @@ Loaded '*main::_<vars.pm'
 Loaded '*main::_<Scope.pm'
 Loaded '*main::_<Config.pm'
 Loaded '*main::_<DynaLoader.pm'
-Loaded '*main::_<feature.pm'
 Loaded '*main::_<Commands.pm'
 Loaded '*main::_<DebugHooks.pm'
 Loaded '*main::_<CmdProcessor.pm'
@@ -438,24 +417,6 @@ Loaded '*main::_<-e'
 @@ TraceRT_internals
 Loaded '*main::_<-e'
 @@ TraceSubsCT
- = = = = = = = = = = = = = = =
-DEEP: 1
-CNTX: void
-CSUB: feature::__common( 1, refaliasing )
-TEXT: feature.pm:xx-xx
-
-FROM: feature -feature.pm -xxx -feature::__common
-FROM: DB -DebugHooks.pm -xxx -feature::import
-FROM: main -DebugHooks.pm -xxx -DB::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
-FROM: Devel::TraceSubsCT -TraceSubsCT.pm -xxx -(eval)
-FROM: main -DebugHooks.pm -xxx -Devel::TraceSubsCT::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
-FROM: main --e -0 -(eval)
-FROM: main -DebugHooks.pm -xxx -main::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
- = = = = = = = = = = = = = = =
-
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
@@ -1070,24 +1031,6 @@ GOTO: main --e -4 -main::t3
 FROM: main --e -5 -main::t4
  = = = = = = = = = = = = = = =
 @@ TraceGotoCT
- = = = = = = = = = = = = = = =
-DEEP: 1
-CNTX: void
-CSUB: feature::__common( 1, refaliasing )
-TEXT: feature.pm:xx-xx
-
-FROM: feature -feature.pm -xxx -feature::__common
-FROM: DB -DebugHooks.pm -xxx -feature::import
-FROM: main -DebugHooks.pm -xxx -DB::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
-FROM: Devel::TraceGotoCT -TraceGotoCT.pm -xxx -(eval)
-FROM: main -DebugHooks.pm -xxx -Devel::TraceGotoCT::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
-FROM: main --e -0 -(eval)
-FROM: main -DebugHooks.pm -xxx -main::BEGIN
-FROM: main -DebugHooks.pm -xxx -(eval)
- = = = = = = = = = = = = = = =
-
  = = = = = = = = = = = = = = =
 DEEP: 1
 CNTX: void
