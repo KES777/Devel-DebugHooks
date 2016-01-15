@@ -217,6 +217,21 @@ package    # hide the package from the PAUSE indexer
     DB;
 
 
+
+## Utility subs
+sub _all_frames {
+	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
+
+	my $lvl =  1;
+	while( my @frame =  caller( $lvl ) ) {
+		print $DB::OUT "ORIG: @frame[0..3,5]\n";
+		$lvl++;
+	}
+
+	print $DB::OUT "\n";
+}
+
+
 # Used perl internal variables:
 # ${ ::_<filename }
 # @{ ::_<filename }
@@ -336,20 +351,6 @@ BEGIN { # Initialization goes here
 	applyOptions();
 }
 
-
-
-## Utility subs
-sub _all_frames {
-	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
-
-	my $lvl =  1;
-	while( my @frame =  caller( $lvl ) ) {
-		print $DB::OUT "ORIG: @frame[0..3,5]\n";
-		$lvl++;
-	}
-
-	print $DB::OUT "\n";
-}
 
 
 # Hooks to Perl's internals should be first.
