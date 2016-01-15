@@ -215,6 +215,9 @@ sub applyOptions {
 	# Q: is warn expected when $DB::trace =  undef?
 	$DB::trace =  $DB::options{ trace_line }
 		if defined $DB::options{ trace_line };
+
+	$^P &= ~0x20   if $DB::options{ NonStop };
+
 }
 
 
@@ -231,9 +234,8 @@ sub applyOptions {
 # %DB::postponed
 # @DB::args
 
-# Perl sets up $DB::single to 1 after the 'script.pl' is loaded, so we are able
-# to debug it from first OP. In NonStop mode we should clear $DB::single to run
-# script until breakpoint
+# Perl sets up $DB::single to 1 after the 'script.pl' is compiled, so we are able
+# to debug it from first OP. We can disable this feature through NonStop option.
 
 our $dbg;            # debugger object/class
 our $package;        # current package
@@ -276,7 +278,7 @@ BEGIN {
 
 	#NOTE: we should always trace goto frames. Hiding them will prevent
 	# us to complete our work - debugging.
-	# But we still allow to control this behaviou at compiletime & runtime
+	# But we still allow to control this behaviour at compiletime & runtime
 	# $options{ trace_goto };    #see DH:import  # compile time & runtime option
 	$^P |= 0x80;
 }
@@ -284,13 +286,14 @@ BEGIN {
 # TODO: describe qw/ frames dbg_frames trace_load trace_subs
 # trace_returns / options
 
-# $options{ NonStop } - Ignore debugger traps. This flag
-# force the script run onward despite on $DB::single, $DB::signal, $DB::trace
+
+# $options{ NonStop } - if true then 0x20 flag is flushed
 
 
 
 
 # $^P default values
+#      ! x
 # 0111 0011 1111
 # |||| |||| |||^-- Debug subroutine enter/exit.
 # |||| |||| ||^--- Line-by-line debugging.
@@ -625,25 +628,10 @@ sub DB {
 			$ext_call++; scall( $DB::commands->{ b }, $DB::line );
 		}
 
-		# We should stop when meet breakpoint with "true" condition
-		delete $DB::options{ NonStop };
 	}
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal
 	elsif( $DB::trace  &&  !$DB::single  &&  !$DB::signal ) {
-		return;
-	}
-	# We should ignore only first debugger's stop in NonStop mode
-	# Also we ensure that we stopped by $DB::single ...
-	elsif( $DB::options{ NonStop }  &&  $DB::single  &&  !$DB::signal ) {
-		print $DB::OUT "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug } || 1;
-
-		warn "$DB::trace $DB::single $DB::signal";
-
-		# ... which we ignore
-		delete $DB::options{ NonStop };
-		$DB::single =  0;
-
 		return;
 	}
 	# TODO: elseif $DB::signal
