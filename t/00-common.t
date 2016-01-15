@@ -297,6 +297,29 @@ is
 	,$files->{ TraceRT_internals }
 	,"Do not trace internal calls";
 
+
+# Goto frames checks
+$script =  << 'PERL';
+sub t1 { 1; }
+sub t2{ t1; }
+sub t3{ t2; goto &t1; };
+sub t4{ goto &t3; }
+sub t5{ t4; goto &t1; }
+t5;
+PERL
+
+is
+	`perl -I$lib -d:TraceRT=trace_subs -e '$script'`
+	,"\n". $files->{ TraceRT_goto }
+	,"Check goto frames in normal mode";
+
+is
+	`perl -I$lib -d:TraceRT=trace_subs,NonStop -e '$script'`
+	,"\n". $files->{ TraceRT_goto_NonStop }
+	,"Check goto frames in NonStop mode";
+
+
+
 # TODO: implement testcase
 # is
 # 	n( `perl -I$lib -d:Interact='cmds=b 2/go' -e '$script' )
@@ -1105,4 +1128,158 @@ GOTO: Devel::TraceGotoCT -TraceGotoCT.pm -xxx -Devel::TraceGotoCT::test
 FROM: main --e -0 -Devel::TraceGotoCT::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+@@ TraceRT_goto
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t5(  )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: main::t4(  )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t3(  )
+TEXT: -e:3-3
+
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+CSUB: main::t2(  )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 4
+CNTX: void
+CSUB: main::t1(  )
+TEXT: -e:1-1
+
+FROM: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t1(  )
+TEXT: -e:1-1
+
+GOTO: main --e -3 -main::t1
+GOTO: main --e -4 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+GSUB: main::t1(  )
+TEXT: -e:1-1
+
+GOTO: main --e -5 -main::t1
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+@@ TraceRT_goto_NonStop
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+CSUB: main::t5(  )
+TEXT: -e:5-5
+
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: main::t4(  )
+TEXT: -e:4-4
+
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t3(  )
+TEXT: -e:3-3
+
+GOTO: main --e -5 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+CSUB: main::t2(  )
+TEXT: -e:2-2
+
+FROM: main --e -3 -main::t2
+GOTO: main --e -5 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 4
+CNTX: void
+CSUB: main::t1(  )
+TEXT: -e:1-1
+
+FROM: main --e -2 -main::t1
+FROM: main --e -3 -main::t2
+GOTO: main --e -5 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+GSUB: main::t1(  )
+TEXT: -e:1-1
+
+GOTO: main --e -3 -main::t1
+GOTO: main --e -5 -main::t3
+FROM: main --e -5 -main::t4
+FROM: main --e -6 -main::t5
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 1
+CNTX: void
+GSUB: main::t1(  )
+TEXT: -e:1-1
+
+GOTO: main --e -5 -main::t1
+FROM: main --e -6 -main::t5
  = = = = = = = = = = = = = = =
