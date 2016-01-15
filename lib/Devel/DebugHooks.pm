@@ -744,6 +744,12 @@ sub sub_returns {
 		print $DB::OUT "\n";
 	}
 
+	# The current FILE:LINE is the subroutine call place.
+	# That is the first frame in the @DB::goto_frames, which is recorded at
+	# 'trace_subs' by calling 'caller' like DB::DB does. You may read code as:
+	# The point this sub was called from is: (--the sub we are returning from)
+	( $DB::package, $DB::file, $DB::line ) =  @{ $DB::goto_frames[0] }[0..2];
+
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
 	$DB::single =  $last->{ single };
