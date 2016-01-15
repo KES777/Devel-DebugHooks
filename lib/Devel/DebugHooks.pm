@@ -351,6 +351,7 @@ BEGIN {
 BEGIN {
 	if( $options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 	if( $options{ s } ) { require 'strict.pm';    'strict'->import();   }
+	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 	# http://perldoc.perl.org/warnings.html
 	# The scope of the strict/warnings pragma is limited to the enclosing block.
 	# But this not truth.
