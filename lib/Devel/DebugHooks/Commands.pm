@@ -172,6 +172,7 @@ $DB::commands =  {
 
 	,q => sub { $DB::single =  0; exit; }
 
+	# TODO: print list of vars which refer this one
 	,vars => sub {
 		my $type =  0;
 		my $level =  0;
@@ -187,7 +188,7 @@ $DB::commands =  {
 			$level =  $1  if /^(\d+)$/;
 		}
 
-		$type ||= 7;
+		$type ||= 7;  # TODO: make defaults configurable
 		$level +=  4; # The first client frame
 
 		require 'PadWalker.pm';
