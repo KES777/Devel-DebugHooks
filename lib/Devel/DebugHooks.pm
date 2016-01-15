@@ -37,37 +37,7 @@ BEGIN {
 
 
 sub import {
-	my $class =  shift;
-
-	# NOTICE: If descendats has sub calls after calling to $self->SUPER::import
-	# those calls will be traced by 'trace_subs'. Localize $ext_call to disable
-	# that (see below)
-
-	if( $_[0]  and  $_[0] eq 'options' ) {
-		my %params =  @_;
-		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
-	}
-	else {
-		for( @_ ) {
-			if( /^(\w+)=([\w\d]+)/ ) {
-				$DB::options{ $1 } =  $2;
-			}
-			else {
-				$DB::options{ $_ } =  1;
-			}
-		}
-	}
-
-	# Disable tracing internal call
-	# TODO: implement $DB::options{ trace_internals }
-	local $DB::ext_call =  $DB::ext_call +1;
-	DB::applyOptions();
-
-	# We set default here because setting it at DB::BEGIN block will cause us
-	# see third party module's gotos. Settig option to 0 at DB::BEGIN will
-	# confuse us here, because we do not know is it disabled at DB::BEGIN or
-	# descendant module
-	$DB::options{ trace_goto } //=  1;
+	DB::import( @_ );
 }
 
 
@@ -581,10 +551,42 @@ BEGIN { # Initialization goes here
 
 
 
+my %RT_options;
+sub import { # NOTE: The import is called at CT yet
+	my $class =  shift;
+
+	if( $_[0]  and  $_[0] eq 'options' ) {
+		my %params =  @_;
+		@RT_options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
+	}
+	else {
+		for( @_ ) {
+			if( /^(\w+)=([\w\d]+)/ ) {
+				$RT_options{ $1 } =  $2;
+			}
+			else {
+				$RT_options{ $_ } =  1;
+			}
+		}
+	}
+
+
+	# The RT options are applied after 'main::' is loaded
+	$RT_options{ trace_goto } //=  1;
+}
+
+
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	if( $options{ trace_load } ) {
 		$ext_call++; mcall( 'trace_load', $dbg, @_ );
+	}
+
+	# RT options applied after main program is loaded
+	if( $_[0] eq "*main::_<$0" ) {
+		my @keys =  keys %RT_options;
+		@DB::options{ @keys } =  @RT_options{ @keys };
+		$ext_call++; scall( \&applyOptions );
 	}
 }
 

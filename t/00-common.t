@@ -341,6 +341,21 @@ FROM: main --e -0 -Devel::DebugHooks::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
  = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 2
+CNTX: void
+CSUB: DB::import( Devel::DebugHooks )
+TEXT: 
+
+FROM: Devel::DebugHooks -DebugHooks.pm -xxx -DB::import
+FROM: main --e -0 -Devel::DebugHooks::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+DB::import RETURNS:
+>>NOTHING<<
+ = = = = = = = = = = = = = = =
 Devel::DebugHooks::import RETURNS:
 >>NOTHING<<
  = = = = = = = = = = = = = = =
@@ -435,6 +450,19 @@ CSUB: Devel::DebugHooks::import( Devel::TraceSubsCT )
 TEXT: /lib/Devel/DebugHooks.pm:19-30
 
 FROM: Devel::TraceSubsCT -TraceSubsCT.pm -6 -Devel::DebugHooks::import
+FROM: main --e -0 -Devel::TraceSubsCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+CSUB: DB::import( Devel::TraceSubsCT )
+TEXT: 
+
+FROM: Devel::DebugHooks -DebugHooks.pm -xxx -DB::import
+FROM: Devel::TraceSubsCT -TraceSubsCT.pm -xxx -Devel::DebugHooks::import
 FROM: main --e -0 -Devel::TraceSubsCT::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
@@ -1049,6 +1077,19 @@ CSUB: Devel::DebugHooks::import( Devel::TraceGotoCT, trace_subs )
 TEXT: DebugHooks.pm:xx-xx
 
 FROM: Devel::TraceGotoCT -TraceGotoCT.pm -6 -Devel::DebugHooks::import
+FROM: main --e -0 -Devel::TraceGotoCT::import
+FROM: main --e -0 -main::BEGIN
+FROM: main --e -0 -(eval)
+ = = = = = = = = = = = = = = =
+
+ = = = = = = = = = = = = = = =
+DEEP: 3
+CNTX: void
+CSUB: DB::import( Devel::TraceGotoCT, trace_subs )
+TEXT: 
+
+FROM: Devel::DebugHooks -DebugHooks.pm -xxx -DB::import
+FROM: Devel::TraceGotoCT -TraceGotoCT.pm -xxx -Devel::DebugHooks::import
 FROM: main --e -0 -Devel::TraceGotoCT::import
 FROM: main --e -0 -main::BEGIN
 FROM: main --e -0 -(eval)
