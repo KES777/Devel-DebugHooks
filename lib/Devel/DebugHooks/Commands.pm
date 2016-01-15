@@ -276,7 +276,8 @@ $DB::commands =  {
 
 
 		# set or delete breakpoint
-		$traps->{ $line }?
+		# TODO: testcase: trap remains if condition supplied
+		$traps->{ $line }  &&  !$condition ?
 			# BUG? deleting a key does not remove a breakpoint for that line
 			# WORKAROUND: we should explicitly set value to 0 then delete the key
 			do{ $traps->{ $line } =  0; delete $traps->{ $line } }:
