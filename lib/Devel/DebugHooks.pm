@@ -212,8 +212,8 @@ sub _all_frames {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
-	# Q: is warn expected when $DB::trace =  undef?
-	$DB::trace =  $DB::options{ trace_line }
+	# Q: is warn expected when $DB::trace == undef?
+	$DB::trace =  $DB::options{ trace_line } || 0
 		if defined $DB::options{ trace_line };
 
 	$^P &= ~0x20   if $DB::options{ NonStop };
