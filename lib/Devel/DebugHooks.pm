@@ -79,6 +79,13 @@ sub trace_load {
 }
 
 
+
+# This sub is called for each DB::DB call while $DB::trace is true
+sub trace_line {
+}
+
+
+
 sub bbreak {
 	my $info =  "\n" .' =' x30 ."$DB::ext_call\n";
 
@@ -273,6 +280,7 @@ BEGIN {
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
+	# TODO: camelize options
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	# The differece when we set option at compile time, we see module loadings
@@ -303,6 +311,8 @@ BEGIN {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
+	$DB::trace =  $DB::options{ trace_line }
+		if defined $DB::options{ trace_line };
 }
 
 # $^P default values
@@ -584,7 +594,7 @@ sub DB {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
-	# TODO: Do tracing here
+	do{ $ext_call++; mcall( 'trace_line', $dbg ); }   if $DB::trace;
 
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
@@ -602,15 +612,25 @@ sub DB {
 		# We should stop when meet breakpoint with "true" condition
 		delete $DB::options{ NonStop };
 	}
-	# Should ignore only first debugger's trap in NonStop mode
-	elsif( $DB::options{ NonStop } ) {
+	# We ensure here that we stopped by $DB::trace and not any of:
+	# trap, single, signal
+	elsif( $DB::trace  &&  !$DB::single  &&  !$DB::signal ) {
+		return;
+	}
+	# We should ignore only first debugger's stop in NonStop mode
+	# Also we ensure that we stopped by $DB::single ...
+	elsif( $DB::options{ NonStop }  &&  $DB::single  &&  !$DB::signal ) {
 		print $DB::OUT "NonStop flag is ON. Exiting...\n"   if $DB::options{ _debug } || 1;
 
+		warn "$DB::trace $DB::single $DB::signal";
+
+		# ... which we ignore
 		delete $DB::options{ NonStop };
 		$DB::single =  0;
 
 		return;
 	}
+	# TODO: elseif $DB::signal
 
 
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
@@ -622,6 +642,8 @@ sub DB {
 
 	$dbg->bbreak();
 
+	# TODO: remove clever things out of core. This modules should implement
+	# only interface features
 	# interact() should return defined value to keep interaction
 	while( defined ( my $str =  $dbg->interact() ) ) {
 		my $result =  $dbg->process( $str );
