@@ -149,7 +149,9 @@ $DB::commands =  {
 		# $#DB::stack =  $DB::deep -1;
 		# TODO: implement testcase for case when we 's' in main script before
 		# any sub call. At this moment the $DB::stack has no frames at all.
-		$DB::stack[ -1 ]{ single } =  1   if exists $DB::stack[ -1 ];
+		# There is no gurantee how much frames we go out, so change all them
+		# TODO: IT: sub t1{ #s } sub t2{ t1() } t2(); 1; We should stop at 1;
+		$_->{ single } =  1   for @DB::stack;
 
 		return;
 	}
@@ -164,8 +166,8 @@ $DB::commands =  {
 		# sub t1{ 1; #s } sub t2{ t1(); 1; } sub t3{ t2(); 2; } t3() #b 1;go
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
-		# $#DB::stack =  $DB::deep -1;
-		$DB::stack[ -1 ]{ single } =  2   if exists $DB::stack[ -1 ];
+		# TODO: IT: sub t1{ 1#n } sub t2{ 1 } sub t3{ t1(); t2() } t3()
+		$_->{ single } =  2   for @DB::stack;
 
 		return;
 	}
