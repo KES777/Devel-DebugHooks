@@ -239,6 +239,14 @@ sub _all_frames {
 }
 
 
+# This sub is called twice: at compile time and before run time of 'main' package
+sub applyOptions {
+	$DB::trace =  $DB::options{ trace_line }
+		if defined $DB::options{ trace_line };
+}
+
+
+
 # Used perl internal variables:
 # ${ ::_<filename }
 # @{ ::_<filename }
@@ -309,11 +317,6 @@ BEGIN {
 
 
 
-# This sub is called twice: at compile time and before run time of 'main' package
-sub applyOptions {
-	$DB::trace =  $DB::options{ trace_line }
-		if defined $DB::options{ trace_line };
-}
 
 # $^P default values
 # 0111 0011 1111
