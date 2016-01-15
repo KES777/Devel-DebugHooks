@@ -575,6 +575,12 @@ sub import { # NOTE: The import is called at CT yet
 	}
 
 
+	# if we set trace_load we want to see which modules are used in main::
+	# So we apply this just before main:: is compiled but after debugger is loaded
+	$DB::options{ trace_load } =  $RT_options{ trace_load }
+		if defined $RT_options{ trace_load };
+
+
 	# The RT options are applied after 'main::' is loaded
 	$RT_options{ trace_goto } //=  1;
 }
