@@ -3,6 +3,7 @@ package Devel::DebugHooks;
 BEGIN {
 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
+	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 }
 
 our $VERSION =  '0.01';
@@ -211,6 +212,7 @@ sub _all_frames {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
+	# Q: is warn expected when $DB::trace =  undef?
 	$DB::trace =  $DB::options{ trace_line }
 		if defined $DB::options{ trace_line };
 }
@@ -332,6 +334,7 @@ BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
 	$DB::ext_call =  0;
+	# TODO: set $DB::trace at CT
 	applyOptions();
 }
 
@@ -509,6 +512,7 @@ BEGIN { # Initialization goes here
 	}
 
 
+	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		$ext_call--; # $ext_call++ before mcall prevents reenterance to DB::sub
 

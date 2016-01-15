@@ -178,6 +178,6 @@ sub import {
 
 
 
-use Devel::DebugHooks( 'trace_subs=0' );
+use Devel::DebugHooks();
 
 1;

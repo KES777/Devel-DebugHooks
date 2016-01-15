@@ -3,6 +3,7 @@ package Devel::DebugHooks::Commands;
 # BEGIN {
 # 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
+#	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
 
 my $cmd_f;
