@@ -278,6 +278,27 @@ $DB::commands =  {
 
 		1;
 	}
+	,B => sub {
+		if( $_[0] eq '*' ) {
+			#TODO: implement removing all traps
+		}
+
+
+		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+
+
+		my $traps =  DB::traps( file( $file ) );
+		return -1   unless exists $traps->{ $line };
+
+
+		# Q: Why deleting a key does not remove a breakpoint for that line?
+		# A: Because this is the internal hash
+		# WORKAROUND: we should explicitly set value to 0 then delete the key
+		$traps->{ $line } =  0;
+		delete $traps->{ $line };
+
+		1;
+	}
 
 	,b => sub {
 		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
@@ -308,16 +329,10 @@ $DB::commands =  {
 		}
 
 
-		# set or delete breakpoint
-		# TODO: testcase: trap remains if condition supplied
-		$traps->{ $line }  &&  !$condition ?
-			# BUG? deleting a key does not remove a breakpoint for that line
-			# WORKAROUND: we should explicitly set value to 0 then delete the key
-			do{ $traps->{ $line } =  0; delete $traps->{ $line } }:
-			do{
-				($traps->{ $line }{ condition } =  $condition // 1);
-				$traps->{ $line }{ tmp } =  $tmp   if defined $tmp;
-			};
+		# set breakpoint
+		# TODO: testcase: trap remains with new condition if it was supplied
+		$traps->{ $line }{ condition } =  $condition // 1;
+		$traps->{ $line }{ tmp } =  $tmp   if defined $tmp;
 
 		1;
 	}

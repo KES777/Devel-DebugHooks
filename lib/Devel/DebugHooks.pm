@@ -625,7 +625,7 @@ sub DB {
 
 		# Delete temporary breakpoint
 		if( $traps->{ $DB::line }{ tmp } ) {
-			$ext_call++; scall( $DB::commands->{ b }, $DB::line );
+			$ext_call++; scall( $DB::commands->{ B }, $DB::line );
 		}
 
 	}
