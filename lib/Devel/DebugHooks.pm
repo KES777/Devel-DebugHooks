@@ -396,6 +396,8 @@ BEGIN { # Initialization goes here
 		sub traps {
 			my $filename =  shift // $DB::file;
 
+			$DB::_tfiles->{ $filename } =  1;
+
 			return \%{ "::_<$filename" };
 		}
 
