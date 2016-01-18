@@ -282,6 +282,9 @@ $DB::commands =  {
 	,b => sub {
 		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
 
+		$line     =  $DB::line   if $line eq '.';
+		$file     =  file( $file );
+
 		my $traps =  DB::traps( $file );
 
 
@@ -299,7 +302,7 @@ $DB::commands =  {
 		}
 
 
-		unless( DB::can_break( file(), $line ) ) {
+		unless( DB::can_break( $file, $line ) ) {
 			print $DB::OUT file(). "This line is not breakable\n";
 			return -1;
 		}
