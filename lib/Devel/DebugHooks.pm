@@ -622,6 +622,10 @@ sub DB {
 		if( exists $traps->{ $DB::line }{ tmp } ) {
 			# Delete temporary breakpoint
 			delete $traps->{ $DB::line }{ tmp };
+			unless( keys $traps->{ $DB::line } ) {
+				$traps->{ $DB::line } =  0;
+				delete $traps->{ $DB::line };
+			}
 		}
 		else {
 			# Do not stop if breakpoint condition evaluated to false value
