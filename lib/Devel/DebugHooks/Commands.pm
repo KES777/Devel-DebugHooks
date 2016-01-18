@@ -201,6 +201,13 @@ $DB::commands =  {
 		1;
 	},
 
+	,st => sub {
+		require 'Data/Dump.pm';
+		print $DB::OUT Data::Dump::pp( \@DB::stack, \@DB::goto_frames );
+		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
+
+		1;
+	}
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. The
 	# true value of $DB::single will be restored at DB::sub when this sub returns
 	# Therefore DB::DB will be called at the first OP followed this sub call
@@ -460,6 +467,16 @@ $DB::commands =  {
 				1;
 		# 	}
 		# }
+	}
+	,e => sub {
+		return {
+			expr => '$t',
+			code => sub {
+				my( $args, $expr_result ) =  @_;
+
+				print $DB::out ">>>$args - $expr_result<<<\n";
+			}
+		}
 	}
 
 	# TODO: give names to ANON
