@@ -7,6 +7,9 @@ package Devel::DebugHooks::Commands;
 # }
 use Data::Dump qw/ pp /;
 
+
+my $file_line =  qr/(?:(.*):)?(\d+|\.)/;
+
 my $cmd_f;
 my $curr_file;
 sub file {
@@ -82,7 +85,7 @@ sub list {
 
 	if( @_ == 1 ) {
 		my $arg =  shift;
-		if( ( $line_cursor, $line, $file ) =  $arg =~ m/^(\d+|\.)$|^(\d+)\s+(\d+)$/ ) {
+		if( ( $file, $line_cursor ) =  $arg =~ m/^${file_line}$/ ) {
 			$line_cursor   =  $DB::line   if $line_cursor eq '.';
 			$line_cursor //=  $line;
 
@@ -274,9 +277,10 @@ $DB::commands =  {
 	}
 
 	,b => sub {
-		my( $line, $condition ) =  shift =~ m/^([\d]+|\.)(?:\s+(.*))?$/;
+		my( $file, $line, $condition ) =  shift =~ m/^${file_line}(?:\s+(.*))?$/;
 		$line =  $DB::line   if $line eq '.';
-		my $traps =  DB::traps();
+
+		my $traps =  DB::traps( $file );
 
 
 		# list all breakpoints
@@ -309,8 +313,8 @@ $DB::commands =  {
 	}
 
 	,go => sub {
-		my( $line, $file ) =  shift =~ m/^(\d+)(?:\s+(.+))?$/;
-
+		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+		$line =  $DB::line   if $line eq '.';
 		file( $file );
 
 		if( defined $line ) {
