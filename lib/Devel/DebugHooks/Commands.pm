@@ -330,9 +330,14 @@ $DB::commands =  {
 
 
 		# set breakpoint
-		# TODO: testcase: trap remains with new condition if it was supplied
-		$traps->{ $line }{ condition } =  $condition // 1;
-		$traps->{ $line }{ tmp } =  $tmp   if defined $tmp;
+		if( defined $tmp ) {
+			$traps->{ $line }{ tmp } =  1;
+		}
+		else {
+			# TODO: testcase: trap remains with new condition if it was supplied
+			$traps->{ $line }{ condition } =  $condition // 1;
+		}
+
 
 		1;
 	}

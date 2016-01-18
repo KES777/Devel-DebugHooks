@@ -618,16 +618,17 @@ sub DB {
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
-		# Do not stop if breakpoint condition evaluated to false value
-		return   unless DB::eval( $traps->{ $DB::line }{ condition } );
 
-		# TODO: Implement on_stop event
-
-		# Delete temporary breakpoint
-		if( $traps->{ $DB::line }{ tmp } ) {
-			$ext_call++; scall( $DB::commands->{ B }, $DB::line );
+		if( exists $traps->{ $DB::line }{ tmp } ) {
+			# Delete temporary breakpoint
+			delete $traps->{ $DB::line }{ tmp };
+		}
+		else {
+			# Do not stop if breakpoint condition evaluated to false value
+			return   unless DB::eval( $traps->{ $DB::line }{ condition } );
 		}
 
+		# TODO: Implement on_stop event
 	}
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal
