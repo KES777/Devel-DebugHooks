@@ -132,6 +132,15 @@ sub readline {
 
 
 
+sub init {
+	my $self =  shift;
+
+	$DB::ext_call++;
+	DB::scall( $DB::commands->{ load } );
+}
+
+
+
 # ... define another utilities that can be called at CT
 my $last_input =  's';
 sub interact {
