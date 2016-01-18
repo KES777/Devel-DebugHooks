@@ -130,6 +130,8 @@ sub watch {
 		require Data::Dump;
 
 		for( defined $line ? ( $line ) : keys %$traps ) {
+			next   unless exists $traps->{ $_ }{ watches };
+
 			print $DB::OUT "line $_:\n";
 			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ watches } };
@@ -395,6 +397,9 @@ $DB::commands =  {
 		# list all breakpoints
 		unless( $line ) {
 			for( sort keys %$traps ) {
+				next   unless exists $traps->{ $_ }{ condition }
+					||  exists $traps->{ $_ }{ tmp };
+
 				print $DB::OUT "$_: ". $traps->{ $_ }{ condition }
 					. ( $traps->{ $_ }{ tmp } ? '!' : '' )
 					."\n";
