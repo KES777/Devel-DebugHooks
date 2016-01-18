@@ -171,15 +171,18 @@ sub load {
 
 
 
+# TODO: implement AutoSave option
 sub save {
 	my $self =  shift;
 	my( $file ) =  @_;
 	$file ||=  '/home/kes/.dbgini';
 
-	my $source =  $DB::file;
-	my $traps = {
-		$source => DB::traps( $source )
-	};
+	my $traps;
+	for my $source ( keys %$DB::_tfiles ) {
+		$traps->{ $source } =  DB::traps( $source );
+		delete $traps->{ $source } # Do not save empty hashes
+			unless keys %{ $traps->{ $source } };
+	}
 
 	open my $fh, '>', $file   or die $!;
 	print $fh pp $traps;
