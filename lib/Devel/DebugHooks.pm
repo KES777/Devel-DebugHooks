@@ -622,17 +622,28 @@ sub DB {
 
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
-		my $trap =  $traps->{ $DB::line };
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 
-		# Calculate new values for watch expressions
+		# NOTE: the stop events are not exclusive so we can not use elsif
+		my $stop =  0;
+		my $trap =  $traps->{ $DB::line };
+
+		# Stop on watch expression
 		if( exists $trap->{ watches } ) {
+			# Calculate new values for watch expressions
 			for my $watch_item ( @{ $trap->{ watches } } ) {
 				$watch_item->{ old } =  $watch_item->{ new } // [ undef ];
 				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
 			}
+
+			$ext_call++;
+			# The 'watch' method should compare 'old' and 'new' values and return
+			# true value if they are differ. Additionaly it may print to $DB::OUT
+			# to show comparison results
+			$stop ||=  mcall( 'watch', $dbg, $trap->{ watches } );
 		}
 
+		# Stop if temporary breakpoint
 		if( exists $trap->{ tmp } ) {
 			# Delete temporary breakpoint
 			delete $trap->{ tmp };
@@ -640,15 +651,18 @@ sub DB {
 				$traps->{ $DB::line } =  0;
 				delete $traps->{ $DB::line };
 			}
+
+			$stop ||=  1;
 		}
-		elsif( exists $trap->{ condition } ) {
-			# Do not stop if breakpoint condition evaluated to false value
-			return   unless DB::eval( $trap->{ condition } );
+
+		# Stop if breakpoint condition evaluated to true value
+		if( exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } ) ) {
+			$stop ||=  1;
 		}
-		# Do not stop if no 'watch' event
-		elsif( !do{  $ext_call++; mcall( 'watch', $dbg, $trap->{ watches } )  } ) {
-			return;
-		}
+
+
+		return   unless $stop;
+
 
 		# TODO: Implement on_stop event
 	}
