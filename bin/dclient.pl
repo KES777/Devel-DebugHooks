@@ -23,7 +23,7 @@ $loop = IO::Async::Loop->new;
 use IO::Async::Timer::Periodic;
 $timer = IO::Async::Timer::Periodic->new(
     first_interval =>  0,
-    interval       =>  5,
+    interval       =>  2,
 
     on_tick        =>  sub {
         # warn ">>@_<<<< Retrying";
@@ -205,3 +205,5 @@ Devel::DollarAt
 Devel::Cycle
 Devel::CoverReport
 Devel::Cover
+
+Tie::Watch
