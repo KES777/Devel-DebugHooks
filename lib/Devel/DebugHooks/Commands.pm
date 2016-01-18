@@ -51,11 +51,13 @@ my $old_DB_line  =  -1;
 sub list {
 	shift   if @_ == 1  &&   (!defined $_[0] || $_[0] eq '');
 
+	# reset $line_cursor if DB::DB were called. BUG: if DB::DB called twice for same line
+	if( $old_DB_line != $DB::line ) {
+		$old_DB_line =  $DB::line;
+		$line_cursor =  $DB::line;
+	}
+
 	unless( @_ ) {
-		if( $old_DB_line != $DB::line ) {
-			$old_DB_line =  $DB::line;
-			$line_cursor =  $DB::line;
-		}
 
 		_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
 
