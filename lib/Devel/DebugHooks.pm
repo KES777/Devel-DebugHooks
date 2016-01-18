@@ -597,7 +597,7 @@ sub import { # NOTE: The import is called at CT yet
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	if( $options{ trace_load } ) {
-		$ext_call++; mcall( 'trace_load', $dbg, @_ );
+		$ext_call++; mcall( 'trace_load', $DB::dbg, @_ );
 	}
 
 	# RT options applied after main program is loaded
@@ -618,7 +618,7 @@ sub DB {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
 
-	do{ $ext_call++; mcall( 'trace_line', $dbg ); }   if $DB::trace;
+	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
@@ -640,7 +640,7 @@ sub DB {
 			# The 'watch' method should compare 'old' and 'new' values and return
 			# true value if they are differ. Additionaly it may print to $DB::OUT
 			# to show comparison results
-			$stop ||=  mcall( 'watch', $dbg, $trap->{ watches } );
+			$stop ||=  mcall( 'watch', $DB::dbg, $trap->{ watches } );
 		}
 
 		# Stop if temporary breakpoint
@@ -681,13 +681,13 @@ sub DB {
 	# Actually to make things same we should call 'scall' here, despite on
 	# $DB::single has no effect
 
-	$dbg->bbreak();
+	$DB::dbg->bbreak();
 
 	# TODO: remove clever things out of core. This modules should implement
 	# only interface features
 	# interact() should return defined value to keep interaction
-	while( defined ( my $str =  $dbg->interact() ) ) {
-		my $result =  $dbg->process( $str );
+	while( defined ( my $str =  $DB::dbg->interact() ) ) {
+		my $result =  $DB::dbg->process( $str );
 		last   unless defined $result;
 		next   if $result;
 
@@ -701,7 +701,7 @@ sub DB {
 		print $DB::OUT "\n";
 	}
 
-	$dbg->abreak();
+	$DB::dbg->abreak();
 }
 
 
@@ -741,7 +741,7 @@ sub trace_subs {
 		[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ];
 
 	if( $options{ trace_subs } ) {
-		$ext_call++; mcall( 'trace_subs', $dbg, @_ );
+		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
 	}
 }
 
@@ -812,17 +812,17 @@ sub sub {
 
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $dbg, @ret );
+			$ext_call++; mcall( 'trace_returns', $DB::dbg, @ret );
 			return @ret;
 		}
 		elsif( defined wantarray ) {                  # scalar context
 			my $ret =  &$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $dbg, $ret );
+			$ext_call++; mcall( 'trace_returns', $DB::dbg, $ret );
 			return $ret;
 		}
 		else {                                        # void context
 			&$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $dbg );
+			$ext_call++; mcall( 'trace_returns', $DB::dbg );
 			return;
 		}
 	}
