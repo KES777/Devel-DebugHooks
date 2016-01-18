@@ -65,6 +65,22 @@ sub trace_line {
 
 
 sub watch {
+	my $self =  shift;
+	my( $watches ) =  @_;
+
+
+	my $changed =  0;
+	for my $item ( @$watches ) {
+		unless( @{ $item->{ old } }  ~~  @{ $item->{ new } } ) {
+			$changed ||=  1;
+			# print $DB::OUT "The value of " .$item->{ expr } ." is changed:\n"
+			# 	."The old value: ". Data::Dump::pp( @{ $item->{ old } } ) ."\n"
+			# 	."The new value: ". Data::Dump::pp( @{ $item->{ new } } ) ."\n"
+		}
+	}
+
+
+	return 1;
 }
 
 
