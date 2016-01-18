@@ -13,13 +13,13 @@ my $file_line =  qr/(?:(.*):)?(\d+|\.)/;
 my $cmd_f;
 my $curr_file;
 sub file {
-	return $curr_file   unless defined $_[0];
+	return $curr_file // $DB::file  unless defined $_[0];
 
 	$curr_file =  shift;
 	$curr_file =  $cmd_f->[ $curr_file ]
 		if $curr_file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $curr_file ];
 
-	return $curr_file;
+	return $curr_file // $DB::file;
 }
 
 
