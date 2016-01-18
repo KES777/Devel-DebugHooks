@@ -10,8 +10,9 @@ use Data::Dump qw/ pp /;
 my $cmd_f;
 my $curr_file;
 sub file {
-	$curr_file =  shift   if defined $_[0];
+	return $curr_file   unless defined $_[0];
 
+	$curr_file =  shift;
 	$curr_file =  $cmd_f->[ $curr_file ]
 		if $curr_file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $curr_file ];
 
@@ -28,13 +29,12 @@ my %cmd_T = (
 );
 
 
-
 sub _list {
 	my( $from, $to, $file ) =  @_;
 
 
-	my $source =  DB::source( $file );
-	my $traps  =  DB::traps( $file );
+	my $source =  DB::source( file( $file ) );
+	my $traps  =  DB::traps( file( $file ) );
 
 	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
@@ -291,8 +291,8 @@ $DB::commands =  {
 		}
 
 
-		unless( DB::can_break( $DB::file, $line ) ) {
-			print $DB::OUT "This line is not breakable\n";
+		unless( DB::can_break( file(), $line ) ) {
+			print $DB::OUT file(). "This line is not breakable\n";
 			return -1;
 		}
 
@@ -311,14 +311,11 @@ $DB::commands =  {
 	,go => sub {
 		my( $line, $file ) =  shift =~ m/^(\d+)(?:\s+(.+))?$/;
 
-		if( $file  &&  $file =~ m/^\d+$/ ) {
-			$file =  $cmd_f->[ $file ]   if exists $cmd_f->[ $file ];
-		}
+		file( $file );
 
 		if( defined $line ) {
-			$DB::file =  $file   if defined $file;
 			return 1   if 0 > $DB::commands->{ b }->( $line );
-			DB::traps()->{ $line }{ tmp } =  1;
+			DB::traps( file() )->{ $line }{ tmp } =  1;
 
 		}
 
@@ -340,9 +337,8 @@ $DB::commands =  {
 				my( $args, $expr ) =  @_;
 
 				# Set current file to selected one:
-				if( @$cmd_f  &&  $args =~ /^\d+$/  &&  $#$cmd_f >= $args ) {
-					$DB::file =  $cmd_f->[ $args ];
-					print $DB::OUT "$DB::file\n";
+				if( $args ne ''  &&  $args =~ /^(\d+)$/ ) {
+					print $DB::OUT file( $args ) ."\n";
 					return 1;
 				}
 
