@@ -617,19 +617,20 @@ sub DB {
 
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
+		my $trap =  $traps->{ $DB::line };
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 
-		if( exists $traps->{ $DB::line }{ tmp } ) {
+		if( exists $trap->{ tmp } ) {
 			# Delete temporary breakpoint
-			delete $traps->{ $DB::line }{ tmp };
-			unless( keys $traps->{ $DB::line } ) {
+			delete $trap->{ tmp };
+			unless( keys %$trap ) {
 				$traps->{ $DB::line } =  0;
 				delete $traps->{ $DB::line };
 			}
 		}
 		else {
 			# Do not stop if breakpoint condition evaluated to false value
-			return   unless DB::eval( $traps->{ $DB::line }{ condition } );
+			return   unless DB::eval( $trap->{ condition } );
 		}
 
 		# TODO: Implement on_stop event
