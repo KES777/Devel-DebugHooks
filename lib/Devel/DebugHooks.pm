@@ -632,6 +632,7 @@ sub postponed {
 
 
 
+# TODO: implement: on_enter, on_leave, on_compile
 sub DB {
 	init();
 
@@ -782,8 +783,16 @@ sub goto {
 };
 
 
+# my $x = 0;
+# use Data::Dump qw/ pp /;
 use Hook::Scope;
 sub sub_returns {
+	# $ext_call++; scall( sub{
+	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
+	# 		print $DB::OUT pp( \@DB::stack, \@DB::goto_frames );
+	# 	}
+	# });
+
 	my $last =  pop @DB::stack;
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
