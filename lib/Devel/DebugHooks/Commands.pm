@@ -154,6 +154,40 @@ sub watch {
 
 
 
+sub load {
+	my $self =  shift;
+	my( $file ) =  @_;
+	$file ||=  '/home/kes/.dbgini';
+
+
+	my $traps =  do $file;
+	for( keys $traps ) {
+		%{ DB::traps( $_ ) } =  %{ $traps->{ $_ } };
+	}
+
+
+	return 1;
+}
+
+
+
+sub save {
+	my $self =  shift;
+	my( $file ) =  @_;
+	$file ||=  '/home/kes/.dbgini';
+
+	my $source =  $DB::file;
+	my $traps = {
+		$source => DB::traps( $source )
+	};
+
+	open my $fh, '>', $file   or die $!;
+	print $fh pp $traps;
+
+	return 1;
+}
+
+
 $DB::commands =  {
 	'.' => sub {
 		$curr_file =  $DB::file;
@@ -449,8 +483,10 @@ $DB::commands =  {
 		return 1;
 	}
 
-	,l => \&list,
+	,l    => \&list
 	,w    => \&watch
+	,load => \&load
+	,save => \&save
 };
 
 1;
