@@ -53,8 +53,13 @@ sub trace_load {
 
 # This sub is called for each DB::DB call while $DB::trace is true
 sub trace_line {
+	print "$DB::line\n";
 }
 
+
+
+sub watch {
+}
 
 
 sub bbreak {
@@ -620,6 +625,14 @@ sub DB {
 		my $trap =  $traps->{ $DB::line };
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 
+		# Calculate new values for watch expressions
+		if( exists $trap->{ watches } ) {
+			for my $watch_item ( @{ $trap->{ watches } } ) {
+				$watch_item->{ old } =  $watch_item->{ new } // [ undef ];
+				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
+			}
+		}
+
 		if( exists $trap->{ tmp } ) {
 			# Delete temporary breakpoint
 			delete $trap->{ tmp };
@@ -628,9 +641,13 @@ sub DB {
 				delete $traps->{ $DB::line };
 			}
 		}
-		else {
+		elsif( exists $trap->{ condition } ) {
 			# Do not stop if breakpoint condition evaluated to false value
 			return   unless DB::eval( $trap->{ condition } );
+		}
+		# Do not stop if no 'watch' event
+		elsif( !do{  $ext_call++; mcall( 'watch', $dbg, $trap->{ watches } )  } ) {
+			return;
 		}
 
 		# TODO: Implement on_stop event
