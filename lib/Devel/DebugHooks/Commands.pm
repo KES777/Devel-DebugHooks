@@ -323,14 +323,8 @@ $DB::commands =  {
 	}
 
 	,go => sub {
-		my( $file, $line ) =  shift =~ m/^${file_line}$/;
-		$line =  $DB::line   if $line eq '.';
-		file( $file );
-
-		if( defined $line ) {
-			return 1   if 0 > $DB::commands->{ b }->( $line );
-			DB::traps( file() )->{ $line }{ tmp } =  1;
-
+		if( defined $_[0] ) {
+			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
 
