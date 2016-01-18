@@ -60,6 +60,7 @@ sub _list {
 }
 
 
+
 # TODO: make variables global/configurable
 my $lines_before =  8;
 my $lines_after  =  12;
@@ -113,6 +114,44 @@ sub list {
 
 	1;
 }
+
+
+
+sub watch {
+	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
+
+	$line     =  $DB::line   if $line eq '.';
+	$file     =  file( $file );
+
+	my $traps =  DB::traps( $file );
+
+
+	unless( $expr ) {
+		require Data::Dump;
+
+		for( defined $line ? ( $line ) : keys %$traps ) {
+			print $DB::OUT "line $_:\n";
+			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+				for @{ $traps->{ $_ }{ watches } };
+		}
+
+		return 1;
+	}
+
+
+	unless( DB::can_break( $file, $line ) ) {
+		print $DB::OUT file(). "This line is not breakable. Can not watch at this point\n";
+		return -1;
+	}
+
+
+	push @{ $traps->{ $line }{ watches } }, { expr => $expr };
+	#TODO: do not add same expressions
+
+
+	1;
+}
+
 
 
 $DB::commands =  {
@@ -411,6 +450,7 @@ $DB::commands =  {
 	}
 
 	,l => \&list,
+	,w    => \&watch
 };
 
 1;
