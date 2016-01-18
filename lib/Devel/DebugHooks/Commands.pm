@@ -117,6 +117,9 @@ sub list {
 
 $DB::commands =  {
 	'.' => sub {
+		$curr_file =  $DB::file;
+		$line_cursor =  $DB::line;
+
 		print $DB::OUT "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
 
 		1;
