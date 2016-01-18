@@ -8,7 +8,7 @@ package Devel::DebugHooks::Commands;
 use Data::Dump qw/ pp /;
 
 
-my $file_line =  qr/(?:(.*):)?(\d+|\.)/;
+my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
 my $cmd_f;
 my $curr_file;
