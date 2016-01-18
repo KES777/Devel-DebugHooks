@@ -27,6 +27,8 @@ sub _list {
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
 	for my $line ( $from..$to ) {
+		next   unless exists $source->[ $line ];
+
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
 			print $DB::OUT exists $traps->{ $line }{ condition }? 'b' : ' ';
