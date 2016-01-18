@@ -67,10 +67,11 @@ sub list {
 
 	if( @_ == 1 ) {
 		my $arg =  shift;
-		if( ( $line_cursor ) =  $arg =~ m/^(\d+|\.)$/ ) {
-			$line_cursor =  $DB::line   if $line_cursor eq '.';
+		if( ( $line_cursor, $line, $file ) =  $arg =~ m/^(\d+|\.)$|^(\d+)\s+(\d+)$/ ) {
+			$line_cursor   =  $DB::line   if $line_cursor eq '.';
+			$line_cursor //=  $line;
 
-			_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
+			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file );
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
