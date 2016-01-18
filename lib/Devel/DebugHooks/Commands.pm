@@ -106,7 +106,7 @@ sub list {
 		else {
 			print $DB::OUT "Unknown paramenter: $arg\n";
 
-			return 1;
+			return -1;
 		}
 	}
 
