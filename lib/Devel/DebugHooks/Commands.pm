@@ -280,8 +280,7 @@ $DB::commands =  {
 	}
 
 	,b => sub {
-		my( $file, $line, $condition ) =  shift =~ m/^${file_line}(?:\s+(.*))?$/;
-		$line =  $DB::line   if $line eq '.';
+		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
 
 		my $traps =  DB::traps( $file );
 
@@ -289,7 +288,9 @@ $DB::commands =  {
 		# list all breakpoints
 		unless( $line ) {
 			for( sort keys %$traps ) {
-				print $DB::OUT "$_: ". $traps->{ $_ }{ condition } ."\n";
+				print $DB::OUT "$_: ". $traps->{ $_ }{ condition }
+					. ( $traps->{ $_ }{ tmp } ? '!' : '' )
+					."\n";
 				warn "The breakpoint at $_ is zero and should be deleted"
 					if $traps->{ $_ } == 0;
 			}
@@ -310,7 +311,10 @@ $DB::commands =  {
 			# BUG? deleting a key does not remove a breakpoint for that line
 			# WORKAROUND: we should explicitly set value to 0 then delete the key
 			do{ $traps->{ $line } =  0; delete $traps->{ $line } }:
-			($traps->{ $line }{ condition } =  $condition // 1);
+			do{
+				($traps->{ $line }{ condition } =  $condition // 1);
+				$traps->{ $line }{ tmp } =  $tmp   if defined $tmp;
+			};
 
 		1;
 	}
