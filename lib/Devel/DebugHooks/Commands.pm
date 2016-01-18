@@ -5,8 +5,21 @@ package Devel::DebugHooks::Commands;
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
 #	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
+use Data::Dump qw/ pp /;
 
 my $cmd_f;
+my $curr_file;
+sub file {
+	$curr_file =  shift   if defined $_[0];
+
+	$curr_file =  $cmd_f->[ $curr_file ]
+		if $curr_file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $curr_file ];
+
+	return $curr_file;
+}
+
+
+
 my %cmd_T = (
 	G => '&',
 	C => '=',
