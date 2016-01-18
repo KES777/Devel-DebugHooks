@@ -37,6 +37,12 @@ BEGIN {
 }
 
 
+
+sub init {
+}
+
+
+
 sub import {
 	DB::import( @_ );
 }
@@ -866,6 +872,9 @@ sub lsub : lvalue {
 # It is better to load modules at the end of DB::
 # because of they will be visible to 'trace_load'
 use Devel::DebugHooks::Commands;
+BEGIN {
+	$DB::dbg->init();
+}
 
 
 
