@@ -11,6 +11,12 @@ my $loop;
 my $stream;
 
 
+
+sub tinfo {
+	return " - $$ ($loop) w:" .uwsgi::worker_id();
+}
+
+
 # event handlers
 sub handle_write_eof {
 	die "Write error: >>@_<<";
@@ -33,6 +39,8 @@ sub read_command {
 	my( $self, $buffref, $eof ) =  @_;
 
 	if( $$buffref =~ s/^(.*?)\r?(\n)// ) {
+		print $DB::OUT "\nThis is the thread (RC): " .tinfo() ."\n\n";
+
 		$$buffref = "$1$2$$buffref"   unless defined &readline( "$1$2" );
 
 		return 0;
@@ -74,8 +82,12 @@ sub start_dbg_session {
 
 
 	$DB::OUT =  $stream->read_handle();
-	print $DB::OUT "DBG>";
+	printflush $DB::OUT "DBG>>\n";
+
+	my $str =  "\nThis is the thread (Start): " .tinfo() ."\n\n";
+	$stream->write( $str );
 }
+
 
 
 
@@ -95,6 +107,7 @@ $loop->listen(
 		my( $s ) =  @_;
 
 		warn "listening on: " . $s->sockhost . ':' . $s->sockport . "\n";
+			warn "\nThis is the thread(Listen): " .tinfo();
 	},
 
 	# This sub is invoked for each new incoming connection
@@ -146,7 +159,9 @@ my $last_input =  's';
 sub interact {
 	my $self =  shift;
 
-	printflush $DB::OUT "DBG>"; # TODO: print promt only when session is active
+	# DB::_all_frames();
+
+	printflush $DB::OUT tinfo() ."\nDBG>"; # TODO: print promt only when session is active
 
 	my $line =  &readline();
 	chomp $line;
