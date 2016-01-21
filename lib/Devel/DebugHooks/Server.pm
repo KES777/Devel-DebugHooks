@@ -149,9 +149,8 @@ use IO::Async::Loop;
 $loop =  IO::Async::Loop->new;
 
 
-sub shandler {
-	print $DB::OUT time() ." Singal" .tinfo() ."\n";
-
+sub uwsgi_signal_handler {
+	# print $DB::OUT time() ." Singal" .tinfo() ."\n";
 
 	$loop->loop_once( 0 );
 }
@@ -167,7 +166,7 @@ uwsgi::postfork( sub{
 });
 
 
-uwsgi::register_signal( 1, 'workers', \&shandler );
+uwsgi::register_signal( 1, 'workers', \&uwsgi_signal_handler );
 uwsgi::add_timer( 1, 1 );
 
 
