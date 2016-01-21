@@ -12,6 +12,7 @@ my $stream;
 
 
 
+my $ti =  0;
 sub tinfo {
 	return " - $$ ($loop) w:" .uwsgi::worker_id();
 }
@@ -55,7 +56,7 @@ sub read_command {
 
 
 	if( $$buffref =~ s/^(.*?)\r?(\n)// ) {
-		print $DB::OUT "\nThis is the thread (RC): " .tinfo() ."\n\n";
+		print $DB::OUT "\nThis is the thread (RC): " .tinfo() ."\n\n"   if $ti;
 
 		$$buffref = "$1$2$$buffref"   unless defined &readline( "$1$2" );
 
@@ -99,9 +100,10 @@ sub start_dbg_session {
 	$DB::OUT =  $stream->read_handle();
 	printflush $DB::OUT "DBG>>\n";
 
-	my $str =  "\nThis is the thread (Start): " .tinfo() ."\n\n";
-	`echo '$str' > /home/feelsafe/loop`;
-	$stream->write( $str );
+	if( $ti ) {
+		my $str =  "\nThis is the thread (Start): " .tinfo() ."\n\n";
+		$stream->write( $str )
+	}
 }
 
 
@@ -121,7 +123,7 @@ sub listen {
 			my( $s ) =  @_;
 
 			warn "listening on: " .$s->sockhost . ':' .$s->sockport;
-			warn "\nThis is the thread(Listen): " .tinfo();
+			warn "\nThis is the thread(Listen): " .tinfo()   if $ti;
 		},
 
 		# This sub is invoked for each new incoming connection
@@ -150,7 +152,7 @@ $loop =  IO::Async::Loop->new;
 
 
 sub uwsgi_signal_handler {
-	# print $DB::OUT time() ." Singal" .tinfo() ."\n";
+	# print $DB::OUT time() ." Singal" .tinfo() ."\n"   if $ti;
 
 	$loop->loop_once( 0 );
 }
@@ -216,7 +218,8 @@ sub interact {
 
 	# DB::_all_frames();
 
-	printflush $DB::OUT tinfo() ."\nDBG>"; # TODO: print promt only when session is active
+	printflush $DB::OUT tinfo()   if $ti;
+	printflush $DB::OUT "\nDBG>"; # TODO: print promt only when session is active
 
 	my $line =  &readline();
 	chomp $line;
