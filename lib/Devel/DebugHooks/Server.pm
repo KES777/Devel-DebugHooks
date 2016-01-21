@@ -149,11 +149,9 @@ use IO::Async::Loop;
 $loop =  IO::Async::Loop->new;
 
 
-# my $interval =  10;
 sub shandler {
 	print $DB::OUT time() ." Singal" .tinfo() ."\n";
 
-	# sleep $interval--   if $interval > 0;
 
 	$loop->loop_once( 0 );
 }
