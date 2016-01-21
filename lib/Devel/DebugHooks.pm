@@ -709,7 +709,24 @@ sub DB {
 	# $DB::single has no effect
 
 	$DB::dbg->bbreak();
+	interact();
+	$DB::dbg->abreak();
+}
 
+
+
+sub init {
+	( $DB::package, $DB::file, $DB::line ) = caller(1);
+
+	# Commented out because of:
+	# https://rt.perl.org/Ticket/Display.html?id=127249
+	# die ">$DB::file< ne >" .file( $DB::file ) ."<"
+	# 	if $DB::file ne file( $DB::file );
+}
+
+
+
+sub interact {
 	# TODO: remove clever things out of core. This modules should implement
 	# only interface features
 	# interact() should return defined value to keep interaction
@@ -726,22 +743,7 @@ sub DB {
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 		print $DB::OUT "\n";
-	}
-
-	$DB::dbg->abreak();
-}
-
-
-
-sub init {
-	( $DB::package, $DB::file, $DB::line ) = caller(1);
-
-	# Commented out because of:
-	# https://rt.perl.org/Ticket/Display.html?id=127249
-	# die ">$DB::file< ne >" .file( $DB::file ) ."<"
-	# 	if $DB::file ne file( $DB::file );
-}
-
+	}}
 
 
 sub trace_subs {
