@@ -105,13 +105,6 @@ sub start_dbg_session {
 }
 
 
-
-
-# Setup and process $loop
-use IO::Async::Loop;
-$loop =  IO::Async::Loop->new;
-
-
 sub listen {
 	my( $loop ) =  @_;
 
@@ -137,8 +130,26 @@ sub listen {
 }
 
 
+
+
+
+# Setup and process $loop
+# We can uncoment this if we want debugger messages were sent to dbg client
+# BEGIN {
+# 	use IO::Async::Loop;
+# 	$loop =  IO::Async::Loop->new;
+# 	# As soon as possible
+# 	# But, it is better that only worker listens to :9000
+# 	# And because of BEGIN block the IO::Async modules are noticed by debugger
+# 	&listen( $loop );
+# 	sleep 2; # wait dbg client to connect
+# 	$loop->loop_once( 0 );
+# }
+use IO::Async::Loop;
+$loop =  IO::Async::Loop->new;
+
+
 # my $interval =  10;
-&listen( $loop );
 sub shandler {
 	print $DB::OUT time() ." Singal" .tinfo() ."\n";
 
@@ -147,22 +158,19 @@ sub shandler {
 	$loop->loop_once( 0 );
 }
 
+
+
 uwsgi::postfork( sub{
+	&listen( $loop );
+	$loop->loop_once( 0 );
+	# Useless. Signals are sended to worker only after it is forked
+	# uwsgi::signal( 1 );
 	print $DB::OUT time() ." Forked\n";
 });
 
-print $DB::OUT time() ." Prepare\n";
-sleep 3;
-print $DB::OUT time() ." Loop once\n";
-$loop->loop_once( 0 );
-sleep 2;
-print $DB::OUT time() ." Register callback\n";
+
 uwsgi::register_signal( 1, 'workers', \&shandler );
 uwsgi::add_timer( 1, 1 );
-print $DB::OUT time() ." Send signal\n";
-uwsgi::signal( 1 );
-sleep 2;
-print $DB::OUT time() ." Callback is registred\n";
 
 
 

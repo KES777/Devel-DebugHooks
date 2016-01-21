@@ -284,6 +284,7 @@ our %options;
 # Do DB:: configuration stuff here
 BEGIN {
 	$IN                        //= \*STDIN;
+	#TODO: cache output until debugger connected
 	$OUT                       //= \*STDOUT;
 
 	$options{ _debug }         //=  0;
