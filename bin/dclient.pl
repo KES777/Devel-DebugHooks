@@ -15,6 +15,7 @@ my $loop;
 my $timer;
 my $tty;
 
+my $verbose =  0;
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 use IO::Async::Loop;
@@ -51,6 +52,15 @@ $tty =  IO::Async::Stream->new(
 
 sub tty_read {
     my ( $self, $buffref, $eof ) = @_;
+
+    if( $$buffref =~ s/-v\n// ) {
+        $verbose =  $verbose ? 0 : 1 ;
+        return 1;
+    }
+    if( $$buffref =~ s/-vv\n// ) {
+        $verbose =  2;
+        return 1;
+    }
 
     if( $session_stream  &&  $session_stream->loop ) {
         $session_stream->write( $$buffref );
@@ -107,7 +117,7 @@ sub handle_read_error {
 sub handle_read {
     my( $self, $buffref, $eof ) =  @_;
 
-    on_data( $$buffref );
+    on_data( $buffref );
     $$buffref =  '';
 
     if( $eof ) {
@@ -121,7 +131,12 @@ sub handle_read {
 
 
 sub on_data {
-    $tty->write( @_ );
+    my( $data ) =  @_;
+
+    $tty->write( "New data(DC)\n" )   if $verbose;
+    $data =  $$data;
+    $data =  ' -'x20 ."\n" .$data ." -"x20 ."\n"   if $verbose > 1;
+    $tty->write( $data );
 }
 
 
