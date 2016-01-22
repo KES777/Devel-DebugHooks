@@ -220,10 +220,15 @@ sub bbreak {
 
 # ... define another utilities that can be called at CT
 my $last_input =  's';
+my $in_progress =  0;
 sub interact {
 	my $self =  shift;
 
-	# DB::_all_frames();
+	unless( $in_progress ) {
+		warn "Interact: " .tinfo()   if $ti;
+		printflush $DB::OUT "\nDBG>"; # TODO: print promt only when session is active
+		$in_progress++;
+	}
 
 	printflush $DB::OUT tinfo()   if $ti;
 	printflush $DB::OUT "\nDBG>"; # TODO: print promt only when session is active
@@ -238,6 +243,7 @@ sub interact {
 	}
 
 
+	$in_progress--;
 	return $line;
 }
 
