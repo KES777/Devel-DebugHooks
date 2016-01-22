@@ -394,6 +394,12 @@ BEGIN { # Initialization goes here
 
 
 
+		sub sources {
+			return grep{ s/^_<// } keys %{ 'main::' };
+		}
+
+
+
 		sub traps {
 			my $filename =  shift // $DB::file;
 
