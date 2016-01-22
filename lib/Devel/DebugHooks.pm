@@ -100,7 +100,7 @@ sub interact {
 
 
 
-eval 'require ' .$DB::options{ cmd_processor };
+eval 'require ' .$DB::options{ cmd_processor }; die $@   if $@;
 sub process {
 	BEGIN{ 'strict'->unimport( 'refs' )   if $DB::options{ s } }
 	# TODO: if we set trap on sub that loaded at CT, this will FAIL
