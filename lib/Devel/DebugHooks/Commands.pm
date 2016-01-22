@@ -36,12 +36,14 @@ sub _list {
 	my( $from, $to, $file ) =  @_;
 
 
-	my $source =  DB::source( file( $file ) );
-	my $traps  =  DB::traps( file( $file ) );
+	$file =  file( $file );
+	my $source =  DB::source( $file );
+	my $traps  =  DB::traps( $file );
 
 	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
+	print $DB::OUT "$file\n";
 	for my $line ( $from..$to ) {
 		next   unless exists $source->[ $line ];
 
