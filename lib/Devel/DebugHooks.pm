@@ -866,6 +866,8 @@ sub sub {
 
 
 	die "This should be reached never";
+	#NOTICE: This reached when someone leaves sub by 'next/last'
+	#Then 'return' is not called at all???
 };
 
 
