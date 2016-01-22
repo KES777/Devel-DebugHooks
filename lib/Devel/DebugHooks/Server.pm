@@ -139,7 +139,8 @@ $loop =  IO::Async::Loop->new;
 
 
 sub uwsgi_signal_handler {
-	# print $DB::OUT time() ." Singal" .tinfo() ."\n"   if $ti;
+	# warn time() ." Singal" .tinfo() ."\n"   if $ti;
+	warn 'Signal';
 
 	# First of all we should process loop queue: connect client, read data...
 	$loop->loop_once( 0 );
@@ -151,11 +152,11 @@ sub uwsgi_signal_handler {
 
 
 uwsgi::postfork( sub{
+	print $DB::OUT time() ." Forked\n";
 	&listen( $loop );
 	$loop->loop_once( 0 );
 	# Useless. Signals are sended to worker only after it is forked
 	# uwsgi::signal( 1 );
-	print $DB::OUT time() ." Forked\n";
 });
 
 
