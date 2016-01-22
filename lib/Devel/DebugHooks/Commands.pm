@@ -62,8 +62,8 @@ sub _list {
 
 
 # TODO: make variables global/configurable
-my $lines_before =  8;
-my $lines_after  =  12;
+my $lines_before =  20;
+my $lines_after  =  8;
 my $line_cursor;
 my $old_DB_line  =  -1;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
@@ -159,7 +159,7 @@ sub watch {
 sub load {
 	my $self =  shift;
 	my( $file ) =  @_;
-	$file ||=  '/home/kes/.dbgini';
+	$file ||=  '/home/feelsafe/.dbgini';
 
 
 	my $traps =  do $file;
@@ -177,7 +177,7 @@ sub load {
 sub save {
 	my $self =  shift;
 	my( $file ) =  @_;
-	$file ||=  '/home/kes/.dbgini';
+	$file ||=  '/home/feelsafe/.dbgini';
 
 	my $traps;
 	for my $source ( keys %$DB::_tfiles ) {
