@@ -88,7 +88,6 @@ sub start_dbg_session {
 
 	$loop->add( $stream );
 	$DB::OUT =  $stream->read_handle();
-	printflush $DB::OUT "DBG>>\n";
 
 	if( $ti ) {
 		my $str =  "This is the thread (Start): " .tinfo() ."\n";
