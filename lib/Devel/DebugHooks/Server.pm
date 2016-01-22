@@ -29,10 +29,14 @@ sub handle_write_error {
 }
 
 
+# TODO: Need to check. Because of eof does not seen until write the event is not
+# occour until write handle is closed
 sub handle_closed {
 	$DB::OUT =  \*STDOUT;
 	undef $stream;
-	warn "Session closed";
+	my $time =  localtime();
+	`echo "$time Session closed\n" >> /home/feelsafe/loop`;
+	warn "$time Session closed";
 }
 
 
@@ -43,7 +47,7 @@ sub read_command {
 
 
 	if( $$buffref =~ s/^(.*?)\r?(\n)// ) {
-		print $DB::OUT "\nThis is the thread (RC): " .tinfo() ."\n\n"   if $ti;
+		warn "\nThis is the thread (RC): " .tinfo() ."\n\n"   if $ti;
 
 		$$buffref = "$1$2$$buffref"   unless defined &readline( "$1$2" );
 
@@ -83,13 +87,13 @@ sub start_dbg_session {
 	);
 
 	$loop->add( $stream );
-
 	$DB::OUT =  $stream->read_handle();
 	printflush $DB::OUT "DBG>>\n";
 
 	if( $ti ) {
-		my $str =  "\nThis is the thread (Start): " .tinfo() ."\n\n";
-		$stream->write( $str )
+		my $str =  "This is the thread (Start): " .tinfo() ."\n";
+		$stream->write( $str );
+		warn $str;
 	}
 }
 
