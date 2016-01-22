@@ -397,15 +397,22 @@ $DB::commands =  {
 
 		# list all breakpoints
 		unless( $line ) {
-			for( sort keys %$traps ) {
-				next   unless exists $traps->{ $_ }{ condition }
-					||  exists $traps->{ $_ }{ tmp };
+			for my $source ( $file, keys %$DB::_tfiles ) {
+				my $traps =  DB::traps( $source );
+				next   unless keys %$traps;
 
-				print $DB::OUT "$_: ". $traps->{ $_ }{ condition }
-					. ( $traps->{ $_ }{ tmp } ? '!' : '' )
-					."\n";
-				warn "The breakpoint at $_ is zero and should be deleted"
-					if $traps->{ $_ } == 0;
+				print $DB::OUT "$source\n";
+
+				for( sort keys %$traps ) {
+					next   unless exists $traps->{ $_ }{ condition }
+						||  exists $traps->{ $_ }{ tmp };
+
+					print $DB::OUT "$_: ". $traps->{ $_ }{ condition }
+						. ( $traps->{ $_ }{ tmp } ? '!' : '' )
+						."\n";
+					warn "The breakpoint at $_ is zero and should be deleted"
+						if $traps->{ $_ } == 0;
+				}
 			}
 
 			return 1;
