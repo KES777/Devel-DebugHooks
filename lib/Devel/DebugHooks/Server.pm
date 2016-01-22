@@ -156,6 +156,7 @@ sub uwsgi_signal_handler {
 
 uwsgi::postfork( sub{
 	print $DB::OUT time() ." Forked\n";
+	$DB::commands->{ load }->();
 	&listen( $loop );
 	$loop->loop_once( 0 );
 	# Useless. Signals are sended to worker only after it is forked
@@ -194,15 +195,6 @@ sub readline {
 	return $result;
 }
 # END OF IO::Async stuff
-
-
-
-sub init {
-	my $self =  shift;
-
-	$DB::ext_call++;
-	DB::scall( $DB::commands->{ load } );
-}
 
 
 

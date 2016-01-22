@@ -922,6 +922,8 @@ sub lsub : lvalue {
 # because of they will be visible to 'trace_load'
 use Devel::DebugHooks::Commands;
 BEGIN {
+	# NOTICE: it is useless to set breakpoints for not compiled files
+	# TODO: spy module loading and set breakpoints
 	$DB::dbg->init();
 }
 
