@@ -487,6 +487,9 @@ $DB::commands =  {
 
 	# TODO: give names to ANON
 	,T => sub {
+		my( $level ) =  shift =~ m/^(\d+)$/;
+		$level =  -1   unless $level;
+
 		my $deep =  @DB::stack;
 		for my $frame ( DB::frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
@@ -504,6 +507,7 @@ $DB::commands =  {
 			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
 			print $DB::OUT "$d $type $context $subname$args <--  $file:$line\n";
 			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
+			last   unless --$level;
 		}
 
 		return 1;
