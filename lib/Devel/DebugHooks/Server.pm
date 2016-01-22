@@ -3,7 +3,6 @@ package Devel::DebugHooks::Server;
 use strict;
 use warnings;
 
-
 # We should define utility subs first...
 ## IO::Async stuff
 # global DATA
@@ -43,7 +42,7 @@ sub handle_closed {
 sub read_command {
 	my( $self, $buffref, $eof ) =  @_;
 
-	warn 'New Command';
+	warn 'New Command: ' .$$buffref;
 
 
 	if( $$buffref =~ s/^(.*?)\r?(\n)// ) {
@@ -143,13 +142,14 @@ $loop =  IO::Async::Loop->new;
 
 sub uwsgi_signal_handler {
 	# warn time() ." Singal" .tinfo() ."\n"   if $ti;
-	warn 'Signal';
+	warn 'Signal arrive';
 
 	# First of all we should process loop queue: connect client, read data...
 	$loop->loop_once( 0 );
 
 	# ...now we can do something with that
 	DB::interact( 1 );
+	warn 'Signal processed';
 }
 
 
@@ -221,7 +221,9 @@ sub interact {
 
 	unless( $in_progress ) {
 		warn "Interact: " .tinfo()   if $ti;
-		printflush $DB::OUT "\nDBG>"; # TODO: print promt only when session is active
+		# DB::_all_frames();
+		# TODO: print promt only when session is active
+		printflush $DB::OUT "\nDBG" .( @_ ? ':' : '>' );
 		$in_progress++;
 	}
 
