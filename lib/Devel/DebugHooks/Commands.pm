@@ -476,11 +476,9 @@ $DB::commands =  {
 	}
 	,e => sub {
 		return {
-			expr => '$t',
+			expr => shift,
 			code => sub {
-				my( $args, $expr_result ) =  @_;
-
-				print $DB::out ">>>$args - $expr_result<<<\n";
+				print $DB::OUT pp @_;
 			}
 		}
 	}

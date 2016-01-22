@@ -17,25 +17,7 @@ sub process {
 	my $result =  eval { $DB::commands->{ $cmd }( $args_str ) };
 	do{ print $DB::OUT "'$cmd' command died: $@"; return 1; }   if $@;
 
-	if( defined $result ) {
-		return $result   unless ref $result;
-
-		# Allow commands to evaluate $expr at a debugged script context
-		if( ref( $result ) eq 'HASH' ) {
-			return $result->{ code }->(
-				$args_str
-				,DB::eval( $result->{ expr } ) # FIX: it is not evaled at script context
-			);
-		}
-
-		return $result;
-	}
-	else {
-		return;
-	}
-
-
-	return 0;
+	defined $result ? return $result : return;
 }
 
 1;
