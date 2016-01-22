@@ -742,6 +742,10 @@ sub interact {
 	local $DB::interaction =  $DB::interaction +1;
 
 	# interact() should return defined value to keep interaction
+	# 0 means: no command found, but keep interaction
+	# TRUE   : command found, keep interaction
+	# HASHREF: eval given expression and pass results to code
+	# negative: something wrong happened while running the command
 	if( my $str =  $DB::dbg->interact( @_ ) ) {
 		my $result =  $DB::dbg->process( $str );
 		return   unless defined $result;
@@ -755,6 +759,8 @@ sub interact {
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 		print $DB::OUT "\n";
+
+		return 0;
 	}
 
 	return;
