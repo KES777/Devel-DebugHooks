@@ -278,6 +278,7 @@ our @stack;          # array of hashes that alias DB:: ours of current frame
 our $IN;
 our $OUT;
 our %options;
+our $interaction;    # True if we interact with dbg client
 
 
 
@@ -365,7 +366,8 @@ BEGIN {
 BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
-	$DB::ext_call =  0;
+	$DB::ext_call //=  0;
+	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 	applyOptions();
 }
@@ -735,6 +737,10 @@ sub init {
 # TODO: remove clever things out of core. This modules should implement
 # only interface features
 sub interact {
+	return   if $DB::interaction;
+
+	local $DB::interaction =  $DB::interaction +1;
+
 	# interact() should return defined value to keep interaction
 	if( my $str =  $DB::dbg->interact( @_ ) ) {
 		my $result =  $DB::dbg->process( $str );
