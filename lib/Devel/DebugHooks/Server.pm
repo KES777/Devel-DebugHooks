@@ -230,8 +230,7 @@ sub interact {
 		$in_progress++;
 	}
 
-	printflush $DB::OUT tinfo()   if $ti;
-	printflush $DB::OUT "\nDBG>"; # TODO: print promt only when session is active
+	return   if @_  &&  !defined $dbg_buffer;
 
 	my $line =  &readline();
 	chomp $line;
