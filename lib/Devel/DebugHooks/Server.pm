@@ -39,20 +39,7 @@ sub handle_closed {
 sub read_command {
 	my( $self, $buffref, $eof ) =  @_;
 
-
-	my $caller;
-	my $level =  0;
-	1 while( ($caller =  (caller( $level++ ))[3])  &&  $caller ne 'DB::DB' );
-	# Is debugger sleeping at the current moment?
-	if( $caller ne 'DB::DB' ) {
-		if( $$buffref =~ s/^([\w.]+)(?:\s+(.*))?\n// ) {
-			$DB::commands->{ $1 }->( $2 );
-
-			return 1;
-		}
-
-		return 0;
-	}
+	warn 'New Command';
 
 
 	if( $$buffref =~ s/^(.*?)\r?(\n)// ) {
@@ -154,7 +141,11 @@ $loop =  IO::Async::Loop->new;
 sub uwsgi_signal_handler {
 	# print $DB::OUT time() ." Singal" .tinfo() ."\n"   if $ti;
 
+	# First of all we should process loop queue: connect client, read data...
 	$loop->loop_once( 0 );
+
+	# ...now we can do something with that
+	DB::interact( 1 );
 }
 
 
