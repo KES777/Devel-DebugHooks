@@ -513,6 +513,10 @@ $DB::commands =  {
 	,w    => \&watch
 	,load => \&load
 	,save => \&save
+	,pid  => sub {
+		print $DB::OUT Devel::DebugHooks::Server::tinfo();
+		return 1;
+	}
 };
 
 1;
