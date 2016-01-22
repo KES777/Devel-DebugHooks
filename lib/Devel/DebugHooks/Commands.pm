@@ -527,6 +527,15 @@ $DB::commands =  {
 		print $DB::OUT Devel::DebugHooks::Server::tinfo();
 		return 1;
 	}
+	,ge    => sub {
+		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+		$line =  $DB::line   unless defined $line;
+		$file =  file( $file );
+
+		`rsub $file`;
+
+		1
+	}
 };
 
 1;
