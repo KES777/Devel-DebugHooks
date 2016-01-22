@@ -715,7 +715,7 @@ sub DB {
 	# $DB::single has no effect
 
 	$DB::dbg->bbreak();
-	interact();
+	1 while( defined interact() );
 	$DB::dbg->abreak();
 }
 
@@ -732,24 +732,28 @@ sub init {
 
 
 
+# TODO: remove clever things out of core. This modules should implement
+# only interface features
 sub interact {
-	# TODO: remove clever things out of core. This modules should implement
-	# only interface features
 	# interact() should return defined value to keep interaction
-	while( defined ( my $str =  $DB::dbg->interact() ) ) {
+	if( my $str =  $DB::dbg->interact( @_ ) ) {
 		my $result =  $DB::dbg->process( $str );
-		last   unless defined $result;
-		next   if $result;
+		return   unless defined $result;
+		return $result   if $result;
 
 
 		# else no such command exists the entered string will be evaluated
-		# in context of current __FILE__:__LINE__ of a debugged script
+		# in __FILE__:__LINE__ context of script we are debugging
 		print $DB::OUT DB::eval( $str );
 		print $DB::OUT "ERROR: $@"   if $@;
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 		print $DB::OUT "\n";
-	}}
+	}
+
+	return;
+}
+
 
 
 sub trace_subs {
