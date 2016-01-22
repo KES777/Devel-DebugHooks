@@ -74,6 +74,7 @@ sub list {
 	if( $old_DB_line != $DB::line ) {
 		$old_DB_line =  $DB::line;
 		$line_cursor =  $DB::line;
+		$curr_file   =  $DB::file;
 	}
 
 	unless( @_ ) {
