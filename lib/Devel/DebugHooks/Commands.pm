@@ -490,6 +490,14 @@ $DB::commands =  {
 		my( $level ) =  shift =~ m/^(\d+)$/;
 		$level =  -1   unless $level;
 
+		my $T =  {()
+			,oneline   =>
+				'"\n$d $type $context $subname$args <--  $file:$line\n"'
+			,multiline =>
+				'"\n$d $type $subname\n    $context $args\n    <--  $file:$line\n"'
+		};
+		my $format =  'multiline';
+
 		my $deep =  @DB::stack;
 		for my $frame ( DB::frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
@@ -505,7 +513,7 @@ $DB::commands =  {
 			}
 
 			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
-			print $DB::OUT "$d $type $context $subname$args <--  $file:$line\n";
+			print $DB::OUT eval $T->{ $format };
 			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
 			last   unless --$level;
 		}
