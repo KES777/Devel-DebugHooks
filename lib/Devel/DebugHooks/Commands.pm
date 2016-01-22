@@ -489,7 +489,7 @@ $DB::commands =  {
 	,T => sub {
 		my $deep =  @DB::stack;
 		for my $frame ( DB::frames ) {
-			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : '.';
+			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
 			my $type    =  $cmd_T{ $frame->[0] };
 			my $subname =  $frame->[5];
 			my $args    =  $frame->[6] ? $frame->[1] : '';
