@@ -737,7 +737,7 @@ sub init {
 # TODO: remove clever things out of core. This modules should implement
 # only interface features
 sub interact {
-	return   if $DB::interaction;
+	return   if @_  &&  $DB::interaction;
 
 	local $DB::interaction =  $DB::interaction +1;
 
