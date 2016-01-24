@@ -352,7 +352,8 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			if( !defined $DB::sub ) {
+			my $sub =  $DB::goto_frames[ -1 ][ 3 ];
+			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
@@ -363,7 +364,8 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			if( !defined $DB::sub ) {
+			my $sub =  $DB::goto_frames[ -1 ][ 3 ];
+			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
