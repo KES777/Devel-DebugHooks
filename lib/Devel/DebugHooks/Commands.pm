@@ -318,11 +318,11 @@ $DB::commands =  {
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
 		if( $type & 1 ) {
-			print $DB::OUT "\nMY:\n", Data::Dump::pp( PadWalker::peek_my( $level ) ), "\n";
+			print $DB::OUT "\nMY:\n", join( ', ', sort keys %{ PadWalker::peek_my( $level ) } ), "\n";
 		}
 
 		if( $type & 2 ) {
-			print $DB::OUT "\nOUR:\n", Data::Dump::pp( PadWalker::peek_our( $level ) ), "\n";
+			print $DB::OUT "\nOUR:\n", join( ', ', sort keys %{ PadWalker::peek_our( $level ) } ), "\n";
 		}
 
 		if( $type & 4 ) {
@@ -356,7 +356,7 @@ $DB::commands =  {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
-				print $DB::OUT Data::Dump::pp( PadWalker::peek_sub( \&$DB::sub ) ), "\n";
+				print $DB::OUT join( ', ', sort keys %{ PadWalker::peek_sub( $sub ) } ), "\n";
 			}
 		}
 
@@ -367,7 +367,7 @@ $DB::commands =  {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
-				print $DB::OUT Data::Dump::pp( (PadWalker::closed_over( \&$DB::sub ))[0] ), "\n";
+				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
 			}
 		}
 
