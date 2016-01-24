@@ -382,7 +382,7 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
-		my $traps =  DB::traps( file( $file // $DB::file ) );
+		my $traps =  DB::traps( file( $file ) );
 		return -1   unless exists $traps->{ $line };
 
 
@@ -402,15 +402,14 @@ $DB::commands =  {
 		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
 
 		$line     =  $DB::line   if $line eq '.';
-		$file     =  file( $file // $DB::file );
-
-		my $traps =  DB::traps( $file );
+		$file     =  file( $file );
 
 
 		# list all breakpoints
 		unless( $line ) {
 			$cmd_f =  [];
 			my $line_no =  0;
+			# First display traps in the current file
 			for my $source ( $file, grep { $_ ne $file } keys %$DB::_tfiles ) {
 				my $traps =  DB::traps( $source );
 				next   unless keys %$traps;
@@ -440,6 +439,7 @@ $DB::commands =  {
 		}
 
 
+		my $traps =  DB::traps( $file );
 		# set breakpoint
 		if( defined $tmp ) {
 			$traps->{ $line }{ tmp } =  1;
