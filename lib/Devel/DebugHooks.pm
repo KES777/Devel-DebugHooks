@@ -784,7 +784,7 @@ sub interact {
 		print $DB::OUT "ERROR: $@"   if $@;
 
 		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
-		print $DB::OUT "\n";
+		# print $DB::OUT "\n";
 
 		return 0;
 	}
