@@ -386,6 +386,12 @@ BEGIN { # Initialization goes here
 		sub file {
 			my $filename =  shift // $DB::file;
 
+			unless( exists ${ 'main::' }{ "_<$filename" } ) {
+				warn "File '$filename' is not compiled yet";
+
+				return;
+			}
+
 			return ${ "::_<$filename" };
 		}
 
@@ -393,6 +399,8 @@ BEGIN { # Initialization goes here
 
 		sub source {
 			my $filename =  shift // $DB::file;
+
+			return   unless file( $filename );
 
 			return \@{ "::_<$filename" };
 		}
@@ -408,6 +416,8 @@ BEGIN { # Initialization goes here
 		sub traps {
 			my $filename =  shift // $DB::file;
 
+			return   unless file( $filename );
+
 			$DB::_tfiles->{ $filename } =  1;
 
 			return \%{ "::_<$filename" };
@@ -421,7 +431,9 @@ BEGIN { # Initialization goes here
 			($file, $line) =  split ':', $file
 				unless defined $line;
 
-			return defined ${ "::_<$file" }  &&  $line <= $#{ "::_<$file" }
+			return   unless file( $file );
+
+			return $line <= $#{ "::_<$file" }
 				&& ${ "::_<$file" }[ $line ] != 0;
 		}
 	}
