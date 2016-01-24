@@ -440,9 +440,11 @@ BEGIN { # Initialization goes here
 
 	sub eval {
 		my $package; # BUG: PadWalker does not show DB::eval's lexicals
-		# BUG? It is better that PadWalker return undef instead of warn
+		# BUG? It is better that PadWalker return undef instead of warn when out of level
 
 		$package =  $#_ > 1 ? shift : $DB::package;
+		# BUG? expects NO, returns YES if I use 'package' keyword
+		#my $res =  eval "package xxx; defined DB::file( 'zzz' ) ? 'YES':'NO'";
 		eval "package $package; $_[0]";
 	}
 
