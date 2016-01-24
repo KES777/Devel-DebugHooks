@@ -441,7 +441,7 @@ $DB::commands =  {
 	}
 
 	,go => sub {
-		if( defined $_[0] ) {
+		if( defined $_[0]  &&  $_[0] ne '' ) {
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
