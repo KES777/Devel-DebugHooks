@@ -408,14 +408,14 @@ $DB::commands =  {
 		# list all breakpoints
 		unless( $line ) {
 			$cmd_f =  [];
-			my $line_no =  0;
+			my $file_no =  0;
 			# First display traps in the current file
 			for my $source ( $file, grep { $_ ne $file } keys %$DB::_tfiles ) {
 				my $traps =  DB::traps( $source );
 				next   unless keys %$traps;
 
 				push @$cmd_f, $source;
-				print $DB::OUT $line_no++ ." $source\n";
+				print $DB::OUT $file_no++ ." $source\n";
 
 				for( sort keys %$traps ) {
 					next   unless exists $traps->{ $_ }{ condition }
@@ -480,12 +480,12 @@ $DB::commands =  {
 
 		# List available files
 		$cmd_f   =  [];
-		my $line_no =  0;
+		my $file_no =  0;
 		for( sort $0, values %INC ) {
 		# for( sort $0, keys %$expr ) {
 			if( /(?:$args)/ ) {
 				push @$cmd_f, $_;
-				print $DB::OUT $line_no++ ." $_\n";
+				print $DB::OUT $file_no++ ." $_\n";
 			}
 		}
 
