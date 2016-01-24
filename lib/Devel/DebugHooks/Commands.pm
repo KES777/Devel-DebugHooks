@@ -405,11 +405,14 @@ $DB::commands =  {
 
 		# list all breakpoints
 		unless( $line ) {
-			for my $source ( $file, keys %$DB::_tfiles ) {
+			$cmd_f =  [];
+			my $line_no =  0;
+			for my $source ( $file, grep { $_ ne $file } keys %$DB::_tfiles ) {
 				my $traps =  DB::traps( $source );
 				next   unless keys %$traps;
 
-				print $DB::OUT "$source\n";
+				push @$cmd_f, $source;
+				print $DB::OUT $line_no++ ." $source\n";
 
 				for( sort keys %$traps ) {
 					next   unless exists $traps->{ $_ }{ condition }
