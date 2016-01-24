@@ -71,6 +71,7 @@ sub _list {
 
 		print $DB::OUT $line == $DB::line ? '>>' : '  ';
 
+		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
 		print $DB::OUT "$line: " .$source->[ $line ];
 	}
 }
