@@ -64,8 +64,8 @@ sub _list {
 
 
 # TODO: make variables global/configurable
-my $lines_before =  20;
-my $lines_after  =  8;
+my $lines_before =  15;
+my $lines_after  =  15;
 my $line_cursor;
 my $old_DB_line  =  -1;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
