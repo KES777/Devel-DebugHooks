@@ -476,12 +476,12 @@ $DB::commands =  {
 
 				# List available files
 				$cmd_f   =  [];
-				my $line =  0;
+				my $line_no =  0;
 				for( sort $0, values %INC ) {
 				# for( sort $0, keys %$expr ) {
 					if( /(?:$args)/ ) {
 						push @$cmd_f, $_;
-						print $DB::OUT $line++ ." $_\n";
+						print $DB::OUT $line_no++ ." $_\n";
 					}
 				}
 
