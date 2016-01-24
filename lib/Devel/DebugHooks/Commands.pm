@@ -367,6 +367,9 @@ $DB::commands =  {
 		1;
 	}
 	,B => sub {
+		my( $args, $opts ) =  @_;
+		$opts->{ verbose } //=  1;
+
 		if( $_[0] eq '*' ) {
 			#TODO: implement removing all traps
 		}
@@ -384,6 +387,9 @@ $DB::commands =  {
 		# WORKAROUND: we should explicitly set value to 0 then delete the key
 		$traps->{ $line } =  0;
 		delete $traps->{ $line };
+
+
+		$DB::commands->{ b }->()   if $opts->{ verbose };
 
 		1;
 	}
