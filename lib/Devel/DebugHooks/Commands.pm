@@ -27,11 +27,13 @@ my $cmd_f;
 sub file {
 	return $curr_file   unless defined $_[0];
 
-	$curr_file =  shift;
-	$curr_file =  $cmd_f->[ $curr_file ]
-		if $curr_file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $curr_file ];
+	my( $file, $do_not_set ) =  @_;
+	$file =  $cmd_f->[ $file ]
+		if $file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $file ];
 
-	return $curr_file;
+	$curr_file =  $file   unless $do_not_set;
+
+	return $file;
 }
 
 
@@ -382,7 +384,7 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
-		my $traps =  DB::traps( file( $file ) );
+		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
 
@@ -402,7 +404,7 @@ $DB::commands =  {
 		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
 
 		$line     =  $DB::line   if $line eq '.';
-		$file     =  file( $file );
+		$file     =  file( $file, 1 );
 
 
 		# list all breakpoints
