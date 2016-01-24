@@ -314,7 +314,6 @@ $DB::commands =  {
 		$level +=  5;  # The first client frame
 
 		require 'PadWalker.pm';
-		require 'Data/Dump.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
 		if( $type & 1 ) {
@@ -346,7 +345,19 @@ $DB::commands =  {
 			}
 			delete $stash->{ sub }   if $DB::package eq 'DB';
 
-			print $DB::OUT "\nGLOBAL:\n", Data::Dump::pp( $stash ), "\n";
+			my @globals =  ();
+			my %sigil =  ( SCALAR => '$', ARRAY => '@', HASH => '%' );
+			for my $key ( keys %$stash ) {
+				my $glob =  $stash->{ $key };
+				for my $type ( keys %sigil ) {
+					next   unless defined *{ $glob }{ $type };
+					next   if $type eq 'SCALAR'  &&  !defined $$glob;
+					next   if $key =~ /::/;
+					push @globals, $sigil{ $type } .$key;
+				}
+			}
+
+			print $DB::OUT "\nGLOBAL:\n", join( ', ', sort @globals ), "\n";
 		}
 
 		if( $type & 8 ) {
