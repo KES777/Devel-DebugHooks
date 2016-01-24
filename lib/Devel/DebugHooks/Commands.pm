@@ -470,31 +470,26 @@ $DB::commands =  {
 	}
 
 	,f => sub {
-		# return {
-		# 	expr => '\%INC'
-		# 	,code => sub {
-				my( $args, $expr ) =  @_;
+		my( $args, $expr ) =  @_;
 
-				# Set current file to selected one:
-				if( $args ne ''  &&  $args =~ /^(\d+)$/ ) {
-					print $DB::OUT file( $args ) ."\n";
-					return 1;
-				}
+		# Set current file to selected one:
+		if( $args ne ''  &&  $args =~ /^(\d+)$/ ) {
+			print $DB::OUT file( $args ) ."\n";
+			return 1;
+		}
 
-				# List available files
-				$cmd_f   =  [];
-				my $line_no =  0;
-				for( sort $0, values %INC ) {
-				# for( sort $0, keys %$expr ) {
-					if( /(?:$args)/ ) {
-						push @$cmd_f, $_;
-						print $DB::OUT $line_no++ ." $_\n";
-					}
-				}
+		# List available files
+		$cmd_f   =  [];
+		my $line_no =  0;
+		for( sort $0, values %INC ) {
+		# for( sort $0, keys %$expr ) {
+			if( /(?:$args)/ ) {
+				push @$cmd_f, $_;
+				print $DB::OUT $line_no++ ." $_\n";
+			}
+		}
 
-				1;
-		# 	}
-		# }
+		1;
 	}
 	,e => sub {
 		return {
