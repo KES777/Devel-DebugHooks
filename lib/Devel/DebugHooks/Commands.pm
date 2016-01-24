@@ -174,7 +174,7 @@ sub load {
 
 	my $traps =  do $file;
 	for( keys %$traps ) {
-		%{ DB::traps( $_ ) } =  %{ $traps->{ $_ } };
+		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
 
 
