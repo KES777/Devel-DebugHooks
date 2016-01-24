@@ -10,16 +10,28 @@ use Data::Dump qw/ pp /;
 
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
-my $cmd_f;
+
+# reset $line_cursor if DB::DB were called. BUG: if DB::DB called twice for same line
+my $line_cursor;
+my $old_DB_line  =  -1;
 my $curr_file;
+sub update_fl {
+	if( $old_DB_line != $DB::line ) {
+		$old_DB_line =  $DB::line;
+		$line_cursor =  $DB::line;
+		$curr_file   =  $DB::file;
+	}
+}
+
+my $cmd_f;
 sub file {
-	return $curr_file // $DB::file  unless defined $_[0];
+	return $curr_file   unless defined $_[0];
 
 	$curr_file =  shift;
 	$curr_file =  $cmd_f->[ $curr_file ]
 		if $curr_file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $curr_file ];
 
-	return $curr_file // $DB::file;
+	return $curr_file;
 }
 
 
@@ -66,18 +78,10 @@ sub _list {
 # TODO: make variables global/configurable
 my $lines_before =  15;
 my $lines_after  =  15;
-my $line_cursor;
-my $old_DB_line  =  -1;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
 sub list {
+	update_fl();
 	shift   if @_ == 1  &&   (!defined $_[0] || $_[0] eq '');
-
-	# reset $line_cursor if DB::DB were called. BUG: if DB::DB called twice for same line
-	if( $old_DB_line != $DB::line ) {
-		$old_DB_line =  $DB::line;
-		$line_cursor =  $DB::line;
-		$curr_file   =  $DB::file;
-	}
 
 	unless( @_ ) {
 
@@ -378,7 +382,7 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
-		my $traps =  DB::traps( file( $file ) );
+		my $traps =  DB::traps( file( $file // $DB::file ) );
 		return -1   unless exists $traps->{ $line };
 
 
@@ -398,7 +402,7 @@ $DB::commands =  {
 		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
 
 		$line     =  $DB::line   if $line eq '.';
-		$file     =  file( $file );
+		$file     =  file( $file // $DB::file );
 
 		my $traps =  DB::traps( $file );
 
