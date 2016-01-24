@@ -305,13 +305,13 @@ $DB::commands =  {
 			$type |= 4    if /^g|global$/;
 			$type |= 8    if /^u|used$/;
 			$type |= 16   if /^c|closured$/;
-			$type |= 24   if /^s|sub$/;
+			$type |= 24   if /^s|sub$/;       #u+c
 
 			$level =  $1  if /^(\d+)$/;
 		}
 
-		$type ||= 7;  # TODO: make defaults configurable
-		$level +=  4; # The first client frame
+		$type ||=  7;  # TODO: make defaults configurable
+		$level +=  5;  # The first client frame
 
 		require 'PadWalker.pm';
 		require 'Data/Dump.pm';
