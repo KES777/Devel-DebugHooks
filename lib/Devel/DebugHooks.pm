@@ -282,6 +282,7 @@ our $IN;
 our $OUT;
 our %options;
 our $interaction;    # True if we interact with dbg client
+our %stop_in_sub;    # In this hash key is sub name we want to stop on
 
 
 
@@ -816,6 +817,12 @@ sub trace_subs {
 
 	push @DB::goto_frames,
 		[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ];
+
+	# Stop on the first OP in a given subroutine
+	$DB::single =  1
+		if exists $DB::stop_in_sub{ $DB::sub }
+		|| grep{ $DB::sub =~ m/$_$/ } keys %DB::stop_in_sub;
+
 
 	if( $options{ trace_subs } ) {
 		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
