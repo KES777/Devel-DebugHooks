@@ -477,6 +477,9 @@ $DB::commands =  {
 				}
 			}
 
+			print $DB::OUT "Stop on subs:\n";
+			print $DB::OUT "$_\n"   for keys %DB::stop_in_sub;
+
 			return 1;
 		}
 
