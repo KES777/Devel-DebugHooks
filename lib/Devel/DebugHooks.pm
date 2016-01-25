@@ -711,8 +711,10 @@ sub DB {
 			$stop ||=  1;
 		}
 
-		# Stop if breakpoint condition evaluated to true value
-		if( exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } ) ) {
+		# Stop if breakpoint not disabled and condition evaluated to true value
+		if( !exists $trap->{ disabled }
+			&&  exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } )
+		) {
 			$stop ||=  1;
 		}
 
@@ -822,9 +824,13 @@ sub trace_subs {
 		[ $DB::package, $DB::file, $DB::line, $DB::sub, $last_frames, $_[0] ];
 
 	# Stop on the first OP in a given subroutine
+	my $sis =  \%DB::stop_in_sub;
 	$DB::single =  1
-		if exists $DB::stop_in_sub{ $DB::sub }
-		|| grep{ $DB::sub =~ m/$_$/ } keys %DB::stop_in_sub;
+		# First of all we check full match ...
+		if $sis->{ $DB::sub }
+		# ... then check not disabled partially matched subnames
+		|| grep{ $sis->{ $_ }  &&  $DB::sub =~ m/$_$/ } keys %$sis;
+		# TODO: implement condition to stop on
 
 
 	if( $options{ trace_subs } ) {
