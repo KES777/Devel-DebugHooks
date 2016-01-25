@@ -478,9 +478,13 @@ $DB::commands =  {
 
 				for( sort keys %$traps ) {
 					next   unless exists $traps->{ $_ }{ condition }
-						||  exists $traps->{ $_ }{ tmp };
+						||  exists $traps->{ $_ }{ tmp }
+						||  exists $traps->{ $_ }{ disabled }
+						;
 
-					print $DB::OUT "$_: ". $traps->{ $_ }{ condition }
+					print $DB::OUT $_
+						. ( exists $traps->{ $_ }{ disabled } ? '- ' : ': ' )
+						. $traps->{ $_ }{ condition }
 						. ( $traps->{ $_ }{ tmp } ? '!' : '' )
 						."\n";
 					warn "The breakpoint at $_ is zero and should be deleted"
@@ -489,7 +493,8 @@ $DB::commands =  {
 			}
 
 			print $DB::OUT "Stop on subs:\n";
-			print $DB::OUT "$_\n"   for keys %DB::stop_in_sub;
+			print $DB::OUT ($DB::stop_in_sub{ $_ } ? '' : '-') ."$_\n"
+				for keys %DB::stop_in_sub;
 
 			return 1;
 		}
