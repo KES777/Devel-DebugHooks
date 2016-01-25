@@ -101,6 +101,7 @@ sub list {
 		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
 			my( $run_file, $run_line );
 			if( $stack ) {
+				# Here $line_cursor is stack frame number from the top
 				my @frames =  DB::frames();
 				( $run_file, $run_line ) =  @{ $frames[ $line_cursor -1 ] }[3,4];
 				# TODO: save window level to show vars automatically at that level
@@ -421,6 +422,8 @@ $DB::commands =  {
 
 			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
+				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
+				# convert this to subroutine refs
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
@@ -514,6 +517,8 @@ $DB::commands =  {
 				print $DB::OUT $file_no++ ." $source\n";
 
 				for( sort keys %$traps ) {
+					# FIX: the trap may be in form '293 => {}' in this case
+					# we do not see it ever
 					next   unless exists $traps->{ $_ }{ condition }
 						||  exists $traps->{ $_ }{ tmp }
 						||  exists $traps->{ $_ }{ disabled }
