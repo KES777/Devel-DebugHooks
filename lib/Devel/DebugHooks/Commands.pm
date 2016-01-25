@@ -439,7 +439,15 @@ $DB::commands =  {
 	}
 
 	,b => sub {
-		my( $file, $line, $condition, $tmp ) =  shift =~ m/^${file_line}(?:\s+(.*))?(!)?$/;
+		my( $file, $line, $subname, $condition, $tmp ) =
+			shift =~ m/^(?:${file_line}|([\w:]+))(?:\s+(.*))?(!)?$/;
+
+
+		if( defined $subname ) {
+			$DB::stop_in_sub{ $subname } =  1;
+			return 1;
+		}
+
 
 		$line     =  $DB::line   if $line eq '.';
 		$file     =  file( $file, 1 );
