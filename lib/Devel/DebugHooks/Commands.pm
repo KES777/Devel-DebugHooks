@@ -193,10 +193,13 @@ sub load {
 	$file ||=  '/home/feelsafe/.dbgini';
 
 
-	my $traps =  do $file;
+	my( $stops, $traps ) =  do $file;
+
 	for( keys %$traps ) {
 		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
+
+	@DB::stop_in_sub{ keys %$stops } =  values %$stops;
 
 
 	return 1;
@@ -218,7 +221,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh pp $traps;
+	print $fh pp \%DB::stop_in_sub, $traps;
 
 	return 1;
 }
