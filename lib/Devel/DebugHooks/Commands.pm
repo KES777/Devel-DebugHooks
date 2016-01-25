@@ -455,7 +455,8 @@ $DB::commands =  {
 
 
 		if( defined $subname ) {
-			$DB::stop_in_sub{ $subname } =  1;
+			$DB::stop_in_sub{ $subname } =
+				defined $sign  &&  $sign eq '-' ? 0 : 1;
 			return 1;
 		}
 
@@ -500,15 +501,24 @@ $DB::commands =  {
 		}
 
 
+		# set breakpoint
 		unless( DB::can_break( $file, $line ) ) {
 			print $DB::OUT file(). "This line is not breakable\n";
 			return -1;
 		}
 
-
 		my $traps =  DB::traps( $file );
-		# set breakpoint
-		if( defined $tmp ) {
+		# TODO: Move trap from/into $traps into/from $disabled_traps
+		# This will allow us to not trigger DB::DB if trap is disabled
+		if( $sign ){
+			if( $sign eq '-' ) {
+				$traps->{ $line }{ disabled } =  1;
+			}
+			elsif( $sign eq '+' ) {
+				delete $traps->{ $line }{ disabled };
+			}
+		}
+		elsif( defined $tmp ) {
 			$traps->{ $line }{ tmp } =  1;
 		}
 		else {
@@ -618,7 +628,7 @@ $DB::commands =  {
 
 		`rsub $file`;
 
-		1
+		1;
 	}
 };
 
