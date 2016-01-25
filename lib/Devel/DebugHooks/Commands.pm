@@ -98,11 +98,20 @@ sub list {
 
 	if( @_ == 1 ) {
 		my $arg =  shift;
-		if( ( $file, $line_cursor ) =  $arg =~ m/^${file_line}$/ ) {
-			$line_cursor   =  $DB::line   if $line_cursor eq '.';
-			$line_cursor //=  $line;
+		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
+			my( $run_file, $run_line );
+			if( $stack ) {
+				my @frames =  DB::frames();
+				( $run_file, $run_line ) =  @{ $frames[ $line_cursor -1 ] }[3,4];
+				# TODO: save window level to show vars automatically at that level
+				$file        =  $run_file;
+				$line_cursor =  $run_line;
+			}
+			else {
+				$line_cursor   =  $DB::line   if $line_cursor eq '.';
+			}
 
-			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file );
+			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
