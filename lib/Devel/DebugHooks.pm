@@ -230,7 +230,7 @@ sub _all_frames {
 	my( $count ) =  @_;
 	$count //=  -1; # infinite
 
-	my $lvl =  1;
+	my $lvl =  0;
 	# $x  &&  $y = 3 in this case '=' op precedence should be higher then &&
 	while( $count--  &&  (my @frame =  caller( $lvl )) ) {
 		print $DB::OUT "ORIG: @frame[0..3,5]\n";
