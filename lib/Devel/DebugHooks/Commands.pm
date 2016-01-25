@@ -116,8 +116,8 @@ sub list {
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
 		# FIX: the code ref maybe $_[0], $hash->{ key }
-		elsif( my( $coderef, $subname ) =   $arg =~ m/^(\$?)([\w:]+)$/ ) {
-			# List sub by code ref
+		# NOTICE: $level take effect only if '&' sign present. In other cases (\d*) should not match
+		elsif( my( $coderef, $subname, $level ) =   $arg =~ m/^(\$?)([\w:]+|\&)(\d*)$/ ) {
 			my $deparse =  sub {
 				require B::Deparse;
 				my( $coderef ) =  @_;
@@ -130,6 +130,18 @@ sub list {
 			};
 
 
+			# 1.List the current sub or n frames before
+			# TODO: Check is it possible to spy subs from goto_frames?
+			# If yes think about interface to access to them ( DB::frames??? )
+			if( $subname eq '&' ) {
+				$level //=  0;
+				my $coderef =  $DB::stack[ -$level -1 ]{ sub };
+				print $DB::OUT "sub $coderef ";
+				$coderef =  \&$coderef   unless ref $coderef;
+				return $deparse->( $coderef );
+			}
+
+			# 2. List sub by code ref in the variable
 			# TODO: locate this sub at '_<$file' hash and do usual _list
 			# to show breakpoints, lines etc
 			$coderef  &&  return {()
@@ -407,7 +419,7 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			my $sub =  $DB::goto_frames[ -1 ][ 3 ];
+			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 			}
@@ -419,7 +431,7 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			my $sub =  $DB::goto_frames[ -1 ][ 3 ];
+			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 			}
