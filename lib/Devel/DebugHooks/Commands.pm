@@ -118,24 +118,27 @@ sub list {
 		# FIX: the code ref maybe $_[0], $hash->{ key }
 		elsif( my( $coderef, $subname ) =   $arg =~ m/^(\$?)([\w:]+)$/ ) {
 			# List sub by code ref
+			my $deparse =  sub {
+				require B::Deparse;
+				my( $coderef ) =  @_;
+				return -1   unless ref $coderef eq 'CODE';
+
+				print $DB::OUT B::Deparse->new("-p", "-sC")
+					->coderef2text( $coderef );
+
+				return 1;
+			};
+
+
 			# TODO: locate this sub at '_<$file' hash and do usual _list
 			# to show breakpoints, lines etc
 			$coderef  &&  return {()
 				,expr =>  "\$$subname"
-				,code =>  sub {
-					require B::Deparse;
-					my( $coderef ) =  @_;
-					return -1   unless ref $coderef eq 'CODE';
-
-					print $DB::OUT B::Deparse->new("-p", "-sC")
-						->coderef2text( $coderef );
-
-					return 1;
-				}
+				,code =>  $deparse
 			};
 
 
-			# List sub from source
+			# 3. List sub from source
 			$subname =  "${ DB::package }::${ subname }"
 				if $subname !~ m/::/;
 
