@@ -438,6 +438,7 @@ $DB::commands =  {
 			# TODO? should we remove all matched keys?
 		}
 		else {
+			$line     =  $DB::line   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
