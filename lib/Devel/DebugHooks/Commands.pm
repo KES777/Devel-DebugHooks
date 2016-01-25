@@ -419,18 +419,24 @@ $DB::commands =  {
 		}
 
 
-		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+		my( $file, $line, $subname ) =  shift =~ m/^${file_line}|([\w:]+)$/;
 
 
-		my $traps =  DB::traps( file( $file, 1 ) );
-		return -1   unless exists $traps->{ $line };
+		if( defined $subname ) {
+			delete $DB::stop_in_sub{ $subname };
+			# TODO? should we remove all matched keys?
+		}
+		else {
+			my $traps =  DB::traps( file( $file, 1 ) );
+			return -1   unless exists $traps->{ $line };
 
 
-		# Q: Why deleting a key does not remove a breakpoint for that line?
-		# A: Because this is the internal hash
-		# WORKAROUND: we should explicitly set value to 0 then delete the key
-		$traps->{ $line } =  0;
-		delete $traps->{ $line };
+			# Q: Why deleting a key does not remove a breakpoint for that line?
+			# A: Because this is the internal hash
+			# WORKAROUND: we should explicitly set value to 0 then delete the key
+			$traps->{ $line } =  0;
+			delete $traps->{ $line };
+		}
 
 
 		$DB::commands->{ b }->()   if $opts->{ verbose };
