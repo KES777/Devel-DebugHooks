@@ -338,8 +338,9 @@ $DB::commands =  {
 			$level =  $1  if /^(\d+)$/;
 		}
 
+		my $dbg_frames =  5;     # Count of debugger frames
 		$type ||=  7;  # TODO: make defaults configurable
-		$level +=  5;  # The first client frame
+		$level +=  $dbg_frames;  # The first client frame
 
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
