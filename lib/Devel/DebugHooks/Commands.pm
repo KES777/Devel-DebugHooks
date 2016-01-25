@@ -105,6 +105,9 @@ sub list {
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
 		elsif( my( $coderef, $subname ) =   $arg =~ m/^(\$?)([\w:]+)$/ ) {
+			# List sub by code ref
+			# TODO: locate this sub at '_<$file' hash and do usual _list
+			# to show breakpoints, lines etc
 			$coderef  &&  return {()
 				,expr =>  "\$$subname"
 				,code =>  sub {
@@ -120,6 +123,7 @@ sub list {
 			};
 
 
+			# List sub from source
 			$subname =  "${ DB::package }::${ subname }"
 				if $subname !~ m/::/;
 
@@ -334,6 +338,9 @@ $DB::commands =  {
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
 		if( $type & 1 ) {
+			# TODO: for terminals which support color show
+			# 1. not used variables as grey
+			# 2. closed over variables as green or bold
 			print $DB::OUT "\nMY:\n", join( ', ', sort keys %{ PadWalker::peek_my( $level ) } ), "\n";
 		}
 
