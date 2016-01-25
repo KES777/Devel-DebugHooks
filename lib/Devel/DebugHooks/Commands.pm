@@ -104,7 +104,22 @@ sub list {
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
-		elsif( my( $subname ) =   $arg =~ m/^([\w:]+)$/ ) {
+		elsif( my( $coderef, $subname ) =   $arg =~ m/^(\$?)([\w:]+)$/ ) {
+			$coderef  &&  return {()
+				,expr =>  "\$$subname"
+				,code =>  sub {
+					require B::Deparse;
+					my( $coderef ) =  @_;
+					return -1   unless ref $coderef eq 'CODE';
+
+					print $DB::OUT B::Deparse->new("-p", "-sC")
+						->coderef2text( $coderef );
+
+					return 1;
+				}
+			};
+
+
 			$subname =  "${ DB::package }::${ subname }"
 				if $subname !~ m/::/;
 
@@ -113,6 +128,8 @@ sub list {
 			if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
 				_list( $2, $3, $1 );
 			}
+
+			return 1;
 		}
 		else {
 			print $DB::OUT "Unknown paramenter: $arg\n";
