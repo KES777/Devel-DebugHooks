@@ -446,6 +446,9 @@ BEGIN { # Initialization goes here
 		$package =  $#_ > 1 ? shift : $DB::package;
 		# BUG? expects NO, returns YES if I use 'package' keyword
 		#my $res =  eval "package xxx; defined DB::file( 'zzz' ) ? 'YES':'NO'";
+		# warn "eval: package $package; $_[0]"; # FIX: external call
+		# FIX: can not evaluate @_, $_ at the context of user code, just string
+		# @_ is returned
 		eval "package $package; $_[0]";
 	}
 

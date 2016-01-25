@@ -161,6 +161,8 @@ uwsgi::postfork( sub{
 	$loop->loop_once( 0 );
 	# Useless. Signals are sended to worker only after it is forked
 	# uwsgi::signal( 1 );
+	# NOTE: if I 'die' here I get assertion
+	# uwsgi: perl.c:539: perl_destruct: Assertion `(my_perl->Iscopestack_ix) == 1' failed.
 });
 
 

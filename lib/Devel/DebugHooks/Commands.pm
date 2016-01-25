@@ -104,6 +104,7 @@ sub list {
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
+		# FIX: the code ref maybe $_[0], $hash->{ key }
 		elsif( my( $coderef, $subname ) =   $arg =~ m/^(\$?)([\w:]+)$/ ) {
 			# List sub by code ref
 			# TODO: locate this sub at '_<$file' hash and do usual _list
@@ -196,6 +197,7 @@ sub load {
 	my( $stops, $traps ) =  do $file;
 
 	for( keys %$traps ) {
+		# TODO? do we need to can_break( $file, $line )?
 		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
 
