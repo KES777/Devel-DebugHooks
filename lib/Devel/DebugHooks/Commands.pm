@@ -424,10 +424,14 @@ $DB::commands =  {
 		}
 
 
-		my( $file, $line, $subname ) =  shift =~ m/^${file_line}|([\w:]+)$/;
+		my( $file, $line, $subname ) =  shift =~ m/^${file_line}|([\w:]+|&)$/;
 
 
 		if( defined $subname ) {
+			if( $subname eq '&' ) {
+				$subname =  $DB::goto_frames[ -1 ][ 3 ];
+				return -1   if ref $subname; # can not set trap on coderef
+			}
 			delete $DB::stop_in_sub{ $subname };
 			# TODO? should we remove all matched keys?
 		}
@@ -451,10 +455,14 @@ $DB::commands =  {
 
 	,b => sub {
 		my( $sign, $file, $line, $subname, $condition, $tmp ) =
-			shift =~ m/^([-+])?(?:${file_line}|([\w:]+))(?:\s+(.*))?(!)?$/;
+			shift =~ m/^([-+])?(?:${file_line}|([\w:]+|&))(?:\s+(.*))?(!)?$/;
 
 
 		if( defined $subname ) {
+			if( $subname eq '&' ) {
+				$subname =  $DB::goto_frames[ -1 ][ 3 ];
+				return -1   if ref $subname; # can not set trap on coderef
+			}
 			$DB::stop_in_sub{ $subname } =
 				defined $sign  &&  $sign eq '-' ? 0 : 1;
 			return 1;
