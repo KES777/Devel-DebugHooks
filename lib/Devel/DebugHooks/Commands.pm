@@ -600,8 +600,9 @@ $DB::commands =  {
 		};
 		my $format =  'multiline';
 
-		my $deep =  @DB::stack;
-		for my $frame ( DB::frames ) {
+		my @frames =  DB::frames();
+		my $deep   =  @frames;
+		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
 			my $type    =  $cmd_T{ $frame->[0] };
 			my $subname =  $frame->[5];
