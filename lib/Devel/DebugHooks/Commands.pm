@@ -69,7 +69,7 @@ sub _list {
 			print $DB::OUT '  ';
 		}
 
-		print $DB::OUT $line == $DB::line ? '>>' : '  ';
+		print $DB::OUT $file eq $DB::file  &&  $line == $DB::line ? '>>' : '  ';
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
 		print $DB::OUT "$line: " .$source->[ $line ];
