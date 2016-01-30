@@ -65,7 +65,8 @@ sub _list {
 
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
-			print $DB::OUT exists $traps->{ $line }{ condition }? 'b' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ tmp } ? '!'
+				: exists $traps->{ $line }{ condition }? 'b' : ' ';
 		}
 		else {
 			print $DB::OUT '  ';
