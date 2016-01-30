@@ -46,6 +46,7 @@ my %cmd_T = (
 );
 
 
+# TODO: implement trim for wide lines to fit text into window size
 sub _list {
 	my( $from, $to, $file, $run_file, $run_line ) =  @_;
 	$run_file //=  $DB::file;
@@ -139,6 +140,8 @@ sub list {
 			# If yes think about interface to access to them ( DB::frames??? )
 			if( $subname eq '&' ) {
 				$level //=  0;
+				# FIX: 'eval' does not update @DB::stack.
+				# Eval exists at real stack but ot does not at our
 				my $coderef =  $DB::stack[ -$level -1 ]{ sub };
 				print $DB::OUT "sub $coderef ";
 				$coderef =  \&$coderef   unless ref $coderef;
@@ -430,6 +433,7 @@ $DB::commands =  {
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
 				# convert this to subroutine refs
+				# print $DB::OUT "Not in a sub: $sub\n";
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
@@ -443,6 +447,7 @@ $DB::commands =  {
 			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
+				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
 			}
 			else {
 				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
@@ -469,7 +474,8 @@ $DB::commands =  {
 				return -1   if ref $subname; # can not set trap on coderef
 			}
 			delete $DB::stop_in_sub{ $subname };
-			# TODO? should we remove all matched keys?
+			# Q: Should we remove all matched keys?
+			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
 			$line     =  $DB::line   if $line eq '.';
@@ -550,7 +556,7 @@ $DB::commands =  {
 
 		# set breakpoint
 		unless( DB::can_break( $file, $line ) ) {
-			print $DB::OUT file(). "This line is not breakable\n";
+			print $DB::OUT file(). " -- $file This line is not breakable\n";
 			return -1;
 		}
 
