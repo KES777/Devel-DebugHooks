@@ -370,7 +370,7 @@ $DB::commands =  {
 		}
 
 		my $dbg_frames =  5;     # Count of debugger frames
-		$type ||=  7;  # TODO: make defaults configurable
+		$type ||=  3;  # TODO: make defaults configurable
 		$level +=  $dbg_frames;  # The first client frame
 
 		require 'PadWalker.pm';
