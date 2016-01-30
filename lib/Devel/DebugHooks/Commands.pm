@@ -109,8 +109,10 @@ sub list {
 				$file        =  $run_file;
 				$line_cursor =  $run_line;
 			}
-			else {
-				$line_cursor   =  $DB::line   if $line_cursor eq '.';
+			elsif( $line_cursor eq '.' ) {
+				# TODO: 'current' means file and line! FIX this in other places too
+				$file        =  $DB::file;
+				$line_cursor =  $DB::line;
 			}
 
 			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
