@@ -611,7 +611,7 @@ $DB::commands =  {
 		# List available files
 		$cmd_f   =  [];
 		my $file_no =  0;
-		for( sort $0, values %INC ) {
+		for( sort $0, values %INC, DB::sources() ) {
 		# for( sort $0, keys %$expr ) {
 			if( /(?:$args)/ ) {
 				push @$cmd_f, $_;
