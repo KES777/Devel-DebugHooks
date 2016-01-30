@@ -675,6 +675,9 @@ $DB::commands =  {
 
 		1;
 	}
+	,R => sub {
+		`killall uwsgi`;
+	}
 };
 
 1;
