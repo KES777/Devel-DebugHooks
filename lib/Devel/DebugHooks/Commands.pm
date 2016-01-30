@@ -75,7 +75,7 @@ sub _list {
 		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
-		print $DB::OUT "$line: " .$source->[ $line ];
+		print $DB::OUT "$line: " . ($source->[ $line ] =~ s/\t/    /rg ); #/
 	}
 }
 
