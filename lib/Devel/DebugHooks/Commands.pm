@@ -373,15 +373,18 @@ $DB::commands =  {
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
+		my $my =   PadWalker::peek_my(  $level );
+		my $our =  PadWalker::peek_our( $level );
+
 		if( $type & 1 ) {
 			# TODO: for terminals which support color show
 			# 1. not used variables as grey
 			# 2. closed over variables as green or bold
-			print $DB::OUT "\nMY:\n", join( ', ', sort keys %{ PadWalker::peek_my( $level ) } ), "\n";
+			print $DB::OUT "\nMY:\n", join( ', ', sort keys %$my ), "\n";
 		}
 
 		if( $type & 2 ) {
-			print $DB::OUT "\nOUR:\n", join( ', ', sort keys %{ PadWalker::peek_our( $level ) } ), "\n";
+			print $DB::OUT "\nOUR:\n", join( ', ', sort keys %$our ), "\n";
 		}
 
 		if( $type & 4 ) {
