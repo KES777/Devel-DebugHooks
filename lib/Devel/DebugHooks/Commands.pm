@@ -528,7 +528,7 @@ $DB::commands =  {
 				push @$cmd_f, $source;
 				print $DB::OUT $file_no++ ." $source\n";
 
-				for( sort keys %$traps ) {
+				for( sort{ $a <=> $b } keys %$traps ) {
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
 					next   unless exists $traps->{ $_ }{ condition }
