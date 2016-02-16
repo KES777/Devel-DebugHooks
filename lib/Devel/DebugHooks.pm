@@ -749,9 +749,11 @@ sub DB {
 	# Actually to make things same we should call 'scall' here, despite on
 	# $DB::single has no effect
 
+	# FIX: this 'mcall' breaks $DB::file, $DB::line info
+	# $ext_call++; mcall( 'bbreak', $DB::dbg );
 	$DB::dbg->bbreak();
 	1 while( defined interact() );
-	$DB::dbg->abreak();
+	$ext_call++; mcall( 'abreak', $DB::dbg );
 }
 
 
@@ -801,7 +803,8 @@ sub interact {
 	# TRUE   : command found, keep interaction
 	# HASHREF: eval given expression and pass results to code
 	# negative: something wrong happened while running the command
-	if( my $str =  $DB::dbg->interact( @_ ) ) {
+	$ext_call++;
+	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
 		my $result =  process( $str );
 		return $result   unless defined $result  &&  $result == 0;
 
