@@ -617,7 +617,9 @@ $DB::commands =  {
 		# set breakpoint
 		unless( DB::can_break( $file, $line ) ) {
 			print $DB::OUT file(). " -- $file This line is not breakable\n";
-			return -1;
+			# Set breakpoint in any case. This is usefull when you edit file
+			# and want to add traps to those new lines
+			# return -1;
 		}
 
 		my $traps =  DB::traps( $file );
