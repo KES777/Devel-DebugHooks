@@ -685,9 +685,10 @@ sub DB {
 		my $trap =  $traps->{ $DB::line };
 
 		if( exists $trap->{ action } ) {
-			$ext_call++;
-			# NOTICE: if we do not use mcall the $DB::file:$DB::line is broken
-			mcall( 'process', $DB::dbg, $trap->{ action } );
+			# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
+			for( @{ $trap->{ action } } ) {
+				$ext_call++; scall( \&process, $_ );
+			}
 
 			# Do not stop if there are no flags
 			$stop ||=  $DB::single  ||  $DB::signal  ||  $DB::trace;
