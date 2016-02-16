@@ -757,6 +757,28 @@ sub init {
 
 
 
+sub process {
+	my( $str ) =  @_;
+
+	my @args =  ( $DB::dbg, $str );
+	my $code =  $DB::dbg->can( 'process' );
+	PROCESS: {
+		my $result =  $code->( @args );
+		return   unless defined $result;
+		if( $result ) {
+			return $result   unless ref $result  &&  ref $result eq 'HASH';
+
+			$code =  $result->{ code };
+			@args =  DB::eval( $result->{ expr } );
+			redo PROCESS;
+		}
+	}
+
+
+	return 0;
+}
+
+
 # TODO: remove clever things out of core. This modules should implement
 # only interface features
 sub interact {
@@ -765,24 +787,13 @@ sub interact {
 	local $DB::interaction =  $DB::interaction +1;
 
 	# interact() should return defined value to keep interaction
-	# 0 means: no command found, but keep interaction
+	# 0 means: no command found so 'eval( $str )' and keep interaction
 	# TRUE   : command found, keep interaction
 	# HASHREF: eval given expression and pass results to code
 	# negative: something wrong happened while running the command
 	if( my $str =  $DB::dbg->interact( @_ ) ) {
-		my @args =  ( $DB::dbg, $str );
-		my $code =  $DB::dbg->can( 'process' );
-		PROCESS: {
-			my $result =  $code->( @args );
-			return   unless defined $result;
-			if( $result ) {
-				return $result   unless ref $result  &&  ref $result eq 'HASH';
-
-				$code =  $result->{ code };
-				@args =  DB::eval( $result->{ expr } );
-				redo PROCESS;
-			}
-		}
+		my $result =  process( $str );
+		return $result   unless defined $result  &&  $result == 0;
 
 		# else no such command exists the entered string will be evaluated
 		# in __FILE__:__LINE__ context of script we are debugging

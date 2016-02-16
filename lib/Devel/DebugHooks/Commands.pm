@@ -370,7 +370,7 @@ $DB::commands =  {
 			$level =  $1  if /^(\d+)$/;
 		}
 
-		my $dbg_frames =  5;     # Count of debugger frames
+		my $dbg_frames =  6;     # Count of debugger frames
 		$type ||=  3;  # TODO: make defaults configurable
 		$level +=  $dbg_frames;  # The first client frame
 
