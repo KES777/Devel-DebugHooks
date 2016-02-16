@@ -8,6 +8,9 @@ package Devel::DebugHooks::Commands;
 use Data::Dump qw/ pp /;
 
 
+# TODO: implement 'd code' command to debug given subroutine
+# TODO: implement 'l ~TEXT' to list specific lines
+
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
 
@@ -104,6 +107,7 @@ sub list {
 		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
 			my( $run_file, $run_line );
 			if( $stack ) {
+				# TODO: allow to list current sub -0
 				# Here $line_cursor is stack frame number from the top
 				my @frames =  DB::frames();
 				( $run_file, $run_line ) =  @{ $frames[ $line_cursor -1 ] }[3,4];
@@ -522,6 +526,7 @@ $DB::commands =  {
 
 		if( $_[0] eq '*' ) {
 			#TODO: implement removing all traps
+			#B 3:* - remove all traps from file number 3
 		}
 
 

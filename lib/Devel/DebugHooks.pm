@@ -1145,3 +1145,9 @@ sub sub {
 	...
 	# BUG: without +0 the localized value is broken
 	local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
+
+
+Breakpint does not work for this when hash key is initialized
+  b  x64:   my $hash = $c->stash->{'mojo.content'} ||= {};
+
+#TODO: $X=(condition)
