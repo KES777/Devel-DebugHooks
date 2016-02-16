@@ -684,6 +684,13 @@ sub DB {
 		my $stop =  0;
 		my $trap =  $traps->{ $DB::line };
 
+		if( exists $trap->{ action } ) {
+			$ext_call++;
+			# NOTICE: if we do not use mcall the $DB::file:$DB::line is broken
+			mcall( 'process', $DB::dbg, $trap->{ action } );
+			$stop ||=  1;
+		}
+
 		# Stop on watch expression
 		if( exists $trap->{ watches } ) {
 			# Calculate new values for watch expressions
@@ -885,6 +892,8 @@ sub sub_returns {
 	# That is the first frame in the @DB::goto_frames, which is recorded at
 	# 'trace_subs' by calling 'caller' like DB::DB does. You may read code as:
 	# The point this sub was called from is: (--the sub we are returning from)
+	# FIX: when the action exists at the line while running the 'n' or 's' command
+	# it will break $DB::file, $DB::line. See description for action
 	( $DB::package, $DB::file, $DB::line ) =  @{ $DB::goto_frames[0] }[0..2];
 
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
