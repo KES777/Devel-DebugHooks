@@ -688,7 +688,9 @@ sub DB {
 			$ext_call++;
 			# NOTICE: if we do not use mcall the $DB::file:$DB::line is broken
 			mcall( 'process', $DB::dbg, $trap->{ action } );
-			$stop ||=  1;
+
+			# Do not stop if there are no flags
+			$stop ||=  $DB::single  ||  $DB::signal  ||  $DB::trace;
 		}
 
 		# Stop on watch expression
