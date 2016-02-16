@@ -4,12 +4,22 @@ use Log::Log4perl;
 
 sub TIESCALAR {
 	my $class =  shift;
-	return bless { @_ }, 'ScalarHistory';
+
+	my $obj = { data => ${ shift }, @_ };
+
+	return bless $obj, 'ScalarHistory';
 }
 
 sub TIEHASH {
 	my $class =  shift;
-	return bless { @_ }, 'HashHistory';
+	my $data  =  shift;
+	my %arg   =  @_;
+
+	my $obj;
+	@{ $obj->{ data } }{ keys %$data } =  values %$data;
+	@$obj{ keys %arg }                 =  values %arg;
+
+	return bless $obj, 'HashHistory';
 }
 
 

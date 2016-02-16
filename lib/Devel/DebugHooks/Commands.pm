@@ -274,7 +274,7 @@ sub trace_variable {
 	require Devel::DebugHooks::TraceAccess;
 
 	return {()
-		,expr =>  "tie $var, 'Devel::DebugHooks::TraceAccess', desc => '$var'"
+		,expr =>  "tie $var, 'Devel::DebugHooks::TraceAccess', \\$var, desc => '$var'"
 		,code =>  sub {
 			return 1;
 		}
