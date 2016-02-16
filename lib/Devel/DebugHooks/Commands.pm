@@ -263,6 +263,22 @@ sub save {
 }
 
 
+
+sub trace_variable {
+	my( $var ) =  shift;
+
+	require Devel::DebugHooks::TraceAccess;
+
+	return {()
+		,expr =>  "tie $var, 'Devel::DebugHooks::TraceAccess', desc => '$var'"
+		,code =>  sub {
+			return 1;
+		}
+	}
+}
+
+
+
 $DB::commands =  {
 	'.' => sub {
 		$curr_file =  $DB::file;
@@ -683,7 +699,8 @@ $DB::commands =  {
 		print $DB::OUT Devel::DebugHooks::Server::tinfo();
 		return 1;
 	}
-	,ge    => sub {
+	,t    => \&trace_variable
+	,ge   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 		$line =  $DB::line   unless defined $line;
 		$file =  file( $file );
