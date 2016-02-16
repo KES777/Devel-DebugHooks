@@ -356,8 +356,9 @@ $DB::commands =  {
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
-		my $type =  0;
+		my $type  =  0;
 		my $level =  0;
+		my @vars  =  ();
 		for( split " ", shift ) {
 			$type |= ~0   if /^a|all$/;
 			$type |= 1    if /^m|my$/;
@@ -368,6 +369,7 @@ $DB::commands =  {
 			$type |= 24   if /^s|sub$/;       #u+c
 
 			$level =  $1  if /^(\d+)$/;
+			push @vars, $1   if /^([%$@]\S+)$/;
 		}
 
 		my $dbg_frames =  6;     # Count of debugger frames
@@ -453,6 +455,11 @@ $DB::commands =  {
 			else {
 				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
 			}
+		}
+
+		if( @vars ) {
+			# print $DB::OUT @{ $my }{ @vars }, @{ $our }{ @vars };
+			print $DB::OUT @vars; # FIX: use dumper
 		}
 
 		1;
