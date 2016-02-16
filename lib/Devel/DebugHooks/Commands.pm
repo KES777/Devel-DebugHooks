@@ -279,6 +279,42 @@ sub trace_variable {
 
 
 
+sub action {
+	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))$/;
+
+	$line     =  $DB::line   if $line eq '.';
+	$file     =  file( $file );
+
+	my $traps =  DB::traps( $file );
+
+
+	unless( $expr ) {
+		require Data::Dump;
+
+		for( defined $line ? ( $line ) : keys %$traps ) {
+			next   unless exists $traps->{ $_ }{ action };
+
+			print $DB::OUT "line $_:\n";
+			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+				for @{ $traps->{ $_ }{ action } };
+		}
+
+		return 1;
+	}
+
+
+	unless( DB::can_break( $file, $line ) ) {
+		print $DB::OUT file(). "This line is not breakable. Can not set action at this point\n";
+		return -1;
+	}
+
+
+	push @{ $traps->{ $line }{ action } }, $expr;
+
+	return 1;
+}
+
+
 $DB::commands =  {
 	'.' => sub {
 		$curr_file =  $DB::file;
@@ -700,6 +736,33 @@ $DB::commands =  {
 		return 1;
 	}
 	,t    => \&trace_variable
+	,a    => \&action
+	,A    => sub {
+		my( $args, $opts ) =  @_;
+
+		if( $_[0] eq '*' ) {
+			#TODO: implement removing all actions
+			#B 3:* - remove all traps from file number 3
+		}
+
+
+		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+
+
+		$line     =  $DB::line   if $line eq '.';
+		my $traps =  DB::traps( file( $file, 1 ) );
+		return -1   unless exists $traps->{ $line };
+
+
+		# TODO: remove only one action by number
+		delete $traps->{ $line }{ action };
+		unless( keys %{ $traps->{ $line } } ) {
+			$traps->{ $line } =  0;
+			delete $traps->{ $line };
+		}
+
+		1;
+	}
 	,ge   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 		$line =  $DB::line   unless defined $line;
