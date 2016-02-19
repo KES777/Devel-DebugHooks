@@ -184,6 +184,15 @@ sub trace_returns {
 	return $info ."\n" .' =' x15 ."\n";
 }
 
+package
+	X;
+
+sub X {
+	# When we returns from this sub the $DB::single is restored at 'DB::sub_returns'
+	$DB::stack[-1]{ single } =  1;
+}
+
+
 
 package    # hide the package from the PAUSE indexer
 	Devel::DebugHooks::Verbose;
