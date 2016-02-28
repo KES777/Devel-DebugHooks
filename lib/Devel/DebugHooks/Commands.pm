@@ -125,9 +125,8 @@ sub list {
 
 			$line_cursor +=  $lines_after +1 +$lines_before;
 		}
-		# FIX: the code ref maybe $_[0], $hash->{ key }
 		# NOTICE: $level take effect only if '&' sign present. In other cases (\d*) should not match
-		elsif( my( $coderef, $subname, $level ) =   $arg =~ m/^(\$?)([\w:]+|\&)(\d*)$/ ) {
+		elsif( my( $coderef, $subname, $level ) =   $arg =~ m/^(\$?)([\S]+|\&)(\d*)$/ ) {
 			my $deparse =  sub {
 				require B::Deparse;
 				my( $coderef ) =  @_;
