@@ -685,22 +685,22 @@ sub DB {
 
 	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 
+	my $stop =  0;
 	my $traps =  DB::traps();
 	if( exists $traps->{ $DB::line } ) {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 
-		# NOTE: the stop events are not exclusive so we can not use elsif
-		my $stop =  0;
 		my $trap =  $traps->{ $DB::line };
 
+		# NOTE: the stop events are not exclusive so we can not use elsif
 		if( exists $trap->{ action } ) {
 			# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
 			for( @{ $trap->{ action } } ) {
 				$ext_call++; scall( \&process, $_ );
 			}
 
-			# Do not stop if there are no flags
-			$stop ||=  $DB::single  ||  $DB::signal  ||  $DB::trace;
+			# Action do not stop execution
+			$stop ||=  0;
 		}
 
 		# Stop on watch expression
@@ -736,21 +736,18 @@ sub DB {
 		) {
 			$stop ||=  1;
 		}
-
-
-		return   unless $stop;
-
-
-		# TODO: Implement on_stop event
 	}
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal
 	elsif( $DB::trace  &&  !$DB::single  &&  !$DB::signal ) {
-		return;
+		$stop ||=  0;
 	}
 	# TODO: elseif $DB::signal
 
+	return   unless $stop || $DB::single || $DB::signal;
+	# Stop if required or we are in step-by-step mode
 
+	# TODO: Implement on_stop event
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
 	local $ext_call =  $ext_call +1;
