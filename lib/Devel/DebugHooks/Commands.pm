@@ -6,10 +6,28 @@ package Devel::DebugHooks::Commands;
 #	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
 use Data::Dump qw/ pp /;
-
-
+# TODO: implement do not stop in current sub
+# TODO: black box command 'T': 50..70 Black box
+# TODO: enable/disable group of traps
+# TODO: implement option to show full/short sub options
+# TODO: split all code by two: user code and core
+# TODO: implement 'r n' to rewind n stack frames
+# TODO: implement distance 'T XXX'; Automatically sets XXX to the current line
+# TODO: implement 'b &' to set breakpoint to current sub
 # TODO: implement 'd code' command to debug given subroutine
 # TODO: implement 'l ~TEXT' to list specific lines
+# TODO: implement 'ge -2' to edit
+# TODO: implement 's 7', 'n 7', 'go +5' commands to skip N expressions
+# FIX: when returning from sub by 'r' and upper sub has no any stop point
+# we out many frames out
+# TODO: implement tracing subroutine which user run manually 't $subname'
+# NOTICE: when return we can go into destroy
+# TODO: returning from try/catch block
+# Show code flow in NON stop mode
+# TODO: do not exit on blocks. This is usefull when we want to see result of statement
+# if() { statement; }
+# TODO: implement command to list all available packages
+# TODO: implement command to list all available subs in package ( DB::subs )
 
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
