@@ -185,11 +185,21 @@ sub trace_returns {
 }
 
 package
-	X;
+	x;
 
-sub X {
+sub x { # This is 'invader' :)
 	# When we returns from this sub the $DB::single is restored at 'DB::sub_returns'
 	$DB::stack[-1]{ single } =  1;
+	# TODO: Allow to disable trap
+}
+
+package
+	X;
+sub X {
+	local $^D |= (1<<30);
+	$DB::stack[-1]{ single } =  1;
+	$DB::single =  1;
+	1;
 }
 
 
