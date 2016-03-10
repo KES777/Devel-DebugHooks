@@ -468,6 +468,8 @@ BEGIN { # Initialization goes here
 		# warn "eval: package $package; $_[0]"; # FIX: external call
 		# FIX: can not evaluate @_, $_ at the context of user code, just string
 		# @_ is returned
+		# e [$check, $result, @_] -> ["ok", "bad_phone", "[\$check, \$result, \@_]"]
+
 		eval "package $package; $_[0]";
 	}
 
