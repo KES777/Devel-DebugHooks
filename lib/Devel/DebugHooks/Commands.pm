@@ -668,6 +668,7 @@ $DB::commands =  {
 	}
 
 	,go => sub {
+		# If we supply line to go to we set temporary trap in it
 		if( defined $_[0]  &&  $_[0] ne '' ) {
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
@@ -793,6 +794,15 @@ $DB::commands =  {
 		$file =  file( $file );
 
 		`rsub $file`;
+
+		1;
+	}
+	,gef   => sub {
+		my( $file, $line ) =  shift =~ m/^${file_line}$/;
+		$line =  $DB::line   unless defined $line;
+		$file =  file( $file );
+
+		`rsub -f $file`;
 
 		1;
 	}
