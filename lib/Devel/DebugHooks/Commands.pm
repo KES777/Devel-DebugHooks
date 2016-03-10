@@ -216,7 +216,7 @@ sub watch {
 	unless( $expr ) {
 		require Data::Dump;
 
-		for( defined $line ? ( $line ) : keys %$traps ) {
+		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ watches };
 
 			print $DB::OUT "line $_:\n";
@@ -312,7 +312,7 @@ sub action {
 	unless( $expr ) {
 		require Data::Dump;
 
-		for( defined $line ? ( $line ) : keys %$traps ) {
+		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ action };
 
 			print $DB::OUT "line $_:\n";
