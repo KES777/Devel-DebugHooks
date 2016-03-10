@@ -442,7 +442,7 @@ $DB::commands =  {
 			$type |= 24   if /^s|sub$/;       #u+c
 
 			$level =  $1  if /^(\d+)$/;
-			push @vars, $1   if /^([%$@]\S+)$/;
+			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
 
 		my $dbg_frames =  6;     # Count of debugger frames
