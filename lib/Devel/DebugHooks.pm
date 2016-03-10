@@ -189,7 +189,7 @@ package
 
 sub x { # This is 'invader' :)
 	# When we returns from this sub the $DB::single is restored at 'DB::sub_returns'
-	$DB::stack[-1]{ single } =  1;
+	$DB::stack[-1]{ single } =  1   if !@_  ||  $_[0];
 	# TODO: Allow to disable trap
 }
 
