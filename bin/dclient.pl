@@ -162,6 +162,7 @@ sub on_dbg_session {
 
     $loop->add( $session_stream );
 
+    $session_stream->write( "l .\n" );
     warn "DBG session activated";
 }
 
