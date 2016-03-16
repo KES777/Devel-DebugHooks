@@ -6,6 +6,7 @@ package Devel::DebugHooks::Commands;
 #	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
 use Data::Dump qw/ pp /;
+# TODO: implement 'hard_go' to go over all traps to the 'line' or end
 # TODO: implement do not stop in current sub
 # TODO: black box command 'T': 50..70 Black box
 # TODO: enable/disable group of traps
@@ -806,9 +807,29 @@ $DB::commands =  {
 
 		1;
 	}
+	,suspend => sub {
+		uwsgi::suspend();
+
+		1;
+	}
 	,R => sub {
 		`killall uwsgi`;
 	}
 };
 
 1;
+
+__END__
+FIX:
+   x380:     if( $errors =  !$self->_check( $self->validation ) ) {                     #2
+    x381:         warn [ $self->validation ];
+    x382:     } elsif( $errors =  $self->_save( $self->validation ) ) {       #3
+     383:     }
+     384:     else {
+     385:         # inside 'saved' we may return uri to redirect to
+  >>x386:         $redirect_page =  $self->_saved( $self->validation );          #4-a
+     387:     }
+
+ if we 'n' from last expression of _check we do not stop on _save
+
+FIX: do not create new trap if it not exists before 'b +...' command

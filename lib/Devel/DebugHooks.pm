@@ -193,6 +193,8 @@ sub x { # This is 'invader' :)
 	# TODO: Allow to disable trap
 }
 
+# NOTICE: x::x; does not work at the end of sub
+
 package
 	X;
 sub X {
@@ -623,6 +625,10 @@ BEGIN { # Initialization goes here
 
 	sub scall {
 		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
+
+		# TODO: implement debugger debugging
+		# local $^D |= (1<<30);
+		# local $DB::single =  1;
 
 		local $ext_call   =  $ext_call +1;
 		local $DB::single =  0;     # Prevent debugging for next call
@@ -1175,3 +1181,5 @@ Breakpint does not work for this when hash key is initialized
   b  x64:   my $hash = $c->stash->{'mojo.content'} ||= {};
 
 #TODO: $X=(condition)
+
+The debugger do not single step into sub called from string
