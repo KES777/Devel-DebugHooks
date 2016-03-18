@@ -705,10 +705,8 @@ sub DB {
 
 	my $stop =  0;
 	my $traps =  DB::traps();
-	if( exists $traps->{ $DB::line } ) {
+	if( my $trap =  $traps->{ $DB::line } ) {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
-
-		my $trap =  $traps->{ $DB::line };
 
 		# NOTE: the stop events are not exclusive so we can not use elsif
 		if( exists $trap->{ action } ) {
