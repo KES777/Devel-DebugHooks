@@ -1005,7 +1005,7 @@ sub lsub : lvalue {
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
-
+	$DB::single =  0   if $DB::single & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
