@@ -5,7 +5,7 @@ package Devel::DebugHooks::Commands;
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
 #	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
-use Data::Dump qw/ pp /;
+
 # TODO: implement 'hard_go' to go over all traps to the 'line' or end
 # TODO: implement do not stop in current sub
 # TODO: black box command 'T': 50..70 Black box
@@ -279,7 +279,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh pp \%DB::stop_in_sub, $traps;
+	print $fh Data::Dump::pp( \%DB::stop_in_sub, $traps );
 
 	return 1;
 }
@@ -348,7 +348,7 @@ $DB::commands =  {
 	},
 
 	,st => sub {
-		require 'Data/Dump.pm';
+		require Data::Dump;
 		print $DB::OUT Data::Dump::pp( \@DB::stack, \@DB::goto_frames );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
@@ -708,10 +708,12 @@ $DB::commands =  {
 		1;
 	}
 	,e => sub {
+		require Data::Dump;
+
 		return {
 			expr => shift,
 			code => sub {
-				print $DB::OUT pp @_;
+				print $DB::OUT Data::Dump::pp( @_ );
 			}
 		}
 	}
