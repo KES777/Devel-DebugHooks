@@ -70,9 +70,9 @@ sub watch {
 
 
 	my $changed =  0;
+	my $smart_match =  eval 'sub{ @{ $_[0] } ~~ @{ $_[1] } }';
 	for my $item ( @$watches ) {
-		BEGIN{ 'warnings'->unimport( 'experimental::smartmatch' )   if $DB::options{ w } }
-		unless( @{ $item->{ old } }  ~~  @{ $item->{ new } } ) {
+		unless( $smart_match->( $item->{ old }, $item->{ new } ) ) {
 			$changed ||=  1;
 			# print $DB::OUT "The value of " .$item->{ expr } ." is changed:\n"
 			# 	."The old value: ". Data::Dump::pp( @{ $item->{ old } } ) ."\n"
