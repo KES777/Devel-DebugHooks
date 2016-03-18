@@ -16,7 +16,7 @@ our $VERSION =  '0.01';
 # 'Call to undefined sub YourModule::trace_subs/load is made...'
 # That is because perl internals make calls to DB::* as soon as the subs in it
 # are compiled even whole file is not processed yet.
-# Also do not forget to 'push @ISA, "YourModule"' if you set these options at
+# Also do not forget to 'push @ISA, "YourModule"' if you set these DB:: options at
 # compile time: trace_load, trace_subs,
 BEGIN {
 	unless( defined $DB::dbg ) {
@@ -57,7 +57,7 @@ sub trace_load {
 
 
 
-# This sub is called for each DB::DB call while $DB::trace is true
+# This sub is called for each DB::DB call when $DB::trace is true
 sub trace_line {
 	print "$DB::line\n";
 }
@@ -100,6 +100,8 @@ sub interact {
 
 
 
+# Q: May this unit pull other units so we will not be able to see loading process?
+# A: No, this will be done at run time. Until that trace_load will be visible
 eval 'require ' .$DB::options{ cmd_processor }; die $@   if $@;
 sub process {
 	BEGIN{ 'strict'->unimport( 'refs' )   if $DB::options{ s } }
@@ -275,16 +277,16 @@ sub applyOptions {
 
 
 # Used perl internal variables:
-# ${ ::_<filename }
-# @{ ::_<filename }
-# %{ ::_<filename }
+# ${ ::_<filename }  # maintained at 'file' and 'sources'
+# @{ ::_<filename }  # maintained at 'source' and 'can_break'
+# %{ ::_<filename }  # maintained at 'traps'
 # $DB::single
 # $DB::signal
 # $DB::trace
-# $DB::sub  # NOTICE: this maybe the reference to sub, not just the name of it
-# %DB::sub
+# $DB::sub   # NOTICE: this maybe the reference to sub, not just the name of it
+# %DB::sub   # maintained at 'location' and 'subs'
 # %DB::postponed
-# @DB::args
+# @DB::args  # maintained at 'frames'
 
 # Perl sets up $DB::single to 1 after the 'script.pl' is compiled, so we are able
 # to debug it from first OP. We can disable this feature through NonStop option.
@@ -296,28 +298,29 @@ our $line;           # current line number
 our $ext_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
-our @stack;          # array of hashes that alias DB:: ours of current frame
-                     # This allows us to spy the DB:: values for the given frame
+our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
+                     # This allows us to spy the DB::'s values for a given frame
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
 our %options;
 our $interaction;    # True if we interact with dbg client
-our %stop_in_sub;    # In this hash key is sub name we want to stop on
+our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
+                     # maintained at 'trace_subs'
 
 
 
 # Do DB:: configuration stuff here
 BEGIN {
 	$IN                        //= \*STDIN;
-	#TODO: cache output until debugger connected
+	#TODO: cache output until debugger is connected
 	$OUT                       //= \*STDOUT;
 
 	$options{ _debug }         //=  0;
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
-	# TODO: camelize options
+	# TODO: camelize options. Q: Why?
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
 	# The differece when we set option at compile time, we see module loadings
@@ -373,7 +376,7 @@ BEGIN {
 # we can track module loading and subs calling process
 # Also it is safe that descendant debugger module 'use' us. BUT BE AWARE!!!
 # That module should not use any module before this one
-# if they want track when each sub call occour and each module is loaded
+# otherwise sub calls and module loading will not be tracked
 #
 # When we 'use' descendant debugger at the end our module appears last at load chain.
 # Also there is a problem how to pass descendant class name to 'use' it.
@@ -405,6 +408,9 @@ BEGIN { # Initialization goes here
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
+		# Returns TRUE if $filename was compiled/evaled
+		# The file is evaled if it looks like (eval 34)
+		# But this may be changed by #file:line. See ??? for info
 		sub file {
 			my $filename =  shift // $DB::file;
 
@@ -419,6 +425,7 @@ BEGIN { # Initialization goes here
 
 
 
+		# Returns source for $filename
 		sub source {
 			my $filename =  shift // $DB::file;
 
@@ -429,17 +436,21 @@ BEGIN { # Initialization goes here
 
 
 
+		# Returns list of compiled files/evaled strings
+		# The $filename for evaled strings looks like (eval 34)
 		sub sources {
 			return grep{ s/^_<// } keys %{ 'main::' };
 		}
 
 
 
+		# Returns hashref of traps for $filename keyed by $line
 		sub traps {
 			my $filename =  shift // $DB::file;
 
 			return   unless file( $filename );
 
+			# Keep list of $filenames we perhaps manipulate traps
 			$DB::_tfiles->{ $filename } =  1;
 
 			return \%{ "::_<$filename" };
@@ -447,6 +458,7 @@ BEGIN { # Initialization goes here
 
 
 
+		# Returns TRUE if we can set trap for $file:line
 		sub can_break {
 			my( $file, $line ) =  @_;
 
@@ -455,8 +467,13 @@ BEGIN { # Initialization goes here
 
 			return   unless file( $file );
 
-			return $line <= $#{ "::_<$file" }
+			# TODO: testcase for negative lines
+			return ($line<0?-$line-1:$line) <= $#{ "::_<$file" }
 				&& ${ "::_<$file" }[ $line ] != 0;
+
+			# http://perldoc.perl.org/perldebguts.html#Debugger-Internals
+			# Values in this array are magical in numeric context:
+			# they compare equal to zero only if the line is not breakable.
 		}
 	}
 
@@ -476,6 +493,9 @@ BEGIN { # Initialization goes here
 	}
 
 
+
+	# Returns the location where $subname is defined in the form:
+	# filename:startline-endline
 	sub location {
 		my $subname =  shift;
 
@@ -489,6 +509,8 @@ BEGIN { # Initialization goes here
 
 
 
+	# Returns list of all defined not ANON subs.
+	# We may limit the list by supplying regex
 	sub subs {
 		return keys %DB::sub   unless @_;
 
@@ -498,6 +520,8 @@ BEGIN { # Initialization goes here
 
 
 
+	# Returns caller frame info with arguments at given level
+	# or all call stack with goto frames
 	sub frames {
 		my $level =  shift;
 
@@ -601,6 +625,9 @@ BEGIN { # Initialization goes here
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		$ext_call--; # $ext_call++ before mcall prevents reenterance to DB::sub
+		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
+		# (This doesn't happen if the subroutine -was compiled in the DB package.)
+		# ...was called and compiled in the DB package
 
 		# Any subroutine call invoke DB::sub again
 		# The right way is to turn off 'Debug subroutine enter/exit'
@@ -647,10 +674,11 @@ BEGIN { # Initialization goes here
 
 my %RT_options;
 sub import { # NOTE: The import is called at CT yet
+	# CT of callers module. For this one it is RT
 	my $class =  shift;
 
 	if( $_[0]  and  $_[0] eq 'options' ) {
-		my %params =  @_;
+		my %params =  @_; # FIX? the $_[1] should be HASHREF; $options = @_[1]
 		@RT_options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
 	}
 	else {
@@ -673,6 +701,9 @@ sub import { # NOTE: The import is called at CT yet
 
 	# The RT options are applied after 'main::' is loaded
 	$RT_options{ trace_goto } //=  1;
+
+	# FIX? should I call applyOptions here and not at trace_load
+	# What is the benefit?
 }
 
 
@@ -709,13 +740,15 @@ sub DB {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
 
 		# NOTE: the stop events are not exclusive so we can not use elsif
+		# FIX: rename: action -> actions
 		if( exists $trap->{ action } ) {
-			# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
+			# Run all actions
 			for( @{ $trap->{ action } } ) {
+				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
 				$ext_call++; scall( \&process, $_ );
 			}
 
-			# Action do not stop execution
+			# Actions do not stop execution
 			$stop ||=  0;
 		}
 
@@ -723,6 +756,7 @@ sub DB {
 		if( exists $trap->{ watches } ) {
 			# Calculate new values for watch expressions
 			for my $watch_item ( @{ $trap->{ watches } } ) {
+				# FIX: why we use [ undef ]
 				$watch_item->{ old } =  $watch_item->{ new } // [ undef ];
 				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
 			}
@@ -739,14 +773,16 @@ sub DB {
 			# Delete temporary breakpoint
 			delete $trap->{ tmp };
 			unless( keys %$trap ) {
-				$traps->{ $DB::line } =  0;
+				# Just trap deleting does not help. We should signal internals
+				# about that we should not stop here anymore
+				$traps->{ $DB::line } =  0; # Perl does not do this automanically. Why?
 				delete $traps->{ $DB::line };
 			}
 
 			$stop ||=  1;
 		}
 
-		# Stop if breakpoint not disabled and condition evaluated to true value
+		# Stop if trap is not disabled and condition evaluated to TRUE value
 		if( !exists $trap->{ disabled }
 			&&  exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } )
 		) {
@@ -756,6 +792,9 @@ sub DB {
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal
 	elsif( $DB::trace  &&  !$DB::single  &&  !$DB::signal ) {
+		# FIX? Actually the '$DB::trace' were processed when we do
+		# mcall( 'trace_line', $DB::dbg )
+		# So this condition block is pretty useless
 		$stop ||=  0;
 	}
 	# TODO: elseif $DB::signal
@@ -791,6 +830,8 @@ sub init {
 
 
 
+# Get a string and process it.
+# If result is
 sub process {
 	my( $str ) =  @_;
 
@@ -847,14 +888,14 @@ sub interact {
 
 
 sub trace_subs {
-	my $last_frames =  $_[0] ne 'G'?
-		$DB::stack[ -1 ]{ goto_frames }:
-		undef;
+	my $last_frames =  $_[0] eq 'G'?
+		undef: # goto does not create frames
+		$DB::stack[ -1 ]{ goto_frames };
 
 	# TODO: implement testcase
 	# We we run script in NonStop mode the $DB::package/file/line are not updated
 	# because of &DB::DB is not called. If we update them here the GOTO frames
-	# will get more actual info about that from which place the GOTO was done
+	# will get more actual info about that from which place the GOTO was called
 	# $DB::package/file/line will be more closer to that place
 
 	# TODO: check goto context, args, flags etc
@@ -893,7 +934,7 @@ sub goto {
 	return   if $ext_call;
 
 	# TODO: implement testcase
-	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go;
+	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go; # Step over goto
 	$DB::single =  0   if $DB::single & 2;
 	trace_subs( 'G' );
 };
@@ -934,6 +975,7 @@ sub sub_returns {
 sub sub {
 	if( $ext_call  ||  $DB::sub eq 'DB::sub_returns' ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
 	}
 	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
@@ -984,6 +1026,9 @@ sub sub {
 
 
 
+# FIX: debugger dies when lsub is not defined but the call is to an lvalue subroutine
+# The perl may not "...fall back to &DB::sub (args)."
+# http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 sub lsub : lvalue {
 	if( $ext_call ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } };
