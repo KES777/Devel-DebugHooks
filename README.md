@@ -32,6 +32,7 @@ Quick guide for commands:
 
 	T - stack trace.
 	T N - show only N last frames
+	NOTICE: stacktrace will shows GOTO!!! frames also
 
 	b - list all traps
 	b . - set trap at current step
