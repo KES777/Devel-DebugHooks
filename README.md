@@ -4,6 +4,17 @@ How to run:
 
 	perl -d:DebugHooks::Terminal script.pl
 
+	## Debug remotely
+	# FIX harcoded server:port at
+	# Devel::DebugHooks::Server.pm:107
+	# on remote
+	perl -d:DebugHooks::Server script.pl
+	# on local
+	./dclient.pl 1.2.3.4 9000
+
+
+
+
 Quick guide for commands:
 
 	s - single step. Trace into
