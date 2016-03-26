@@ -154,20 +154,20 @@ sub uwsgi_signal_handler {
 
 
 
-uwsgi::postfork( sub{
-	print $DB::OUT time() ." Forked\n";
-	$DB::commands->{ load }->();
-	&listen( $loop );
-	$loop->loop_once( 0 );
-	# Useless. Signals are sended to worker only after it is forked
-	# uwsgi::signal( 1 );
-	# NOTE: if I 'die' here I get assertion
-	# uwsgi: perl.c:539: perl_destruct: Assertion `(my_perl->Iscopestack_ix) == 1' failed.
-});
+# uwsgi::postfork( sub{
+# 	print $DB::OUT time() ." Forked\n";
+# 	$DB::commands->{ load }->();
+# 	&listen( $loop );
+# 	$loop->loop_once( 0 );
+# 	# Useless. Signals are sended to worker only after it is forked
+# 	# uwsgi::signal( 1 );
+# 	# NOTE: if I 'die' here I get assertion
+# 	# uwsgi: perl.c:539: perl_destruct: Assertion `(my_perl->Iscopestack_ix) == 1' failed.
+# });
 
 
-uwsgi::register_signal( 1, 'workers', \&uwsgi_signal_handler );
-uwsgi::add_timer( 1, 1 );
+# uwsgi::register_signal( 1, 'workers', \&uwsgi_signal_handler );
+# uwsgi::add_timer( 1, 1 );
 
 
 
@@ -264,5 +264,8 @@ sub import {
 
 
 use Devel::DebugHooks();
+
+&listen( $loop );
+$loop->loop_once( 0 );
 
 1;
