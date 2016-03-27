@@ -477,6 +477,8 @@ BEGIN { # Initialization goes here
 		}
 	}
 
+
+
 	sub eval {
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# BUG? It is better that PadWalker return undef instead of warn when out of level
@@ -487,7 +489,7 @@ BEGIN { # Initialization goes here
 
 		my $expr =  shift;
 		@_ =  @{ $DB::context[0] };
-		eval "package $DB::package; $expr";
+		eval "BEGIN{ ( \$^H, \${^WARNING_BITS} ) =  \@DB::context[1..2]; } package $DB::package; $expr";
 	}
 
 
@@ -668,7 +670,7 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
-		@DB::context =  ( \@_ );
+		@DB::context =  ( \@_, (caller 1)[8..9] ); # FIX: Should be  8..10
 	}
 
 
