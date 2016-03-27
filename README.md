@@ -58,3 +58,8 @@ Quick guide for commands:
 
 
 This module implement for shortcut invader operator `x::x;` this is same as  `$DB::single = 1;`
+
+
+NOTICE: Because of current version of Hook::Scope is broken you should comment out:
+
+	use optimizer 'sub-detect' => \&optimizer;
