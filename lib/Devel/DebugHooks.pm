@@ -439,7 +439,7 @@ BEGIN { # Initialization goes here
 		# Returns list of compiled files/evaled strings
 		# The $filename for evaled strings looks like (eval 34)
 		sub sources {
-			return grep{ s/^_<// } keys %{ 'main::' };
+			return grep{ s/^_<//r } keys %{ 'main::' };
 		}
 
 
@@ -477,19 +477,19 @@ BEGIN { # Initialization goes here
 		}
 	}
 
+
+
 	sub eval {
-		my $package; # BUG: PadWalker does not show DB::eval's lexicals
+		# BUG: PadWalker does not show DB::eval's lexicals
 		# BUG? It is better that PadWalker return undef instead of warn when out of level
 
-		$package =  $#_ > 1 ? shift : $DB::package;
 		# BUG? expects NO, returns YES if I use 'package' keyword
 		#my $res =  eval "package xxx; defined DB::file( 'zzz' ) ? 'YES':'NO'";
 		# warn "eval: package $package; $_[0]"; # FIX: external call
-		# FIX: can not evaluate @_, $_ at the context of user code, just string
-		# @_ is returned
-		# e [$check, $result, @_] -> ["ok", "bad_phone", "[\$check, \$result, \@_]"]
 
-		eval "package $package; $_[0]";
+		my $expr =  shift;
+		@_ =  @{ $DB::context[0] };
+		eval "BEGIN{ ( \$^H, \${^WARNING_BITS} ) =  \@DB::context[1..2]; } package $DB::package; $expr";
 	}
 
 
@@ -666,6 +666,17 @@ BEGIN { # Initialization goes here
 		# my $context =  shift;
 		# &{ "$context::$method" }( @_ );
 	}
+
+
+
+	sub save_context {
+		@DB::context =  ( \@_, (caller 1)[8..9] ); # FIX: Should be  8..10
+	}
+
+
+
+	sub restore_context {
+	}
 } # end of provided DB::API
 
 
@@ -726,6 +737,8 @@ sub postponed {
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
 	init();
+
+	&save_context;
 
 	print $DB::OUT "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
 	if( $DB::options{ _debug } ) {
