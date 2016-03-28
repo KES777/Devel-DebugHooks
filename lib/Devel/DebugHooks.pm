@@ -439,7 +439,7 @@ BEGIN { # Initialization goes here
 		# Returns list of compiled files/evaled strings
 		# The $filename for evaled strings looks like (eval 34)
 		sub sources {
-			return grep{ s/^_<//r } keys %{ 'main::' };
+			return grep{ s/^_<//r } keys %{ 'main::' }; #/
 		}
 
 
@@ -955,7 +955,7 @@ sub goto {
 
 # my $x = 0;
 # use Data::Dump qw/ pp /;
-use Hook::Scope;
+use Guard;
 sub sub_returns {
 	# $ext_call++; scall( sub{
 	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
@@ -995,7 +995,7 @@ sub sub {
 
 
 	# manual localization
-	Hook::Scope::POST( \&sub_returns );
+	scope_guard \&sub_returns;
 	# TODO: implement testcase
 	# after retruning from level 1 to 0 the @DB::stack should be empty
 	push @DB::stack, {
