@@ -488,6 +488,7 @@ BEGIN { # Initialization goes here
 		}
 	CODE
 	sub eval {
+		my( $expr ) =  @_;
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# BUG? It is better that PadWalker return undef instead of warn when out of level
 
@@ -495,9 +496,7 @@ BEGIN { # Initialization goes here
 		#my $res =  eval "package xxx; defined DB::file( 'zzz' ) ? 'YES':'NO'";
 		# warn "eval: package $package; $_[0]"; # FIX: external call
 
-
-		my $expr =  shift;
-		@_ =  @{ $DB::context[0] };
+		local @_ =  @{ $DB::context[0] }; # TODO: testcase
 		eval "$usercontext; package $DB::package;\n$expr";
 	}
 
@@ -875,6 +874,7 @@ sub process {
 
 	return 0;
 }
+
 
 
 # TODO: remove clever things out of core. This modules should implement
