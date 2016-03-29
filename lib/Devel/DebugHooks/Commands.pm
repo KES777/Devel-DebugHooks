@@ -748,7 +748,7 @@ $DB::commands =  {
 
 			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
 			print $DB::OUT eval $T->{ $format };
-			$deep--  if $frame->[0] ne 'G'  &&  $frame->[0] ne 'D';
+			$deep--  if $frame->[0] ne 'G';
 			last   unless --$level;
 		}
 
