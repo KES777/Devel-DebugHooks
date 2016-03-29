@@ -562,7 +562,7 @@ BEGIN { # Initialization goes here
 			# Skip debugger frames from stacktrace
 			while( my @frame =  caller($level++) ) {
 				# print "DBGF: @frame[0..3,5]\n"        if $options{ dbg_frames };
-				push @frames, [ 'D', undef, @frame]   if $options{ dbg_frames };
+				push @frames, [ 'D', [ @DB::args ], @frame]   if $options{ dbg_frames };
 
 				if( $frame[3] eq 'DB::trace_subs' ) {
 					$found =  1;
@@ -570,7 +570,8 @@ BEGIN { # Initialization goes here
 					my @gframe =  caller($level);
 					if( @gframe  &&  $gframe[ 3 ] eq 'DB::goto' ) {
 						# print "DBGF: @gframe[0..3,5]\n"       if $options{ dbg_frames };
-						push @frames, [ 'D', undef, @gframe]   if $options{ dbg_frames };
+						# TODO: implement testcase: 'T' should show args for sub calls
+						push @frames, [ 'D', [ @DB::args ], @gframe]   if $options{ dbg_frames };
 						$level++;
 					}
 					else {
