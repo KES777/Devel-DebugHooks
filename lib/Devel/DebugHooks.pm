@@ -479,6 +479,14 @@ BEGIN { # Initialization goes here
 
 
 
+	# We put code here to execute it only once
+	my $usercontext =  <<'	CODE';
+		BEGIN{
+			( $^H, ${^WARNING_BITS} ) =  @DB::context[1..2];
+			my $hr =  $DB::context[3];
+			%^H =  %$hr   if $hr;
+		}
+	CODE
 	sub eval {
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# BUG? It is better that PadWalker return undef instead of warn when out of level
@@ -487,9 +495,10 @@ BEGIN { # Initialization goes here
 		#my $res =  eval "package xxx; defined DB::file( 'zzz' ) ? 'YES':'NO'";
 		# warn "eval: package $package; $_[0]"; # FIX: external call
 
+
 		my $expr =  shift;
 		@_ =  @{ $DB::context[0] };
-		eval "BEGIN{ ( \$^H, \${^WARNING_BITS} ) =  \@DB::context[1..2]; } package $DB::package; $expr";
+		eval "$usercontext; package $DB::package;\n$expr";
 	}
 
 
@@ -670,7 +679,7 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
-		@DB::context =  ( \@_, (caller 1)[8..9] ); # FIX: Should be  8..10
+		@DB::context =  ( \@_, (caller 1)[8..10] );
 	}
 
 
