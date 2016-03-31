@@ -490,13 +490,14 @@ BEGIN { # Initialization goes here
 	# http://perldoc.perl.org/functions/eval.html
 	# We may define eval in other package if we want to place eval into other
 	# namespace. It will still "doesn't see the usual surrounding lexical scope"
-	# because "it is defined here in the DB package"
+	# because "it is defined in the DB package"
 	# sub My::eval {
 	sub eval {
 		my( $expr ) =  @_;
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
+		local $^D;
 
 		local @_ =  @{ $DB::context[0] }; # TODO: testcase
 		eval "$usercontext; package $DB::package;\n$expr";
