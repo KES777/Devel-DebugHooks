@@ -835,9 +835,7 @@ sub DB {
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 	# WRONG!!! It has. See mcall/scall
 
-	# FIX: this 'mcall' breaks $DB::file, $DB::line info
-	# $ext_call++; mcall( 'bbreak', $DB::dbg );
-	$DB::dbg->bbreak();
+	$ext_call++; mcall( 'bbreak', $DB::dbg );
 	1 while( defined interact() );
 	$ext_call++; mcall( 'abreak', $DB::dbg );
 }
