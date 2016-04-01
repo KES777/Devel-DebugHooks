@@ -830,10 +830,10 @@ sub DB {
 	# TODO: Implement on_stop event
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
+
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	# Actually to make things same we should call 'scall' here, despite on
-	# $DB::single has no effect
+	# WRONG!!! It has. See mcall/scall
 
 	# FIX: this 'mcall' breaks $DB::file, $DB::line info
 	# $ext_call++; mcall( 'bbreak', $DB::dbg );
