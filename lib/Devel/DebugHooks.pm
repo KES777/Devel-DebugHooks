@@ -996,6 +996,22 @@ sub sub_returns {
 }
 
 
+
+sub push_frame {
+	push @DB::stack, {
+		single      =>  $DB::single,
+		sub         =>  $DB::sub,
+		goto_frames =>  [ @DB::goto_frames ],
+	};
+
+	@DB::goto_frames =  ();
+
+	# TODO: implement testcase
+	# after retruning from level 1 to 0 the @DB::stack should be empty
+	trace_subs( 'C' );
+}
+
+
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	if( $ext_call  ||  $DB::sub eq 'DB::sub_returns' ) {
@@ -1008,17 +1024,7 @@ sub sub {
 
 	# manual localization
 	scope_guard \&sub_returns;
-	# TODO: implement testcase
-	# after retruning from level 1 to 0 the @DB::stack should be empty
-	push @DB::stack, {
-		single      =>  $DB::single,
-		sub         =>  $DB::sub,
-		goto_frames =>  [ @DB::goto_frames ],
-	};
-
-	@DB::goto_frames =  ();
-
-	trace_subs( 'C' );
+	push_frame();
 
 	$DB::single =  0   if $DB::single & 2;
 	{
