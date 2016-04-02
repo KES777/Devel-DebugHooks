@@ -1000,7 +1000,7 @@ sub pop_frame {
 
 sub push_frame {
 	push @DB::stack, {
-		single      =>  $DB::single,
+		single      =>  $_[0],
 		sub         =>  $DB::sub,
 		goto_frames =>  [ @DB::goto_frames ],
 	};
@@ -1027,8 +1027,21 @@ sub sub {
 
 
 	# manual localization
-	scope_guard \&DB::Tools::pop_frame;
-	$ext_call++; DB::Tools::push_frame(); $ext_call--;
+	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
+	# start to guard frame before any external call
+	# $ext_call++; scall( \&DB::Tools::push_frame, ($DB::sub eq 'MyMaths::new' ? 'stop':()) );
+
+	my $old =  $DB::single; $DB::single =  0; # THIS CONTROLS NESTING
+	if( $DB::sub eq 'MyMaths::new' ) {
+		$DB::single =  1;
+		$DB::nesting++;
+		DB::Tools::push_frame( $old );
+		$DB::nesting--;
+	}
+	else {
+		$ext_call++; DB::Tools::push_frame( $old ); $ext_call--;
+	}
+	$DB::single =  $old;
 
 	$DB::single =  0   if $DB::single & 2;
 	{
