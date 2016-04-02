@@ -674,7 +674,12 @@ use Guard;
 		# local $DB::single =  1;
 
 		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call # THIS CONTROLS NESTING
+
+
+		my $osingle =  $DB::single;
+		scope_guard {
+			$DB::single =  $osingle;
+		};
 
 
 		my $odebug;
@@ -690,6 +695,9 @@ use Guard;
 			$DB::ddlvl++;
 			$DB::single =  1;
 			$ext_call--;
+		}
+		else {
+			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
 
