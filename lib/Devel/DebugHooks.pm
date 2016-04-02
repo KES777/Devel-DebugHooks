@@ -923,7 +923,9 @@ sub goto {
 	trace_subs( 'G' );
 };
 
+use Guard;
 
+{ package DB::Tools;
 
 sub trace_subs {
 	my $last_frames =  $_[0] eq 'G'?
@@ -967,7 +969,6 @@ sub trace_subs {
 
 # my $x = 0;
 # use Data::Dump qw/ pp /;
-use Guard;
 sub pop_frame {
 	# $ext_call++; scall( sub{
 	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
@@ -1010,11 +1011,14 @@ sub push_frame {
 	# after retruning from level 1 to 0 the @DB::stack should be empty
 	trace_subs( 'C' );
 }
+}
 
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
-	if( $ext_call  ||  $DB::sub eq 'DB::pop_frame' ) {
+	if( $ext_call
+		||  $DB::sub eq 'DB::Tools::pop_frame'
+	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
@@ -1023,8 +1027,8 @@ sub sub {
 
 
 	# manual localization
-	scope_guard \&pop_frame;
-	push_frame();
+	scope_guard \&DB::Tools::pop_frame;
+	$ext_call++; DB::Tools::push_frame(); $ext_call--;
 
 	$DB::single =  0   if $DB::single & 2;
 	{
