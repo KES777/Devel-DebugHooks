@@ -878,13 +878,16 @@ sub init {
 
 
 # Get a string and process it.
-# If result is
 sub process {
 	my( $str ) =  @_;
 
 	my @args =  ( $DB::dbg, $str );
 	my $code =  $DB::dbg->can( 'process' );
 	PROCESS: {
+		# 0 means : no command found so 'eval( $str )' and keep interaction
+		# TRUE    : command found, keep interaction
+		# HASHREF : eval given { expr } and pass results to { code }
+		# negative: something wrong happened while running the command
 		my $result =  $code->( @args );
 		return   unless defined $result;
 		if( $result ) {
@@ -896,6 +899,13 @@ sub process {
 		}
 	}
 
+	# else no such command exists the entered string will be evaluated
+	# in __FILE__:__LINE__ context of script we are debugging
+	print $DB::OUT DB::eval( $str ) // 'undef';
+	print $DB::OUT "ERROR: $@"   if $@;
+
+	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
+	# print $DB::OUT "\n";
 
 	return 0;
 }
@@ -909,25 +919,9 @@ sub interact {
 
 	local $DB::interaction =  $DB::interaction +1;
 
-	# interact() should return defined value to keep interaction
-	# 0 means: no command found so 'eval( $str )' and keep interaction
-	# TRUE   : command found, keep interaction
-	# HASHREF: eval given expression and pass results to code
-	# negative: something wrong happened while running the command
 	$ext_call++;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
-		my $result =  process( $str );
-		return $result   unless defined $result  &&  $result == 0;
-
-		# else no such command exists the entered string will be evaluated
-		# in __FILE__:__LINE__ context of script we are debugging
-		print $DB::OUT DB::eval( $str ) // 'undef';
-		print $DB::OUT "ERROR: $@"   if $@;
-
-		# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
-		# print $DB::OUT "\n";
-
-		return 0;
+		return process( $str );
 	}
 
 	return;
