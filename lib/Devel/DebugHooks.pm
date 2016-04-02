@@ -968,7 +968,7 @@ sub trace_subs {
 # my $x = 0;
 # use Data::Dump qw/ pp /;
 use Guard;
-sub sub_returns {
+sub pop_frame {
 	# $ext_call++; scall( sub{
 	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
 	# 		print $DB::OUT pp( \@DB::stack, \@DB::goto_frames );
@@ -1014,7 +1014,7 @@ sub push_frame {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
-	if( $ext_call  ||  $DB::sub eq 'DB::sub_returns' ) {
+	if( $ext_call  ||  $DB::sub eq 'DB::pop_frame' ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
@@ -1023,7 +1023,7 @@ sub sub {
 
 
 	# manual localization
-	scope_guard \&sub_returns;
+	scope_guard \&pop_frame;
 	push_frame();
 
 	$DB::single =  0   if $DB::single & 2;
