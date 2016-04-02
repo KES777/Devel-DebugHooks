@@ -911,6 +911,20 @@ sub interact {
 
 
 
+# TODO: Before run the programm we could deparse sources and insert some code
+# in the place of 'goto'. This code may save __FILE__:__LINE__ into DB::
+sub goto {
+	return   unless $options{ trace_goto };
+	return   if $ext_call;
+
+	# TODO: implement testcase
+	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go; # Step over goto
+	$DB::single =  0   if $DB::single & 2;
+	trace_subs( 'G' );
+};
+
+
+
 sub trace_subs {
 	my $last_frames =  $_[0] eq 'G'?
 		undef: # goto does not create frames
@@ -949,19 +963,6 @@ sub trace_subs {
 	}
 }
 
-
-
-# TODO: Before run the programm we could deparse sources and insert some code
-# in the place of 'goto'. This code may save __FILE__:__LINE__ into DB::
-sub goto {
-	return   unless $options{ trace_goto };
-	return   if $ext_call;
-
-	# TODO: implement testcase
-	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go; # Step over goto
-	$DB::single =  0   if $DB::single & 2;
-	trace_subs( 'G' );
-};
 
 
 # my $x = 0;
