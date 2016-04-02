@@ -671,26 +671,22 @@ use Guard;
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
-		# local $DB::single =  1;
 
-		local $ext_call   =  $ext_call +1;
+		local $ddlvl         =  $ddlvl;
+		local $ext_call      =  $ext_call +1;
+		local $options{ dd } =  $options{ dd };
 
-
+		# Manual localization
 		my $osingle =  $DB::single;
 		scope_guard {
 			$DB::single =  $osingle;
 		};
 
-
-		my $odebug;
 		scope_guard {
-			$DB::options{ dd } =  $odebug;
-			$DB::ddlvl--;
 		}   if $DB::options{ dd };
 
 
 		if( $DB::options{ dd } ) {
-			$odebug =  $DB::options{ dd };
 			$DB::options{ dd } =  0;
 			$DB::ddlvl++;
 			$DB::single =  1;
@@ -699,7 +695,6 @@ use Guard;
 		else {
 			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
-
 
 		return shift->( @_[ 1..$#_ ] );
 
