@@ -672,9 +672,10 @@ use Guard;
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 
-		local $ddlvl         =  $ddlvl;
 		local $ext_call      =  $ext_call +1;
-		local $options{ dd } =  $options{ dd };
+		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
+		local $ddlvl         =  $ddlvl           if $DB::options{ dd };
+		local $options{ dd } =  $options{ dd }   if $DB::options{ dd };
 
 		# Manual localization
 		my $osingle =  $DB::single;
