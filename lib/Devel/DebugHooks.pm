@@ -680,7 +680,7 @@ use Guard;
 		# Manual localization
 		my $osingle =  $DB::single;
 		scope_guard {
-			$DB::single =  $osingle;
+			spy( $osingle );
 		};
 
 		scope_guard {
@@ -690,11 +690,11 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			$DB::options{ dd } =  0;
 			$DB::ddlvl++;
-			$DB::single =  1;
+			spy( 1 );
 			$ext_call   =  0;
 		}
 		else {
-			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
+			spy( 0 ); # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
 		return shift->( @_[ 1..$#_ ] );
@@ -713,6 +713,14 @@ use Guard;
 
 
 	sub restore_context {
+	}
+
+
+
+	sub spy {
+		return $DB::single   unless @_;
+
+		$DB::single =  $_[0];
 	}
 } # end of provided DB::API
 
@@ -938,7 +946,7 @@ sub goto {
 
 	# TODO: implement testcase
 	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go; # Step over goto
-	$DB::single =  0   if $DB::single & 2;
+	spy( 0 )   if $DB::single & 2;
 	trace_subs( 'G' );
 };
 
@@ -971,7 +979,7 @@ sub trace_subs {
 
 	# Stop on the first OP in a given subroutine
 	my $sis =  \%DB::stop_in_sub;
-	$DB::single =  1
+	spy( 1 )
 		# First of all we check full match ...
 		if $sis->{ $DB::sub }
 		# ... then check not disabled partially matched subnames
@@ -998,8 +1006,6 @@ sub pop_frame {
 	my $last =  pop @DB::stack;
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
-		print $DB::OUT "DB::single state changed " . $DB::single ."->" .$last->{ single };
-		print $DB::OUT "\n";
 	}
 
 	# The current FILE:LINE is the subroutine call place.
@@ -1012,12 +1018,13 @@ sub pop_frame {
 
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
-	$DB::single =  $last->{ single };
+	DB::spy( $last->{ single } );
 }
 
 
 
 sub push_frame {
+	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single\n";
 	push @DB::stack, {
 		single      =>  $_[0],
 		sub         =>  $DB::sub,
@@ -1037,6 +1044,7 @@ sub push_frame {
 sub sub {
 	if( $ext_call
 		||  $DB::sub eq 'DB::Tools::pop_frame'
+		||  $DB::sub eq 'DB::spy'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
@@ -1049,10 +1057,11 @@ sub sub {
 	print $DB::OUT "Creating frame for $DB::sub\n";
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
+
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
 	$ext_call++; scall( \&DB::Tools::push_frame, $old );
 
-	$DB::single =  0   if $DB::single & 2;
+	spy( 0 )   if $DB::single & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub   if !$options{ trace_returns };
@@ -1107,7 +1116,7 @@ sub lsub : lvalue {
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
-	$DB::single =  0   if $DB::single & 2;
+	spy( 0 )   if $DB::single & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
