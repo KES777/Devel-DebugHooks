@@ -639,7 +639,23 @@ BEGIN { # Initialization goes here
 
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
-		$ext_call--; # $ext_call++ before mcall prevents reenterance to DB::sub
+		my $method =  shift;
+		my $context =  $_[0];
+		my $sub =  $context->can( $method );
+
+		scall( $sub, @_ );
+	}
+
+
+
+use Guard;
+
+	sub scall {
+
+		# TODO: implement debugger debugging
+		# local $^D |= (1<<30);
+
+		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
 		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 		# (This doesn't happen if the subroutine -was compiled in the DB package.)
 		# ...was called and compiled in the DB package
@@ -651,27 +667,6 @@ BEGIN { # Initialization goes here
 		# my $stub = sub { &$DB::sub };
 		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
 		# Another:
-		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
-
-
-		my $method =  shift;
-		my $context =  $_[0];
-		my $sub =  $context->can( $method );
-
-		$sub->( @_ );
-	}
-
-
-
-use Guard;
-
-	sub scall {
-		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
-
-		# TODO: implement debugger debugging
-		# local $^D |= (1<<30);
-
 		local $ext_call      =  $ext_call +1;
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl         =  $ddlvl           if $DB::options{ dd };
