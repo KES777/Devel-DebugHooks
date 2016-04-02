@@ -657,10 +657,11 @@ BEGIN { # Initialization goes here
 		my $sub =  $context->can( $method );
 
 		$sub->( @_ );
-
 	}
 
 
+
+use Guard;
 
 	sub scall {
 		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
@@ -670,7 +671,18 @@ BEGIN { # Initialization goes here
 		# local $DB::single =  1;
 
 		local $ext_call   =  $ext_call +1;
-		local $DB::single =  0;     # Prevent debugging for next call
+		local $DB::single =  0;     # Prevent debugging for next call # THIS CONTROLS NESTING
+
+
+		scope_guard {
+		}   if $_[2] eq 'stop';
+
+
+		if( $_[2] eq 'stop' ) {
+			$DB::single =  1;
+			$ext_call--;
+		}
+
 
 		return shift->( @_[ 1..$#_ ] );
 
@@ -923,7 +935,7 @@ sub goto {
 	trace_subs( 'G' );
 };
 
-use Guard;
+
 
 { package DB::Tools;
 
@@ -1027,21 +1039,11 @@ sub sub {
 
 
 	# manual localization
+	print $DB::OUT "Creating frame for $DB::sub\n";
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
-	# $ext_call++; scall( \&DB::Tools::push_frame, ($DB::sub eq 'MyMaths::new' ? 'stop':()) );
-
-	my $old =  $DB::single; $DB::single =  0; # THIS CONTROLS NESTING
-	if( $DB::sub eq 'MyMaths::new' ) {
-		$DB::single =  1;
-		$DB::nesting++;
-		DB::Tools::push_frame( $old );
-		$DB::nesting--;
-	}
-	else {
-		$ext_call++; DB::Tools::push_frame( $old ); $ext_call--;
-	}
-	$DB::single =  $old;
+	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
+	$ext_call++; scall( \&DB::Tools::push_frame, $old, ($DB::sub eq 'MyMaths::new' ? 'stop':()) );
 
 	$DB::single =  0   if $DB::single & 2;
 	{
