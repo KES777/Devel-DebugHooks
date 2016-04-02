@@ -317,6 +317,7 @@ BEGIN {
 	$OUT                       //= \*STDOUT;
 
 	$options{ _debug }         //=  0;
+	$options{ dd }             //=  0;         # controls debugger debugging
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
@@ -674,11 +675,15 @@ use Guard;
 		local $DB::single =  0;     # Prevent debugging for next call # THIS CONTROLS NESTING
 
 
+		my $odebug;
 		scope_guard {
-		}   if $_[2] eq 'stop';
+			$DB::options{ dd } =  $odebug;
+		}   if $DB::options{ dd };
 
 
-		if( $_[2] eq 'stop' ) {
+		if( $DB::options{ dd } ) {
+			$odebug =  $DB::options{ dd };
+			$DB::options{ dd } =  0;
 			$DB::single =  1;
 			$ext_call--;
 		}
@@ -1043,7 +1048,7 @@ sub sub {
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
-	$ext_call++; scall( \&DB::Tools::push_frame, $old, ($DB::sub eq 'MyMaths::new' ? 'stop':()) );
+	$ext_call++; scall( \&DB::Tools::push_frame, $old );
 
 	$DB::single =  0   if $DB::single & 2;
 	{
