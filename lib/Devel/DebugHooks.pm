@@ -690,7 +690,7 @@ use Guard;
 			$DB::options{ dd } =  0;
 			$DB::ddlvl++;
 			$DB::single =  1;
-			$ext_call--;
+			$ext_call   =  0;
 		}
 		else {
 			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
