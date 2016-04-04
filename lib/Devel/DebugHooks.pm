@@ -1044,13 +1044,20 @@ sub trace_returns {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	if( $ext_call
-		||  $DB::sub eq 'DB::Tools::pop_frame'
 		||  $DB::sub eq 'DB::spy'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
 	}
+
+	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
+		$DB::single =  0   unless $DB::options{ dd };
+
+		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+		return &$DB::sub;
+	}
+
 	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 
