@@ -319,6 +319,7 @@ BEGIN {
 
 	$options{ _debug }         //=  0;
 	$options{ dd }             //=  0;         # controls debugger debugging
+	$options{ ddd }            //=  0;         # print debug info
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
@@ -643,6 +644,7 @@ BEGIN { # Initialization goes here
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
+		print "mcall ${context}->$method\n"   if $DB::options{ ddd };
 		scall( $sub, @_ );
 	}
 
@@ -654,6 +656,19 @@ use Guard;
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
+		my $sub;
+		if( $DB::options{ ddd } ) {
+			$sub =  (caller 1)[3];
+			if( $sub eq 'DB::mcall' ) {
+				$sub =  "$DB::args[1]::$DB::args[0]";
+			}
+
+			my($file, $line) =  (caller 1)[1,2];
+
+			$file =~ s'.*?([^/]+)$'$1'e;
+			print $DB::OUT "scall from $file:$line -- $sub\n"
+		}
+
 
 		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
 		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
@@ -676,13 +691,19 @@ use Guard;
 		my $osingle =  $DB::single;
 		scope_guard {
 			spy( $osingle );
+			print $DB::OUT "scall END ($file:$line) -- $sub\n"
+				if $DB::options{ ddd };
 		};
 
 		scope_guard {
+			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
+				if $DB::options{ ddd };
 		}   if $DB::options{ dd };
 
 
 		if( $DB::options{ dd } ) {
+			print $DB::OUT "$_[1] IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
+				if $DB::options{ ddd };
 			$DB::options{ dd } =  0;
 			$DB::ddlvl++;
 			spy( 1 );
@@ -715,6 +736,12 @@ use Guard;
 	sub spy {
 		return $DB::single   unless @_;
 
+		if( $DB::options{ ddd } ) {
+			my($file, $line) =  (caller 0)[1,2];
+			$file =~ s'.*?([^/]+)$'$1'e;
+			print $DB::OUT "!! DB::single state changed $DB::single -> $_[0]"
+				." at $file:$line\n"
+		}
 		$DB::single =  $_[0];
 	}
 } # end of provided DB::API
@@ -780,7 +807,8 @@ sub DB {
 
 	&save_context;
 
-	print $DB::OUT "DB::DB called; s:$DB::single t:$DB::trace\n"   if $DB::options{ _debug };
+	print $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace << $file::$line\n"
+		if $DB::options{ _debug } || $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		$ext_call++; scall( $DB::commands->{ T } );
 	}
@@ -863,6 +891,8 @@ sub DB {
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 	# WRONG!!! It has. See mcall/scall
 
+	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
+		if $DB::options{ ddd };
 	$ext_call++; mcall( 'bbreak', $DB::dbg );
 	1 while( defined interact() );
 	$ext_call++; mcall( 'abreak', $DB::dbg );
@@ -999,6 +1029,8 @@ sub pop_frame {
 	# });
 
 	my $last =  pop @DB::stack;
+	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl  --  $last->{ sub }\n"
+		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
 	}
@@ -1019,7 +1051,8 @@ sub pop_frame {
 
 
 sub push_frame {
-	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single\n";
+	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
+		if $DB::options{ ddd };
 	push @DB::stack, {
 		single      =>  $_[0],
 		sub         =>  $DB::sub,
@@ -1043,6 +1076,10 @@ sub trace_returns {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	print $DB::OUT "DB::sub called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single"
+		." $DB::sub <-- @{[ map{ s'.*?([^/]+)$'$1'er } (caller 0)[1,2] ]}\n"
+		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
+
 	if( $ext_call
 		||  $DB::sub eq 'DB::spy'
 	) {
@@ -1062,7 +1099,7 @@ sub sub {
 
 
 	# manual localization
-	print $DB::OUT "Creating frame for $DB::sub\n";
+	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
@@ -1070,6 +1107,11 @@ sub sub {
 	$ext_call++; scall( \&DB::Tools::push_frame, $old );
 
 	spy( 0 )   if $DB::single & 2;
+	if( $DB::options{ ddd } ) {
+		print $DB::OUT "STACK:\n";
+		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub } ."\n"   for @DB::stack;
+		print $DB::OUT "Frame created for $DB::sub\n\n";
+	}
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub   if !$options{ trace_returns };
