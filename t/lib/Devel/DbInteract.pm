@@ -2,6 +2,9 @@ package Devel::DbInteract;
 
 
 
+# Can not use 'parent' because DB:: do calls to subs at its compile time
+# So we should establish relationship before require
+# use parent 'Devel::DebugHooks';
 BEGIN {
 	push @ISA, 'Devel::DebugHooks';
 }
@@ -31,7 +34,6 @@ sub bbreak {
 sub interact {
 	return shift @$commands;
 }
-
 
 
 use Devel::DebugHooks();
