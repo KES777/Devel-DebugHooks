@@ -1032,7 +1032,13 @@ sub push_frame {
 	# after retruning from level 1 to 0 the @DB::stack should be empty
 	trace_subs( 'C' );
 }
+
+
+
+sub trace_returns {
+	$ext_call++; mcall( 'trace_returns', $DB::dbg, @_ );
 }
+
 
 
 # The sub is installed at compile time as soon as the body has been parsed
@@ -1064,17 +1070,17 @@ sub sub {
 
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $DB::dbg, @ret );
+			trace_returns( @ret );
 			return @ret;
 		}
 		elsif( defined wantarray ) {                  # scalar context
 			my $ret =  &$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $DB::dbg, $ret );
+			trace_returns( $ret );
 			return $ret;
 		}
 		else {                                        # void context
 			&$DB::sub;
-			$ext_call++; mcall( 'trace_returns', $DB::dbg );
+			trace_returns;
 			return;
 		}
 	}
