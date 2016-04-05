@@ -45,7 +45,30 @@ is
 	,"Step-by-step debugging.";
 
 
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='s;s;q' -e '$script'` )
+	,$files->{ 'step into sub' }
+	,"Step into sub";
+
+
 __DATA__
 @@ sbs
 -e:0001  1;
 -e:0002  2;
+@@ step into sub
+-e:0008  t2();
+-e:0005    t1();
+-e:0002    1;
