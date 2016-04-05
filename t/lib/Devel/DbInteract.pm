@@ -17,7 +17,10 @@ sub import {
 
 
 sub bbreak {
-	print $DB::OUT "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
+	printf $DB::OUT "%s:%04s  %s"
+		,$DB::file
+		,$DB::line
+		,DB::source()->[ $DB::line ];
 }
 
 

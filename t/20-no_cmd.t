@@ -21,10 +21,10 @@ unified_diff();
 my $files =  get_data_section();
 
 
-my $script =  <<'PERL';
-1;
-2;
-3;
+my $script =  <<'PERL' =~ s#^\t##rgm;
+	1;
+	2;
+	3;
 PERL
 
 is
@@ -36,6 +36,6 @@ is
 
 __DATA__
 @@ step-by-step
--e:1    1;
--e:2    2;
--e:3    3;
+-e:0001  1;
+-e:0002  2;
+-e:0003  3;
