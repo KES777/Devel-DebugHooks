@@ -2,15 +2,6 @@ package Devel::DbInteract;
 
 
 
-# Can not use 'parent' because DB:: do calls to subs at its compile time
-# So we should establish relationship before require
-# use parent 'Devel::DebugHooks';
-BEGIN {
-	push @ISA, 'Devel::DebugHooks';
-}
-
-
-
 our $commands;
 
 
@@ -36,6 +27,8 @@ sub interact {
 }
 
 
+
+use parent '-norequire', 'Devel::DebugHooks';
 use Devel::DebugHooks();
 
 1;
