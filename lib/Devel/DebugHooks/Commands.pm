@@ -401,8 +401,6 @@ $DB::commands =  {
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
 		# $#DB::stack =  $DB::deep -1;
-		# TODO: implement testcase for case when we 's' in main script before
-		# any sub call. At this moment the $DB::stack has no frames at all.
 		# There is no gurantee how much frames we go out, so change all them
 		# TODO: IT: sub t1{ #s } sub t2{ t1() } t2(); 1; We should stop at 1;
 		$_->{ single } =  1   for @DB::stack;
