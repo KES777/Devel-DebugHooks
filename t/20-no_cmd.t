@@ -64,6 +64,25 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		goto &t1;
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl -I$lib -d:DbInteract -e '$script'` )
+	,$files->{ 'sbs goto' }
+	,"Step-by-step debugging goto";
+
+
+
 TODO: {
 	local $TODO =  "RT#127379";
 
@@ -96,6 +115,11 @@ __DATA__
 -e:0005    t1();
 -e:0002    1;
 -e:0006    2;
+-e:0009  3;
+@@ sbs goto
+-e:0008  t2();
+-e:0005    goto &t1;
+-e:0002    1;
 -e:0009  3;
 @@ sbs if block
 -e:0001  $x =  1;
