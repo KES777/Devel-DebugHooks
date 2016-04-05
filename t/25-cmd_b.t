@@ -44,10 +44,34 @@ is
 	,$files->{ 'list empty traps' }
 	,"Empty traps list";
 
+is
+	n( `perl $lib -d:DbInteract='b 1;b;q' -e '$script'` )
+	,$files->{ 'list one trap' }
+	,"Put one trap. List traps";
+
+is
+	n( `perl $lib -d:DbInteract='b 1;b 3;b;q' -e '$script'` )
+	,$files->{ 'list two traps' }
+	,"Put two traps. List traps";
+
+
 
 
 __DATA__
 @@ list empty traps
 -e:0001  1;
 Breakpoints:
+Stop on subs:
+@@ list one trap
+-e:0001  1;
+Breakpoints:
+0 -e
+1: 1
+Stop on subs:
+@@ list two traps
+-e:0001  1;
+Breakpoints:
+0 -e
+1: 1
+3: 1
 Stop on subs:
