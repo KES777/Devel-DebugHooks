@@ -389,7 +389,7 @@ $DB::commands =  {
 		return;
 	}
 
-	# Actually nothing is changed. We stop at each OP in the script.
+	# ...Actually nothing is changed. We stop at each OP in the script.
 	# Only one important thing: if 'n' was called before we change the
 	# $DB::single value from 2 to 1.
 	,s => sub {
@@ -401,7 +401,7 @@ $DB::commands =  {
 		return;
 	}
 
-	# As for the 's' command we stop at each OP in the script. But when the
+	# ...As for the 's' command we stop at each OP in the script. But when the
 	# sub is called we turn off debugging for that sub at DB::sub.
 	# spy( 0 )   if $DB::single & 2;
 	# After that sub returns $DB::single will be restored because of localizing
