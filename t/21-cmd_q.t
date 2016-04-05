@@ -29,10 +29,11 @@ sub n {
 
 
 
+my $script;
 my $files =  get_data_section();
 
 
-my $script =  <<'PERL' =~ s#^\t##rgm;
+$script =  <<'PERL' =~ s#^\t##rgm;
 	END{ 4; }
 	1;
 	2;
