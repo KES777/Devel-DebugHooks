@@ -33,6 +33,7 @@ my $files =  get_data_section();
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
+	END{ 4; }
 	1;
 	2;
 	3;
@@ -107,9 +108,10 @@ TODO: {
 
 __DATA__
 @@ step-by-step
--e:0001  1;
--e:0002  2;
--e:0003  3;
+-e:0002  1;
+-e:0003  2;
+-e:0004  3;
+-e:0001  END{ 4; }
 @@ sbs subs
 -e:0008  t2();
 -e:0005    t1();
