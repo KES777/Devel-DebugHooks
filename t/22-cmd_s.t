@@ -42,7 +42,7 @@ PERL
 is
 	n( `perl $lib -d:DbInteract='s;q' -e '$script'` )
 	,$files->{ 'sbs' }
-	,"Step-by-step debugging.";
+	,"Step-by-step debugging. Step into";
 
 
 
