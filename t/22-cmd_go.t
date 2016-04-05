@@ -68,6 +68,12 @@ is
 	,$files->{ 'go from sub' }
 	,"Run script from sub until the end";
 
+is
+	n( `perl $lib -d:DbInteract='s;s;go' -e '$script'` )
+	,$files->{ 'go from sub #2' }
+	,"Run script from sub until the end. #2";
+
+
 
 __DATA__
 @@ go
@@ -77,4 +83,8 @@ __DATA__
 -e:0003  3;
 @@ go from sub
 -e:0008  t2();
+-e:0002    1;
+@@ go from sub #2
+-e:0008  t2();
+-e:0005    t1();
 -e:0002    1;

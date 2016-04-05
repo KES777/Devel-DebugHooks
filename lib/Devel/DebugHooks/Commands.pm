@@ -663,7 +663,7 @@ $DB::commands =  {
 
 
 		$DB::single =  0;
-		$_->{ single } =  0   	for( @DB::stack );
+		$_->{ single } =  0   for @DB::stack;
 
 
 		return;
