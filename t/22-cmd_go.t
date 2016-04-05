@@ -51,9 +51,30 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='go 2;go' -e '$script'` )
+	,$files->{ 'go from sub' }
+	,"Run script from sub until the end";
+
+
 __DATA__
 @@ go
 -e:0001  1;
 @@ go to line
 -e:0001  1;
 -e:0003  3;
+@@ go from sub
+-e:0008  t2();
+-e:0002    1;

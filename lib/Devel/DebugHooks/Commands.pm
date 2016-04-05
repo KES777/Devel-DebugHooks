@@ -665,9 +665,6 @@ $DB::commands =  {
 		$DB::single =  0;
 		$_->{ single } =  0   	for( @DB::stack );
 
-		# TODO: implement testcase
-		# $script = 'sub t{ #go }; t(); my $x';
-		# Should not stop at 'my $x'
 
 		return;
 	}
