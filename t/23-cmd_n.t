@@ -46,7 +46,26 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='n;n' -e '$script'` )
+	,$files->{ 'step over sub' }
+	,"Step over sub";
 __DATA__
 @@ sbs
 -e:0001  1;
 -e:0002  2;
+@@ step over sub
+-e:0008  t2();
+-e:0009  3;
