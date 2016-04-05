@@ -591,6 +591,7 @@ $DB::commands =  {
 			$cmd_f =  [];
 			my $file_no =  0;
 			# First display traps in the current file
+			print $DB::OUT "Breakpoints:\n";
 			for my $source ( $file, grep { $_ ne $file } keys %$DB::_tfiles ) {
 				my $traps =  DB::traps( $source );
 				next   unless keys %$traps;
