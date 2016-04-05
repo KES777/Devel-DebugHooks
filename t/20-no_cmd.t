@@ -44,9 +44,35 @@ is
 	,"Step-by-step debugging";
 
 
+TODO: {
+	local $TODO =  "RT#127379";
+
+	$script =  <<'	PERL' =~ s#^\t\t##rgm;
+		$x =  1;
+		if( $x > 2 ) {
+			1;
+		}
+		elsif( $x == 0 ) {
+			2;
+		}
+		else {
+			3;
+		}
+	PERL
+
+	is
+		n( `perl -I$lib -d:DbInteract -e'$script'` )
+		,$files->{ 'sbs if block' }
+		,"Step-by-step debugging if block";
+}
 
 __DATA__
 @@ step-by-step
 -e:0001  1;
 -e:0002  2;
 -e:0003  3;
+@@ sbs if block
+-e:0001  $x =  1;
+-e:0002  if( $x > 2 ) {
+-e:0005  elsif( $x == 0 ) {
+-e:0009    3;
