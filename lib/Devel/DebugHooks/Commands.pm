@@ -409,8 +409,7 @@ $DB::commands =  {
 	,n => sub {
 		$DB::single =  2;
 		# If next executed OP will be return from sub, the $DB::single will be
-		# overwrited by the value for that frame. We prevent that here:
-		# TODO: IT: sub t1{ 1#n } sub t2{ 1 } sub t3{ t1(); t2() } t3()
+		# changed by the outer frame. We prevent that here:
 		$_->{ single } =  2   for @DB::stack;
 
 		return;
