@@ -87,6 +87,25 @@ is
 	,"Double step from sub";
 
 
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		t1();
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='go 5;n;q' -e '$script'` )
+	,$files->{ 'step over sub #2' }
+	,"Step over sub in a sub";
+
+
 __DATA__
 @@ sbs
 -e:0001  1;
@@ -102,3 +121,7 @@ __DATA__
 -e:0007  t2();
 -e:0002    1;
 -e:0008  3;
+@@ step over sub #2
+-e:0008  t2();
+-e:0005    t1();
+-e:0006    t1();

@@ -394,8 +394,6 @@ $DB::commands =  {
 	# $DB::single value from 2 to 1.
 	,s => sub {
 		$DB::single =  1;
-		# TODO: implement testcase
-		# sub t1{ 1; } sub t2{ t1(); #n t1(); } sub t3{ t2(); 2; } t3() #b 2;go
 		$_->{ single } =  1   for @DB::stack;
 
 		return;
