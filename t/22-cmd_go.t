@@ -44,7 +44,16 @@ is
 	,$files->{ go }
 	,"Run script until the end";
 
+is
+	n( `perl $lib -d:DbInteract='go 3' -e '$script'` )
+	,$files->{ 'go to line' }
+	,"Run script to the line";
+
+
 
 __DATA__
 @@ go
 -e:0001  1;
+@@ go to line
+-e:0001  1;
+-e:0003  3;
