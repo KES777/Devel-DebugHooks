@@ -398,9 +398,7 @@ $DB::commands =  {
 		# n behaves as s for non sub calls
 		# TODO: implement testcase
 		# sub t1{ 1; } sub t2{ t1(); #n t1(); } sub t3{ t2(); 2; } t3() #b 2;go
-		# There is no gurantee how much frames we go out, so change all them
-		# TODO: IT: sub t1{ #s } sub t2{ t1() } t2(); 1; We should stop at 1;
-		$_->{ single } =  1   for @DB::stack;;
+		$_->{ single } =  1   for @DB::stack;
 
 		return;
 	}
