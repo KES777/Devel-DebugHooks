@@ -62,6 +62,14 @@ is
 	n( `perl $lib -d:DbInteract='n;n' -e '$script'` )
 	,$files->{ 'step over sub' }
 	,"Step over sub";
+
+is
+	n( `perl $lib -d:DbInteract='go 2;n;q' -e '$script'` )
+	,$files->{ 'step from sub' }
+	,"Step from sub";
+
+
+
 __DATA__
 @@ sbs
 -e:0001  1;
@@ -69,3 +77,7 @@ __DATA__
 @@ step over sub
 -e:0008  t2();
 -e:0009  3;
+@@ step from sub
+-e:0008  t2();
+-e:0002    1;
+-e:0006    2;

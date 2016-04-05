@@ -408,8 +408,6 @@ $DB::commands =  {
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		$DB::single =  2;
-		# TODO: implement testcase
-		# sub t1{ 1; #s } sub t2{ t1(); 1; } sub t3{ t2(); 2; } t3() #b 1;go
 		# If next executed OP will be return from sub, the $DB::single will be
 		# overwrited by the value for that frame. We prevent that here:
 		# TODO: IT: sub t1{ 1#n } sub t2{ 1 } sub t3{ t1(); t2() } t3()
