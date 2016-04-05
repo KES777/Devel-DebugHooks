@@ -63,6 +63,11 @@ is
 	,$files->{ 'step into sub' }
 	,"Step into sub";
 
+is
+	n( `perl $lib -d:DbInteract='go 2;s;q' -e '$script'` )
+	,$files->{ 'step from sub' }
+	,"Step from sub";
+
 
 __DATA__
 @@ sbs
@@ -72,3 +77,7 @@ __DATA__
 -e:0008  t2();
 -e:0005    t1();
 -e:0002    1;
+@@ step from sub
+-e:0008  t2();
+-e:0002    1;
+-e:0006    2;
