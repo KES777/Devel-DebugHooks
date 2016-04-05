@@ -6,7 +6,7 @@ use warnings;
 
 use Test::More 'no_plan';
 use Test::Output;
-use FindBin qw/ $Bin /;  my $lib =  "$Bin/lib";
+use FindBin qw/ $Bin /;  my $lib =  "-I$Bin/lib -I$Bin/../lib";
 use Data::Section::Simple qw/ get_data_section /;
 
 use Test::Differences;
@@ -55,71 +55,71 @@ $x =  t2( 5, 'str' );
 $x++;
 PERL
 is
-	n( `perl -I$lib -d:DebugHooks -e '$script'` )
+	n( `perl $lib -d:DebugHooks -e '$script'` )
 	, $files->{ VerboseBehaviour }
 	, "Check verbose behaviour for demo purpose";
 
 
 # Debug zero value
-is `perl -I$lib -d:DZV -e0`, "\n". $files->{ dzv }, "Debug zero value";
+is `perl $lib -d:DZV -e0`, "\n". $files->{ dzv }, "Debug zero value";
 is
-	`perl -I$lib -d:DZVii -e0`
+	`perl $lib -d:DZVii -e0`
 	, "\n". $files->{ dzv }
 	, "Debug zero value. Default initialization";
 
 
 # Test flags for tracing messages
 is
-	n(`perl -I$lib -d:TraceLoadCT -e0`)
+	n(`perl $lib -d:TraceLoadCT -e0`)
 	,$files->{ TraceLoadCT }
 	,"Set trace_load flag at compile time";
 
 is
-	n(`perl -I$lib -d:TraceLoadCT -e 'use Empty'`)
+	n(`perl $lib -d:TraceLoadCT -e 'use Empty'`)
 	,$files->{ TraceLoadCT_Empty }
 	,"Set trace_load flag at compile time with usage";
 
 is
-	n(`perl -I$lib -d:TraceRT=trace_load -e0`)
+	n(`perl $lib -d:TraceRT=trace_load -e0`)
 	,$files->{ TraceLoadRT }
 	,"Set trace_load flag at run time";
 
 is
-	n(`perl -I$lib -d:TraceRT=trace_load -e 'use Empty'`)
+	n(`perl $lib -d:TraceRT=trace_load -e 'use Empty'`)
 	,$files->{ TraceLoadRT_Empty }
 	,"Set trace_load flag at run time with usage";
 
 
 # sub calls
 is
-	n(`perl -I$lib -d:TraceSubsCT -e 'sub test{};  test();'`)
+	n(`perl $lib -d:TraceSubsCT -e 'sub test{};  test();'`)
 	,"\n" .$files->{ TraceSubsCT }
 	,"Set trace_subs flag at compile time";
 
 is
-	n(`perl -I$lib -d:TraceRT=trace_subs -e 'sub test{};  test();'`)
+	n(`perl $lib -d:TraceRT=trace_subs -e 'sub test{};  test();'`)
 	,"\n" .$files->{ TraceSubsRT }
 	,"Set trace_subs flag at run time";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e 'sub test{};  test( str => 7, [], {}, undef );'` )
+	n( `perl $lib -d:TraceRT=trace_subs -e 'sub test{};  test( str => 7, [], {}, undef );'` )
 	,"\n". $files->{ TraceSubs_args }
 	,"Check passed arguments to sub call";
 
 
 # Check context
 is
-	n(`perl -I$lib -d:TraceRT=trace_subs -e 'sub test{};  test();'`)
+	n(`perl $lib -d:TraceRT=trace_subs -e 'sub test{};  test();'`)
 	,"\n" .$files->{ TraceSubs_call_void }
 	,"Check void context for sub call";
 
 is
-	n(`perl -I$lib -d:TraceRT=trace_subs -e 'sub test{};  \$s =  test();'`)
+	n(`perl $lib -d:TraceRT=trace_subs -e 'sub test{};  \$s =  test();'`)
 	,"\n" .$files->{ TraceSubs_call_scalar }
 	,"Check scalar context for sub call";
 
 is
-	n(`perl -I$lib -d:TraceRT=trace_subs -e 'sub test{};  \@l =  test();'`)
+	n(`perl $lib -d:TraceRT=trace_subs -e 'sub test{};  \@l =  test();'`)
 	,"\n" .$files->{ TraceSubs_call_list }
 	,"Check list context for sub call";
 
@@ -127,25 +127,25 @@ is
 # return values
 $script =  'sub test{ return [], {}, undef };  test();';
 is
-	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_returns -e '$script'` )
 	,"\n" .$files->{ TraceReturns_void }
 	,"Check return values from sub call at void context";
 
 $script =  'sub test{ return [], {}, undef };  $s = test();';
 is
-	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_returns -e '$script'` )
 	,"\n". $files->{ TraceReturns_scalar }
 	,"Check return values from sub call at scalar context";
 
 $script =  'sub test{ return [], {}, undef };  @l = test();';
 is
-	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_returns -e '$script'` )
 	,"\n". $files->{ TraceReturns_list }
 	,"Check return values from sub call at list context";
 
 $script =  'sub t1{} sub t2{} sub t3{ @_ ? goto &t1 : goto &t2; } t3(); t3(1);';
 is
-	n( `perl -I$lib -d:TraceRT=trace_returns -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_returns -e '$script'` )
 	,"\n". $files->{ TraceReturns_goto }
 	,"Check right subnames while returning from goto subs";
 
@@ -158,17 +158,17 @@ t2();
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_one }
 	,"Check goto frames. One level";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
 	,"\n". $files->{ TraceGoto_one }
 	,"Check goto frames. One level. +trace_goto";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs -e '$script'` )
 	,"\n". $files->{ TraceGoto_one }
 	,"trace_goto is enabled by default";
 
@@ -183,12 +183,12 @@ t5();
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_deep }
 	,"Check goto frames. Deep level";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
 	,"\n". $files->{ TraceGoto_deep }
 	,"Check goto frames. Deep level. +trace_goto";
 
@@ -200,12 +200,12 @@ t2( 3 );
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_one_with_args }
 	,"Check goto frames. One level with args";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
 	,"\n". $files->{ TraceGoto_one_with_args }
 	,"Check goto frames. One level with args +trace_goto";
 
@@ -220,34 +220,34 @@ t5( 7 );
 PERL
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_deep_with_args }
 	,"Check goto frames. Deep level with args";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto -e '$script'` )
 	,"\n". $files->{ TraceGoto_deep_with_args }
 	,"Check goto frames. Deep level with args +trace_goto";
 
 
 # different frames test
 is
-	n( `perl -I$lib -d:TraceRT=dbg_frames,orig_frames -e '$script'` )
+	n( `perl $lib -d:TraceRT=dbg_frames,orig_frames -e '$script'` )
 	,''
 	,"'dbg_frames', 'orig_frames' has no effect without trace_subs";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,dbg_frames,orig_frames -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,dbg_frames,orig_frames -e '$script'` )
 	,"\n". $files->{ TraceSubs_with_dbg_orig_frames }
 	,"Set 'dbg_frames' and 'orig_frames' flags";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1 }
 	,"Limit callstack tracing to 1 frame";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_goto,frames=1 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_goto,frames=1 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1_with_goto }
 	,"Limit callstack tracing to 1 frame +trace_goto";
 
@@ -263,37 +263,37 @@ PERL
 
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,frames=1,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1_2 }
 	,"Limit callstack tracing to 1 frame. Test 2";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,frames=1 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames1_2_goto }
 	,"Limit callstack tracing to 1 frame. Test 2. +trace_goto";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2,trace_goto=0 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,frames=2,trace_goto=0 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames2 }
 	,"Limit callstack tracing to 2 frames";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,frames=2 -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_subs,frames=2 -e '$script'` )
 	,"\n". $files->{ TraceSubs_limit_frames2_goto }
 	,"Limit callstack tracing to 2 frames. +trace_goto";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_goto -e '$script'` )
+	n( `perl $lib -d:TraceRT=trace_goto -e '$script'` )
 	,''
 	,"Tracing goto frames without trace_subs is useless";
 
 is
-	n( `perl -I$lib -d:TraceGotoCT=trace_subs -e0` )
+	n( `perl $lib -d:TraceGotoCT=trace_subs -e0` )
 	,"\n". $files->{ TraceGotoCT }
 	,"Trace gotos at compile time";
 
 is
-	n( `perl -I$lib -d:TraceRT=trace_subs,trace_load -e0` )
+	n( `perl $lib -d:TraceRT=trace_subs,trace_load -e0` )
 	,$files->{ TraceRT_internals }
 	,"Do not trace internal calls";
 
@@ -309,12 +309,12 @@ t5;
 PERL
 
 is
-	`perl -I$lib -d:TraceRT=trace_subs -e '$script'`
+	`perl $lib -d:TraceRT=trace_subs -e '$script'`
 	,"\n". $files->{ TraceRT_goto }
 	,"Check goto frames in normal mode";
 
 is
-	`perl -I$lib -d:TraceRT=trace_subs,NonStop -e '$script'`
+	`perl $lib -d:TraceRT=trace_subs,NonStop -e '$script'`
 	,"\n". $files->{ TraceRT_goto_NonStop }
 	,"Check goto frames in NonStop mode";
 
@@ -322,7 +322,7 @@ is
 
 # TODO: implement testcase
 # is
-# 	n( `perl -I$lib -d:Interact='cmds=b 2/go' -e '$script' )
+# 	n( `perl $lib -d:Interact='cmds=b 2/go' -e '$script' )
 # EXPECTED: GOTO: main -- -4 -main::t3
 # but the DB::goto frame is broken so information is wrong
 # The broken info also located at
@@ -333,13 +333,13 @@ is
 
 ###
 is
-	n( `perl -I$lib -d:AutoInit -e0` )
+	n( `perl $lib -d:AutoInit -e0` )
 	,'Devel::AutoInit'
 	,"Check auto initialization of \$DB::dbg";
 
 
 # print "ZZZZZZZZZZZZZZZ\n";
-# print n `perl -I$lib -d:TraceRT=trace_subs -e '$script'`;
+# print n `perl $lib -d:TraceRT=trace_subs -e '$script'`;
 
 __DATA__
 @@ VerboseBehaviour

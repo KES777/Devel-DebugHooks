@@ -6,7 +6,7 @@ use warnings;
 
 use Test::More 'no_plan';
 use Test::Output;
-use FindBin qw/ $Bin /;  my $lib =  "$Bin/lib";
+use FindBin qw/ $Bin /;  my $lib =  "-I$Bin/lib -I$Bin/../lib";
 use Data::Section::Simple qw/ get_data_section /;
 
 use Test::Differences;
@@ -39,7 +39,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl -I$lib -d:DbInteract -e '$script'` )
+	n( `perl $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'step-by-step' }
 	,"Step-by-step debugging";
 
@@ -58,7 +58,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl -I$lib -d:DbInteract -e '$script'` )
+	n( `perl $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'sbs subs' }
 	,"Step-by-step debugging subroutines";
 
@@ -77,7 +77,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl -I$lib -d:DbInteract -e '$script'` )
+	n( `perl $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'sbs goto' }
 	,"Step-by-step debugging goto";
 
@@ -100,7 +100,7 @@ TODO: {
 	PERL
 
 	is
-		n( `perl -I$lib -d:DbInteract -e'$script'` )
+		n( `perl $lib -d:DbInteract -e'$script'` )
 		,$files->{ 'sbs if block' }
 		,"Step-by-step debugging if block";
 }

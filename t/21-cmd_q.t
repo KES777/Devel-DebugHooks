@@ -6,7 +6,7 @@ use warnings;
 
 use Test::More 'no_plan';
 use Test::Output;
-use FindBin qw/ $Bin /;  my $lib =  "$Bin/lib";
+use FindBin qw/ $Bin /;  my $lib =  "-I$Bin/lib -I$Bin/../lib";
 use Data::Section::Simple qw/ get_data_section /;
 
 use Test::Differences;
@@ -41,7 +41,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl -I$lib -d:DbInteract='q' -e '$script'` )
+	n( `perl $lib -d:DbInteract='q' -e '$script'` )
 	,$files->{ quit }
 	,"Quit debugger. Do not trace END/DESTROY";
 
