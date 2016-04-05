@@ -18,6 +18,17 @@ unified_diff();
 
 
 
+sub n {
+	$_ =  join '', @_;
+
+	s#\t#  #gm;
+	s#(?:.*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
+
+	$_;
+}
+
+
+
 my $files =  get_data_section();
 
 
@@ -29,7 +40,7 @@ my $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	`perl -I$lib -d:DbInteract='q' -e '$script'`
+	n( `perl -I$lib -d:DbInteract='q' -e '$script'` )
 	,$files->{ quit }
 	,"Quit debugger. Do not trace END/DESTROY";
 
