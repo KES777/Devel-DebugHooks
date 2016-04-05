@@ -44,6 +44,26 @@ is
 	,"Step-by-step debugging";
 
 
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl -I$lib -d:DbInteract -e '$script'` )
+	,$files->{ 'sbs subs' }
+	,"Step-by-step debugging subroutines";
+
+
+
 TODO: {
 	local $TODO =  "RT#127379";
 
@@ -71,6 +91,12 @@ __DATA__
 -e:0001  1;
 -e:0002  2;
 -e:0003  3;
+@@ sbs subs
+-e:0008  t2();
+-e:0005    t1();
+-e:0002    1;
+-e:0006    2;
+-e:0009  3;
 @@ sbs if block
 -e:0001  $x =  1;
 -e:0002  if( $x > 2 ) {
