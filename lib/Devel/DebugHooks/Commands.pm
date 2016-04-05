@@ -404,8 +404,9 @@ $DB::commands =  {
 	}
 
 	# As for the 's' command we stop at each OP in the script. But when the
-	# sub is called we turn off debugging for that sub at DB::sub. Because of
-	# $DB::single localizing its value will be restored after that sub returns.
+	# sub is called we turn off debugging for that sub at DB::sub.
+	# spy( 0 )   if $DB::single & 2;
+	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		$DB::single =  2;
