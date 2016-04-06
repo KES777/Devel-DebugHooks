@@ -384,7 +384,7 @@ $DB::commands =  {
 		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];
 
 		# and stop only at this one
-		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= @DB::stack;
+		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= @DB::stack;;
 
 		return;
 	}
