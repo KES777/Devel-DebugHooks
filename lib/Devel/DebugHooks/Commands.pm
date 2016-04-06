@@ -377,7 +377,7 @@ $DB::commands =  {
 
 
 		# Skip the current frame we are in ...
-		$DB::single =  0;
+		$DB::single =  0;;
 
 		# ... skip N next frames
 		# $#DB::stack =  @DB::stack -1;

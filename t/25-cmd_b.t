@@ -96,7 +96,6 @@ is
 	,$files->{ 'stop by sub name. goto' }
 	,"Stop on trap by subroutine name reached from goto";
 
-print n( `perl $lib -d:DbInteract='b t1;b;go;q' -e '$script'` );
 
 
 __DATA__
