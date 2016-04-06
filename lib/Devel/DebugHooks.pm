@@ -977,7 +977,7 @@ sub goto {
 	return   if $ext_call;
 
 	spy( 0 )   if $DB::single & 2;
-	trace_subs( 'G' );
+	$ext_call++; scall( \&DB::Tools::trace_subs, 'G' );
 };
 
 
