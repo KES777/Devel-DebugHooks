@@ -733,6 +733,7 @@ use Guard;
 
 
 
+	my $x;
 	sub spy {
 		return $DB::single   unless @_;
 
@@ -741,8 +742,11 @@ use Guard;
 			$file =~ s'.*?([^/]+)$'$1'e;
 			print $DB::OUT "!! DB::single state changed $DB::single -> $_[0]"
 				." at $file:$line\n"
+				unless $x;
 		}
-		$DB::single =  $_[0];
+
+		$DB::single =  $_[0]   unless $x;
+		$x =  $_[1];
 	}
 } # end of provided DB::API
 
