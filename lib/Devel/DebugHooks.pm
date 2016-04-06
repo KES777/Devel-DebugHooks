@@ -1067,13 +1067,15 @@ sub push_frame {
 		single      =>  $_[0],
 		sub         =>  $DB::sub,
 		goto_frames =>  [ @DB::goto_frames ],
+		type        =>  $_[1],
 	};
 
 	@DB::goto_frames =  ();
 
 	# TODO: implement testcase
 	# after returning from level 1 to 0 the @DB::stack should be empty
-	trace_subs( 'C' );
+	trace_subs( $_[1] );
+}
 }
 
 
@@ -1114,7 +1116,7 @@ sub sub {
 	# start to guard frame before any external call
 
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
-	$ext_call++; scall( \&DB::Tools::push_frame, $old );
+	$ext_call++; scall( \&DB::Tools::push_frame, $old, 'C' );
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
