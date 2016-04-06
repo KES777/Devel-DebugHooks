@@ -1105,12 +1105,13 @@ sub sub {
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
 	$ext_call++; scall( \&DB::Tools::push_frame, $old );
 
-	spy( 0 )   if $DB::single & 2;
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
 		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub } ."\n"   for @DB::stack;
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
+	spy( 0 )   if $DB::single & 2;
+
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub   if !$options{ trace_returns };
@@ -1335,7 +1336,7 @@ sub sub {
 	local $DB::single =  ($DB::single & 2) ? 0 : $DB::single+0;
 
 
-Breakpint does not work for this when hash key is initialized
+Breakpoint does not work for this when hash key is initialized
   b  x64:   my $hash = $c->stash->{'mojo.content'} ||= {};
 
 #TODO: $X=(condition)
