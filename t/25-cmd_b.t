@@ -93,7 +93,7 @@ is
 $script =~  s/t1\(\)/goto &t1/;
 is
 	n( `perl $lib -d:DbInteract='b t1;b;go;s' -e '$script'` )
-	,$files->{ 'stop by sub name' }
+	,$files->{ 'stop by sub name. goto' }
 	,"Stop on trap by subroutine name reached from goto";
 
 print n( `perl $lib -d:DbInteract='b t1;b;go;q' -e '$script'` );
@@ -136,4 +136,11 @@ Stop on subs:
 t1
 -e:0002    1;
 -e:0006    2;
+-e:0009  3;
+@@ stop by sub name. goto
+-e:0008  t2();
+Breakpoints:
+Stop on subs:
+t1
+-e:0002    1;
 -e:0009  3;
