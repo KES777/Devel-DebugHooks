@@ -61,6 +61,24 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		2;
+	}
+	t2();
+	3;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='b 2;b 9;go;go;s' -e '$script'` )
+	,$files->{ 'stop by line in sub' }
+	,"Stop on trap by line in sub then outside of it";
+
+
 __DATA__
 @@ list empty traps
 -e:0001  1;
@@ -82,3 +100,7 @@ Stop on subs:
 @@ stop by line
 -e:0001  1;
 -e:0003  3;
+@@ stop by line in sub
+-e:0008  t2();
+-e:0002    1;
+-e:0009  3;
