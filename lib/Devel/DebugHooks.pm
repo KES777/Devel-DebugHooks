@@ -966,6 +966,7 @@ sub interact {
 # TODO: Before run the programm we could deparse sources and insert some code
 # in the place of 'goto'. This code may save __FILE__:__LINE__ into DB::
 sub goto {
+	#FIX: IT: when trace_goto disabled we can not step over goto
 	return   unless $options{ trace_goto };
 	return   if $ext_call;
 
