@@ -969,8 +969,6 @@ sub goto {
 	return   unless $options{ trace_goto };
 	return   if $ext_call;
 
-	# TODO: implement testcase
-	# sub t1{} sub t2{ goto &t1; #n } sub t3{ t2() } t3() #b 2;go; # Step over goto
 	spy( 0 )   if $DB::single & 2;
 	trace_subs( 'G' );
 };

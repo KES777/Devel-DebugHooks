@@ -70,6 +70,14 @@ is
 
 
 
+$script =~  s/t1\(\)/goto &t1/;
+is
+	n( `perl $lib -d:DbInteract='s;n;q' -e '$script'` )
+	,$files->{ 'step over goto' }
+	,"Step over goto";
+
+
+
 $script =  <<'PERL' =~ s#^\t##rgm;
 	sub t1 {
 		1;
@@ -117,6 +125,10 @@ __DATA__
 -e:0008  t2();
 -e:0002    1;
 -e:0006    2;
+@@ step over goto
+-e:0008  t2();
+-e:0005    goto &t1;
+-e:0009  3;
 @@ double step from sub
 -e:0007  t2();
 -e:0002    1;
