@@ -85,6 +85,15 @@ is
 
 
 
+$script =~  s/t1\(\)/goto &t1/;
+is
+	n( `perl $lib -d:DbInteract='b t1;b;go;q' -e '$script'` )
+	,$files->{ 'stop by sub name' }
+	,"Stop on trap by subroutine name reached from goto";
+
+print n( `perl $lib -d:DbInteract='b t1;b;go;q' -e '$script'` );
+
+
 __DATA__
 @@ list empty traps
 -e:0001  1;
