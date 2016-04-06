@@ -1013,7 +1013,7 @@ sub trace_subs {
 		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
 	}
 
-	DB::spy( 1 )
+	DB::spy( 1, 1 )
 		# First of all we check full match ...
 		if $sis->{ $sub }
 		# ... then check not disabled partially matched subnames
