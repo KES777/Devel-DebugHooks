@@ -1007,19 +1007,19 @@ sub trace_subs {
 
 	# Stop on the first OP in a given subroutine
 	my $sis =  \%DB::stop_in_sub;
-	spy( 1 )
-		# First of all we check full match ...
-		if $sis->{ $DB::sub }
-		# ... then check not disabled partially matched subnames
-		|| grep{ $sis->{ $_ }  &&  $DB::sub =~ m/$_$/ } keys %$sis;
-		# TODO: implement condition to stop on
 
 
 	if( $options{ trace_subs } ) {
 		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
 	}
-}
 
+	DB::spy( 1 )
+		# First of all we check full match ...
+		if $sis->{ $sub }
+		# ... then check not disabled partially matched subnames
+		|| grep{ $sis->{ $_ }  &&  $sub =~ m/$_$/ } keys %$sis;
+		# TODO: implement condition to stop on
+}
 
 
 # my $x = 0;
