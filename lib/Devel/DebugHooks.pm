@@ -1020,7 +1020,8 @@ sub pop_frame {
 	# 	}
 	# });
 
-	my $last =  pop @DB::stack;
+	my $last;
+	do{ $last =  pop @DB::stack } while $last->{ type } eq 'G';
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl  --  $last->{ sub }\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
@@ -1073,8 +1074,6 @@ sub push_frame {
 
 	@DB::goto_frames =  ();
 
-	# TODO: implement testcase
-	# after returning from level 1 to 0 the @DB::stack should be empty
 	trace_subs( $_[1] );
 }
 }
