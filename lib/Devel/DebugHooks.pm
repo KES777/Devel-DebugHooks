@@ -977,7 +977,8 @@ sub goto {
 	return   if $ext_call;
 
 	spy( 0 )   if $DB::single & 2;
-	$ext_call++; scall( \&DB::Tools::trace_subs, 'G' );
+	my $old =  $DB::single;
+	$ext_call++; scall( \&DB::Tools::push_frame, $old, 'G' );
 };
 
 
