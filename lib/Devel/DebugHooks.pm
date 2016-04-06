@@ -989,33 +989,18 @@ sub trace_subs {
 		undef: # goto does not create frames
 		$DB::stack[ -1 ]{ goto_frames };
 
-	# TODO: implement testcase
-	# We we run script in NonStop mode the $DB::package/file/line are not updated
-	# because of &DB::DB is not called. If we update them here the GOTO frames
-	# will get more actual info about that from which place the GOTO was called
-	# $DB::package/file/line will be more closer to that place
-
-	# TODO: check goto context, args, flags etc
-	# [ (caller(1))[0..2], $DB::sub, $last_frames ];
-	# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-	# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
-	# Most actual info we get when we trace script step-by-step so these vars
-	# has sharp last opcode location.
-	# ( $DB::package, $DB::file, $DB::line ) =  @{ $DB::stack[ -1 ]{ caller } }
-	# 	if $_[0] ne 'G';
-
 	my $sub =  $DB::stack[ -1 ]{ sub };
 	push @DB::goto_frames,
 		[ $DB::package, $DB::file, $DB::line, $sub, $last_frames, $_[0] ];
-
-	# Stop on the first OP in a given subroutine
-	my $sis =  \%DB::stop_in_sub;
 
 
 	if( $options{ trace_subs } ) {
 		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
 	}
 
+
+	# Stop on the first OP in a given subroutine
+	my $sis =  \%DB::stop_in_sub;
 	DB::spy( 1, 1 )
 		# First of all we check full match ...
 		if $sis->{ $sub }
@@ -1063,7 +1048,21 @@ sub push_frame {
 	# at DB::DB. So next code is useless if one of $DB::single, $DB::signal
 	# or $DB::trace is true. In other case this is the only place we can update
 	# current position.
+
+	# TODO: implement testcase
+	# We we run script in NonStop mode the $DB::package/file/line are not updated
+	# because of &DB::DB is not called. If we update them here the GOTO frames
+	# will get more actual info about that from which place the GOTO was called
+	# $DB::package/file/line will be more closer to that place
+
+	# TODO: check goto context, args, flags etc
+	# [ (caller(1))[0..2], $DB::sub, $last_frames ];
+	# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+	# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+	# Most actual info we get when we trace script step-by-step so these vars
+	# has sharp last opcode location.
 	( $DB::package, $DB::file, $DB::line ) =  caller 1;
+
 	push @DB::stack, {
 		single      =>  $_[0],
 		sub         =>  $DB::sub,
