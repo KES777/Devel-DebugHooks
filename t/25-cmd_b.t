@@ -55,6 +55,11 @@ is
 	,"Put two traps. List traps";
 
 is
+	n( `perl $lib -d:DbInteract='b t1;b;q' -e '$script'` )
+	,$files->{ 'list trap on sub name' }
+	,"Put trap by sub name";
+
+is
 	n( `perl $lib -d:DbInteract='b 3;go;q' -e '$script'` )
 	,$files->{ 'stop by line' }
 	,"Stop on trap by line";
@@ -112,6 +117,11 @@ Breakpoints:
 1: 1
 3: 1
 Stop on subs:
+@@ list trap on sub name
+-e:0001  1;
+Breakpoints:
+Stop on subs:
+t1
 @@ stop by line
 -e:0001  1;
 -e:0003  3;
