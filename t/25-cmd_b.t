@@ -106,6 +106,31 @@ is
 	,$files->{ 'stop by sub name. goto' }
 	,"Stop on trap by subroutine name reached from goto";
 
+is
+	n( `perl $lib -d:DbInteract='b 2;b -2;go' -e '$script'` )
+	,$files->{ '!stop on disabled' }
+	,"Do not stop on disabled traps";
+
+is
+	n( `perl $lib -d:DbInteract='b 2;b -2;b +2;go;s' -e '$script'` )
+	,$files->{ 'stop on enabled' }
+	,"Stop on enabled traps";
+
+is
+	n( `perl $lib -d:DbInteract='b 2;b -2;b;q' -e '$script'` )
+	,$files->{ 'list disabled' }
+	,"List disabled traps";
+
+is
+	n( `perl $lib -d:DbInteract='b 2;b -2;b +2;b;q' -e '$script'` )
+	,$files->{ 'list enabled' }
+	,"List enabled traps";
+
+is
+	n( `perl $lib -d:DbInteract='b 2 2>7;b -2;b +2;b;q' -e '$script'` )
+	,$files->{ 'list conditional reenabled' }
+	,"List conditional reenabled trap";
+
 
 
 __DATA__
@@ -155,3 +180,27 @@ t1
 -e:0002    1;
 -e:0009  3;
 0
+@@ !stop on disabled
+-e:0008  t2();
+@@ stop on enabled
+-e:0008  t2();
+-e:0002    1;
+-e:0009  3;
+@@ list disabled
+-e:0008  t2();
+Breakpoints:
+0 -e
+2- 1
+Stop on subs:
+@@ list enabled
+-e:0008  t2();
+Breakpoints:
+0 -e
+2: 1
+Stop on subs:
+@@ list conditional reenabled
+-e:0008  t2();
+Breakpoints:
+0 -e
+2: 2>7
+Stop on subs:
