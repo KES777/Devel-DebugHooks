@@ -382,8 +382,7 @@ $DB::commands =  {
 		$DB::single =  0;;
 
 		# ... skip N next frames
-		# $#DB::stack =  @DB::stack -1;
-		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];
+		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];;
 
 		# and stop only at this one
 		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= @DB::stack;;

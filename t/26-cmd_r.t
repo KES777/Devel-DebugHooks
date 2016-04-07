@@ -61,6 +61,37 @@ is
 	,$files->{ 'return from main' }
 	,'Return from main:: should do nothing';
 
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t0 {
+		1;
+	}
+	sub t1 {
+		t0();
+		2;
+	}
+	sub t2 {
+		t1();
+		3;
+	}
+	t2();
+	4;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='s;s;s;r 1;q' -e '$script'` )
+	,$files->{ 'return 1' }
+	,'Returning from 1 subroutine';
+
+is
+	n( `perl $lib -d:DbInteract='s;s;s;r 2;q' -e '$script'` )
+	,$files->{ 'return 2' }
+	,'Returning from 2 subroutines';
+
+is
+	n( `perl $lib -d:DbInteract='s;s;s;r 3;q' -e '$script'` )
+	,$files->{ 'return 3' }
+	,'Returning from 3 subroutines';
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -80,3 +111,21 @@ __DATA__
 @@ return from main
 -e:0009  t2();
 -e:0006    t1();
+@@ return 1
+-e:0012  t2();
+-e:0009    t1();
+-e:0005    t0();
+-e:0002    1;
+-e:0006    2;
+@@ return 2
+-e:0012  t2();
+-e:0009    t1();
+-e:0005    t0();
+-e:0002    1;
+-e:0010    3;
+@@ return 3
+-e:0012  t2();
+-e:0009    t1();
+-e:0005    t0();
+-e:0002    1;
+-e:0013  4;
