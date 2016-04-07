@@ -365,6 +365,7 @@ $DB::commands =  {
 		$frames_out //=  1;
 
 		$frames_out =   @DB::stack -$frames_out   if $sharp;
+		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
 		# Q: Should I return from whole script?
 		$frames_out =  $frames_out > @DB::stack ? @DB::stack : $frames_out;

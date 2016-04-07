@@ -123,6 +123,11 @@ is
 	,$files->{ 'return 2 and stop' }
 	,'Return to second frame';
 
+is
+	n( `perl $lib -d:DbInteract='go 2;r 5^;s;q' -e '$script'` )
+	,$files->{ 'return to unexisting' }
+	,'Return to unexisting frame does noting';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -176,3 +181,7 @@ __DATA__
 -e:0012  t2();
 -e:0002    1;
 -e:0013  4;
+@@ return to unexisting
+-e:0012  t2();
+-e:0002    1;
+-e:0006    2;
