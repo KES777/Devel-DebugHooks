@@ -74,6 +74,11 @@ is
 	,$files->{ 'dont stop by false expr' }
 	,"Do not stop on trap with expression evaluated to false";
 
+is
+	n( `perl $lib -d:DbInteract='b 3 2>7;b;b -3 1<3;b;q' -e '$script'` )
+	,$files->{ 'trap state changed' }
+	,"Trap state should be changed by new values";
+
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -184,6 +189,16 @@ Stop on subs:
 -e:0003  3;
 @@ dont stop by false expr
 -e:0001  1;
+@@ trap state changed
+-e:0001  1;
+Breakpoints:
+0 -e
+  3  : 2>7
+Stop on subs:
+Breakpoints:
+0 -e
+  3  - 1<3
+Stop on subs:
 @@ stop by line in sub
 -e:0008  t2();
 -e:0002    1;

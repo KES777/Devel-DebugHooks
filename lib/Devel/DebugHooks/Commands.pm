@@ -647,7 +647,6 @@ $DB::commands =  {
 			$traps->{ $line }{ disabled } =  1     if $sign eq '-';
 			delete $traps->{ $line }{ disabled }   if $sign eq '+';
 
-			# TODO: testcase: trap remains with new condition if it was supplied
 			$traps->{ $line }{ condition } =  $condition   if defined $condition;
 			$traps->{ $line }{ condition } //=  1; # trap always triggered by default
 		}
