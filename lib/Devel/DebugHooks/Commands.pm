@@ -567,7 +567,7 @@ $DB::commands =  {
 
 	,b => sub {
 		my( $sign, $file, $line, $subname, $condition, $tmp ) =
-			shift =~ m/^([-+])?(?:${file_line}|([\w:]+|&))(?:\s+(.*))?(!)?$/;
+			shift =~ m/^([-+])?(?:${file_line}|([\w:]+|&))(?:\s+(.*?))?(!)?$/;
 
 
 		if( defined $subname ) {
