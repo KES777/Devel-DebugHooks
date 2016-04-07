@@ -354,8 +354,9 @@ $DB::commands =  {
 
 		1;
 	}
-	# In compare to 's' and 'n' commands 'r' will not stop at each OP. The
-	# true value of $DB::single will be restored at DB::sub when this sub returns
+	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
+	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
+	# we set $DB::single value to 1 which will be restored at &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		return -1   unless @DB::stack;
@@ -364,17 +365,18 @@ $DB::commands =  {
 
 		$frames_out //=  1;
 
-		$frames_out =   @DB::stack -$frames_out   if $sharp;
+		$frames_out =  @DB::stack -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
-		# Q: Should I return from whole script?
-		$frames_out =  $frames_out > @DB::stack ? @DB::stack : $frames_out;
+		# Return to the last possible frame
+		# Q: Should we return from whole script?
+		$frames_out =  @DB::stack   if $frames_out > @DB::stack;
 
 		# Skip the current frame we are in ...
 		$DB::single =  0;;
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];;
+		$_->{ single } =  0   for @DB::stack[ -($frames_out-1) .. -1 ];
 
 		# and stop only at this one
 		$DB::stack[ -$frames_out ]{ single } =  1;
