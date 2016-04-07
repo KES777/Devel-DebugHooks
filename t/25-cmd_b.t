@@ -64,6 +64,16 @@ is
 	,$files->{ 'stop by line' }
 	,"Stop on trap by line";
 
+is
+	n( `perl $lib -d:DbInteract='b 3 2<7;go' -e '$script'` )
+	,$files->{ 'stop by true expr' }
+	,"Stop on trap with expression evaluated to true";
+
+is
+	n( `perl $lib -d:DbInteract='b 3 2>7;go' -e '$script'` )
+	,$files->{ 'dont stop by false expr' }
+	,"Do not stop on trap with expression evaluated to false";
+
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -124,6 +134,11 @@ t1
 @@ stop by line
 -e:0001  1;
 -e:0003  3;
+@@ stop by true expr
+-e:0001  1;
+-e:0003  3;
+@@ dont stop by false expr
+-e:0001  1;
 @@ stop by line in sub
 -e:0008  t2();
 -e:0002    1;
