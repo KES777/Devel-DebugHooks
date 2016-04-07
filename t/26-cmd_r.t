@@ -56,6 +56,11 @@ is
 	,$files->{ 'return and stop' }
 	,'Returning from subroutine. Stop at upper frame';
 
+is
+	n( `perl $lib -d:DbInteract='r;s;q' -e '$script'` )
+	,$files->{ 'return from main' }
+	,'Return from main:: should do nothing';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -72,3 +77,6 @@ __DATA__
 -e:0002    1;
 -e:0007    3;
 -e:0010  4;
+@@ return from main
+-e:0009  t2();
+-e:0006    t1();
