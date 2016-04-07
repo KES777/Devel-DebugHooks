@@ -698,7 +698,7 @@ $DB::commands =  {
 		return {
 			expr => shift,
 			code => sub {
-				print $DB::OUT Data::Dump::pp( @_ );
+				print $DB::OUT Data::Dump::pp( @_ ) ."\n";
 			}
 		}
 	}

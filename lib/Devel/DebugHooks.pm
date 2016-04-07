@@ -984,33 +984,6 @@ sub goto {
 
 
 { package DB::Tools;
-
-sub trace_subs {
-	my $last_frames =  $_[0] eq 'G'?
-		undef: # goto does not create frames
-		$DB::stack[ -1 ]{ goto_frames };
-
-	my $sub =  $DB::stack[ -1 ]{ sub };
-	push @DB::goto_frames,
-		[ $DB::package, $DB::file, $DB::line, $sub, $last_frames, $_[0] ];
-
-
-	if( $options{ trace_subs } ) {
-		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
-	}
-
-
-	# Stop on the first OP in a given subroutine
-	my $sis =  \%DB::stop_in_sub;
-	DB::spy( 1, 1 )
-		# First of all we check full match ...
-		if $sis->{ $sub }
-		# ... then check not disabled partially matched subnames
-		|| grep{ $sis->{ $_ }  &&  $sub =~ m/$_$/ } keys %$sis;
-		# TODO: implement condition to stop on
-}
-
-
 # my $x = 0;
 # use Data::Dump qw/ pp /;
 sub pop_frame {
@@ -1063,18 +1036,37 @@ sub push_frame {
 	# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 	# Most actual info we get when we trace script step-by-step so these vars
 	# has sharp last opcode location.
-	( $DB::package, $DB::file, $DB::line ) =  caller 1;
 
-	push @DB::stack, {
-		single      =>  $_[0],
-		sub         =>  $DB::sub,
-		goto_frames =>  [ @DB::goto_frames ],
-		type        =>  $_[1],
-	};
+	if( $_[1] ne 'G' ) {
+		( $DB::package, $DB::file, $DB::line ) =  caller 1;
 
-	@DB::goto_frames =  ();
+		push @DB::stack, {
+			single      =>  $_[0],
+			sub         =>  $DB::sub,
+			goto_frames =>  [ @DB::goto_frames ],
+			type        =>  $_[1],
+		};
 
-	trace_subs( $_[1] );
+		@DB::goto_frames =  ();
+	}
+	else {
+		push @DB::goto_frames,
+			[ $DB::package, $DB::file, $DB::line, $DB::sub, $_[1] ]
+	}
+
+
+	if( $options{ trace_subs } ) {
+		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
+	}
+
+	# Stop on the first OP in a given subroutine
+	my $sis =  \%DB::stop_in_sub;
+	DB::spy( 1, 1 )
+		# First of all we check full match ...
+		if $sis->{ $DB::sub }
+		# ... then check not disabled partially matched subnames
+		|| grep{ $sis->{ $_ }  &&  $DB::sub =~ m/$_$/ } keys %$sis;
+		# TODO: implement condition to stop on
 }
 }
 
