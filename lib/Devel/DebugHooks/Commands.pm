@@ -606,18 +606,20 @@ $DB::commands =  {
 						||  exists $traps->{ $_ }{ disabled }
 						;
 
-					print $DB::OUT $_
-						. ( exists $traps->{ $_ }{ disabled } ? '- ' : ': ' )
-						. $traps->{ $_ }{ condition }
-						. ( $traps->{ $_ }{ tmp } ? '!' : '' )
-						."\n";
+					printf $DB::OUT "  %-3d%s %s\n"
+						,$_
+						,exists $traps->{ $_ }{ tmp }      ? '!'
+							:(exists $traps->{ $_ }{ disabled } ? '-' : ':')
+						,$traps->{ $_ }{ condition }
+						;
+
 					warn "The breakpoint at $_ is zero and should be deleted"
 						if $traps->{ $_ } == 0;
 				}
 			}
 
 			print $DB::OUT "Stop on subs:\n";
-			print $DB::OUT ($DB::stop_in_sub{ $_ } ? '' : '-') ."$_\n"
+			print $DB::OUT ' ' .($DB::stop_in_sub{ $_ } ? ' ' : '-') ."$_\n"
 				for keys %DB::stop_in_sub;
 
 			return 1;

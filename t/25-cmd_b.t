@@ -175,7 +175,7 @@ Stop on subs:
 -e:0001  1;
 Breakpoints:
 Stop on subs:
-t1
+  t1
 @@ stop by line
 -e:0001  1;
 -e:0003  3;
