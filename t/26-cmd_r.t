@@ -53,8 +53,8 @@ is
 
 is
 	n( `perl $lib -d:DbInteract='go 2;r;r' -e '$script'` )
-	,$files->{ 'return #2' }
-	,"Returning from subroutine. Turn on debug flag at upper frame";
+	,$files->{ 'return and stop' }
+	,'Returning from subroutine. Stop at upper frame';
 
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
@@ -67,7 +67,7 @@ __DATA__
 -e:0002    1;
 -e:0007    3;
 -e:0010  4;
-@@ return #2
+@@ return and stop
 -e:0009  t2();
 -e:0002    1;
 -e:0007    3;
