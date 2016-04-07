@@ -131,6 +131,26 @@ is
 	,$files->{ 'list conditional reenabled' }
 	,"List conditional reenabled trap";
 
+is
+	n( `perl $lib -d:DbInteract='b 2 2<7!;b;q' -e '$script'` )
+	,$files->{ 'list onetime trap' }
+	,"List onetime trap";
+
+is
+	n( `perl $lib -d:DbInteract='b 2!;go;b;q' -e '$script'` )
+	,$files->{ 'onetime trap removed' }
+	,"Onetime traps should be removed after triggering";
+
+is
+	n( `perl $lib -d:DbInteract='b -2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
+	,$files->{ 'onetime trap not affect' }
+	,"Onetime trap does not affect common trap";
+
+is
+	n( `perl $lib -d:DbInteract='b 2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
+	,$files->{ 'onetime trap not affected' }
+	,"Onetime trap should not affected by common trap";
+
 
 
 __DATA__
@@ -142,14 +162,14 @@ Stop on subs:
 -e:0001  1;
 Breakpoints:
 0 -e
-1: 1
+  1  : 1
 Stop on subs:
 @@ list two traps
 -e:0001  1;
 Breakpoints:
 0 -e
-1: 1
-3: 1
+  1  : 1
+  3  : 1
 Stop on subs:
 @@ list trap on sub name
 -e:0001  1;
@@ -190,17 +210,58 @@ t1
 -e:0008  t2();
 Breakpoints:
 0 -e
-2- 1
+  2  - 1
 Stop on subs:
 @@ list enabled
 -e:0008  t2();
 Breakpoints:
 0 -e
-2: 1
+  2  : 1
 Stop on subs:
 @@ list conditional reenabled
 -e:0008  t2();
 Breakpoints:
 0 -e
-2: 2>7
+  2  : 2>7
+Stop on subs:
+@@ list onetime trap
+-e:0008  t2();
+Breakpoints:
+0 -e
+  2  ! 
+Stop on subs:
+@@ onetime trap removed
+-e:0008  t2();
+-e:0002    1;
+Breakpoints:
+Stop on subs:
+@@ onetime trap not affect
+-e:0008  t2();
+Breakpoints:
+0 -e
+  2  - 2>7
+Stop on subs:
+Breakpoints:
+0 -e
+  2  ! 2>7
+Stop on subs:
+-e:0002    1;
+Breakpoints:
+0 -e
+  2  - 2>7
+Stop on subs:
+@@ onetime trap not affected
+-e:0008  t2();
+Breakpoints:
+0 -e
+  2  : 2>7
+Stop on subs:
+Breakpoints:
+0 -e
+  2  ! 2>7
+Stop on subs:
+-e:0002    1;
+Breakpoints:
+0 -e
+  2  : 2>7
 Stop on subs:
