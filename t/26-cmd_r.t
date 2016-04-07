@@ -33,6 +33,7 @@ my $script;
 my $files =  get_data_section();
 
 
+
 $script =  <<'PERL' =~ s#^\t##rgm;
 	sub t1 {
 		1;
@@ -60,6 +61,7 @@ is
 	n( `perl $lib -d:DbInteract='r;s;q' -e '$script'` )
 	,$files->{ 'return from main' }
 	,'Return from main:: should do nothing';
+
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -128,6 +130,28 @@ is
 	,$files->{ 'return to unexisting' }
 	,'Return to unexisting frame does noting';
 
+
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t0 {
+		1;
+	}
+	sub t1 {
+		t0();
+		2;
+	}
+	sub t2 {
+		t1();
+	}
+	t2();
+	4;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
+	,$files->{ 'another additional return' }
+	,'Return from sub which were last OP. Stop at some upper frame';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -185,3 +209,7 @@ __DATA__
 -e:0012  t2();
 -e:0002    1;
 -e:0006    2;
+@@ another additional return
+-e:0011  t2();
+-e:0002    1;
+-e:0012  4;

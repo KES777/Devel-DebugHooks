@@ -380,8 +380,8 @@ $DB::commands =  {
 		# ... skip N next frames
 		$_->{ single } =  0   for @DB::stack[ -($frames_out-1) .. -1 ];
 
-		# and stop only at this one
-		$DB::stack[ -$frames_out ]{ single } =  1;
+		# and stop at some outer frame
+		$_->{ single } =  1   for @DB::stack[ -@DB::stack .. -$frames_out ];
 
 		return;
 	}
