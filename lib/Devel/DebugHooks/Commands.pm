@@ -635,24 +635,22 @@ $DB::commands =  {
 		}
 
 		my $traps =  DB::traps( $file );
-		# TODO: Move trap from/into $traps into/from $disabled_traps
-		# This will allow us to not trigger DB::DB if trap is disabled
-		if( $sign ){
-			if( $sign eq '-' ) {
-				$traps->{ $line }{ disabled } =  1;
-			}
-			elsif( $sign eq '+' ) {
-				delete $traps->{ $line }{ disabled };
-			}
-		}
-		elsif( defined $tmp ) {
-			$traps->{ $line }{ tmp } =  1;
+
+		# One time trap just exists or not.
+		# We stop on it uncoditionally, also we can not disable it
+		if( defined $tmp ) {
+			$traps->{ $line }{ tmp } =  undef;
 		}
 		else {
-			# TODO: testcase: trap remains with new condition if it was supplied
-			$traps->{ $line }{ condition } =  $condition // 1;
-		}
+			# TODO: Move trap from/into $traps into/from $disabled_traps
+			# This will allow us to not trigger DB::DB if trap is disabled
+			$traps->{ $line }{ disabled } =  1     if $sign eq '-';
+			delete $traps->{ $line }{ disabled }   if $sign eq '+';
 
+			# TODO: testcase: trap remains with new condition if it was supplied
+			$traps->{ $line }{ condition } =  $condition   if defined $condition;
+			$traps->{ $line }{ condition } //=  1; # trap always triggered by default
+		}
 
 		1;
 	}
