@@ -88,7 +88,7 @@ sub _list {
 
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
-			print $DB::OUT exists $traps->{ $line }{ tmp } ? '!'
+			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
 				: exists $traps->{ $line }{ disabled }? '-'
 				: exists $traps->{ $line }{ condition }? 'b' : ' ';
 		}
@@ -602,13 +602,13 @@ $DB::commands =  {
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
 					next   unless exists $traps->{ $_ }{ condition }
-						||  exists $traps->{ $_ }{ tmp }
+						||  exists $traps->{ $_ }{ onetime }
 						||  exists $traps->{ $_ }{ disabled }
 						;
 
 					printf $DB::OUT "  %-3d%s %s\n"
 						,$_
-						,exists $traps->{ $_ }{ tmp }      ? '!'
+						,exists $traps->{ $_ }{ onetime }      ? '!'
 							:(exists $traps->{ $_ }{ disabled } ? '-' : ':')
 						,$traps->{ $_ }{ condition }
 						;
@@ -639,7 +639,7 @@ $DB::commands =  {
 		# One time trap just exists or not.
 		# We stop on it uncoditionally, also we can not disable it
 		if( defined $tmp ) {
-			$traps->{ $line }{ tmp } =  undef;
+			$traps->{ $line }{ onetime } =  undef;
 		}
 		else {
 			# TODO: Move trap from/into $traps into/from $disabled_traps

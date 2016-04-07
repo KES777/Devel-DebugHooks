@@ -853,10 +853,12 @@ sub DB {
 			$stop ||=  mcall( 'watch', $DB::dbg, $trap->{ watches } );
 		}
 
-		# Stop if temporary breakpoint
-		if( exists $trap->{ tmp } ) {
+		# Stop if onetime trap
+		if( exists $trap->{ onetime } ) {
 			# Delete temporary breakpoint
-			delete $trap->{ tmp };
+			delete $trap->{ onetime };
+
+			# Remove info about trap from perl internals if no common traps left
 			unless( keys %$trap ) {
 				# Just trap deleting does not help. We should signal internals
 				# about that we should not stop here anymore
