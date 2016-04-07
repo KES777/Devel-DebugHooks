@@ -374,10 +374,6 @@ $DB::commands =  {
 		# TODO: implement testcase and feature
 		# (r > @DB::stack) should run until end of programm
 
-		# TODO: implement testcase
-		# go into sub by breakpoint, then check r, r 1, r N works fine
-
-
 		# Skip the current frame we are in ...
 		$DB::single =  0;;
 

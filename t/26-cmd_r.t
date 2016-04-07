@@ -92,6 +92,22 @@ is
 	n( `perl $lib -d:DbInteract='s;s;s;r 3;q' -e '$script'` )
 	,$files->{ 'return 3' }
 	,'Returning from 3 subroutines';
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 1;q' -e '$script'` )
+	,$files->{ 'return 1 and stop' }
+	,'Returning from 1 subroutines. Stop at upper frame';
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
+	,$files->{ 'return 2 and stop' }
+	,'Returning from 2 subroutines. Stop at upper frame';
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 3;q' -e '$script'` )
+	,$files->{ 'return 3 and stop' }
+	,'Returning from 3 subroutines. Stop at upper frame';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -127,5 +143,17 @@ __DATA__
 -e:0012  t2();
 -e:0009    t1();
 -e:0005    t0();
+-e:0002    1;
+-e:0013  4;
+@@ return 1 and stop
+-e:0012  t2();
+-e:0002    1;
+-e:0006    2;
+@@ return 2 and stop
+-e:0012  t2();
+-e:0002    1;
+-e:0010    3;
+@@ return 3 and stop
+-e:0012  t2();
 -e:0002    1;
 -e:0013  4;
