@@ -79,6 +79,15 @@ is
 	,$files->{ 'trap state changed' }
 	,"Trap state should be changed by new values";
 
+is
+	n( `perl $lib -d:DbInteract='b -3;b;q' -e '$script'` )
+	,$files->{ 'disabled trap' }
+	,"Add disabled trap with default condition";
+
+is
+	n( `perl $lib -d:DbInteract='b +3;b;q' -e '$script'` )
+	,$files->{ 'enabled trap' }
+	,"Add enabled trap with default condition";
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -198,6 +207,18 @@ Stop on subs:
 Breakpoints:
 0 -e
   3  - 1<3
+Stop on subs:
+@@ disabled trap
+-e:0001  1;
+Breakpoints:
+0 -e
+  3  - 1
+Stop on subs:
+@@ enabled trap
+-e:0001  1;
+Breakpoints:
+0 -e
+  3  : 1
 Stop on subs:
 @@ stop by line in sub
 -e:0008  t2();
