@@ -354,6 +354,8 @@ $DB::commands =  {
 
 		1;
 	}
+
+	# Return from sub call to the first OP at some outer frame
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
 	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
 	# we set $DB::single value to 1 which will be restored at &pop_frame
@@ -384,9 +386,10 @@ $DB::commands =  {
 		return;
 	}
 
-	# ...Actually nothing is changed. We stop at each OP in the script.
-	# Only one important thing: if 'n' was called before we change the
-	# $DB::single value from 2 to 1.
+	# Do single step to the next OP
+	# Here we force $DB::single = 1 for current frame and all outer frames.
+	# Because current OP maybe the last OP in sub. It also maybe the last OP in
+	# the outer frame. And so on.
 	,s => sub {
 		$DB::single =  1;
 		$_->{ single } =  1   for @DB::stack;
@@ -394,6 +397,7 @@ $DB::commands =  {
 		return;
 	}
 
+	# Do single step to the next OP. If current OP is sub call. Step over it
 	# ...As for the 's' command we stop at each OP in the script. But when the
 	# sub is called we turn off debugging for that sub at DB::sub.
 	# spy( 0 )   if $DB::single & 2;
@@ -401,13 +405,13 @@ $DB::commands =  {
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		$DB::single =  2;
-		# If next executed OP will be return from sub, the $DB::single will be
-		# changed by the outer frame. We prevent that here:
+		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @DB::stack;
 
 		return;
 	}
 
+	# Quit from the debugger
 	,q => sub { $DB::single =  0; exit; }
 
 	# TODO: print list of vars which refer this one
