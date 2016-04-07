@@ -362,11 +362,9 @@ $DB::commands =  {
 
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
-		# TODO: implement testcase 'r', 'r 0^'
 		$frames_out //=  1;
 
-		# TODO: implement testcase r 5^
-		$frames_out =   @DB::stack -$frames_out +1   if $sharp;
+		$frames_out =   @DB::stack -$frames_out   if $sharp;
 
 		# Q: Should I return from whole script?
 		$frames_out =  $frames_out > @DB::stack ? @DB::stack : $frames_out;

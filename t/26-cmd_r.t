@@ -113,6 +113,16 @@ is
 	,$files->{ 'return all and stop' }
 	,'Returning from all subroutines. Stop when no frames left';
 
+is
+	n( `perl $lib -d:DbInteract='go 2;r 0^;q' -e '$script'` )
+	,$files->{ 'return all and stop' }
+	,'Return to first frame';
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 1^;q' -e '$script'` )
+	,$files->{ 'return 2 and stop' }
+	,'Return to second frame';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
