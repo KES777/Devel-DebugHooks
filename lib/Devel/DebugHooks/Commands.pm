@@ -47,6 +47,7 @@ sub update_fl {
 
 my $cmd_f;
 sub file {
+	update_fl()         unless defined $curr_file;
 	return $curr_file   unless defined $_[0];
 
 	my( $file, $do_not_set ) =  @_;
