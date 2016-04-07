@@ -368,11 +368,8 @@ $DB::commands =  {
 		# TODO: implement testcase r 5^
 		$frames_out =   @DB::stack -$frames_out +1   if $sharp;
 
-		# TODO: implement testcase when $frames_out > @DB::stack
-		$frames_out =  $frames_out > @DB::stack ? @DB::stack+1 : $frames_out;
-
-		# TODO: implement testcase and feature
-		# (r > @DB::stack) should run until end of programm
+		# Q: Should I return from whole script?
+		$frames_out =  $frames_out > @DB::stack ? @DB::stack : $frames_out;
 
 		# Skip the current frame we are in ...
 		$DB::single =  0;;
@@ -381,7 +378,7 @@ $DB::commands =  {
 		$_->{ single } =  0   for @DB::stack[ -$frames_out+1 .. -1 ];;
 
 		# and stop only at this one
-		$DB::stack[ -$frames_out ]{ single } =  1   if $frames_out <= @DB::stack;;
+		$DB::stack[ -$frames_out ]{ single } =  1;
 
 		return;
 	}

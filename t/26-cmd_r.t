@@ -108,6 +108,11 @@ is
 	,$files->{ 'return 3 and stop' }
 	,'Returning from 3 subroutines. Stop at upper frame';
 
+is
+	n( `perl $lib -d:DbInteract='go 2;r 20;q' -e '$script'` )
+	,$files->{ 'return all and stop' }
+	,'Returning from all subroutines. Stop when no frames left';
+
 # IT: @DB::stack -> 0 2 1 0
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
@@ -154,6 +159,10 @@ __DATA__
 -e:0002    1;
 -e:0010    3;
 @@ return 3 and stop
+-e:0012  t2();
+-e:0002    1;
+-e:0013  4;
+@@ return all and stop
 -e:0012  t2();
 -e:0002    1;
 -e:0013  4;
