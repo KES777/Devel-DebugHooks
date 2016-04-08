@@ -114,6 +114,26 @@ is
 	,$files->{ 'goto frames with nested goto' }
 	,"Check goto frames with nested goto";
 
+$cmds =  's 6;e \@DB::goto_frames;q';
+is
+	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'trace file:line' }
+	,"package:file:line should be updated as often as possible";
+
+# When we run script in NonStop mode the $DB::package/file/line are not updated
+# because of &DB::DB is not called. If we update them at &DB::sub the GOTO
+# frames will get more accurate info about that from which place the GOTO was
+# called. To be 100% accurate we may enable $DB::trace
+
+# TODO: it will be good if perl in -d mode will supply for &DB::goto info
+# about file:line where goto is occured like $DB::sub is supplyed for &DB::sub
+$cmds =  'go 2;e \@DB::goto_frames;q';
+is
+	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'trace file:line #2' }
+	,"package:file:line should be updated as often as possible. #2";
+
+
 
 __DATA__
 @@ subroutine frames
@@ -241,3 +261,11 @@ __DATA__
 ]
 -e:0013  3;
 []
+@@ trace file:line
+-e:0012  t2();
+-e:0002    1;
+[["main", "-e", 5, "main::t0", "G"]]
+@@ trace file:line #2
+-e:0012  t2();
+-e:0002    1;
+[["main", "-e", 9, "main::t0", "G"]]

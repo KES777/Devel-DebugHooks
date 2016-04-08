@@ -1021,25 +1021,12 @@ sub pop_frame {
 sub push_frame {
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
-	# (DB::init)... For each step at client's script we update current position
-	# at DB::DB. So next code is useless if one of $DB::single, $DB::signal
-	# or $DB::trace is true. In other case this is the only place we can update
-	# current position.
-
-	# TODO: implement testcase
-	# We we run script in NonStop mode the $DB::package/file/line are not updated
-	# because of &DB::DB is not called. If we update them here the GOTO frames
-	# will get more actual info about that from which place the GOTO was called
-	# $DB::package/file/line will be more closer to that place
-
-	# TODO: check goto context, args, flags etc
-	# [ (caller(1))[0..2], $DB::sub, $last_frames ];
-	# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-	# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
-	# Most actual info we get when we trace script step-by-step so these vars
-	# has sharp last opcode location.
 
 	if( $_[1] ne 'G' ) {
+		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+		# Most actual info we get when we trace script step-by-step at this case
+		# those vars have sharp last opcode location.
 		( $DB::package, $DB::file, $DB::line ) =  caller 1;
 
 		push @DB::stack, {
