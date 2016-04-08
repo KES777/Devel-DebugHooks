@@ -1,6 +1,8 @@
 package Devel::DbInteract;
 
 
+# TODO: Turn off debugging for this
+# END { print $DB::OUT "Commands left"   if @$commands }
 
 our $commands;
 
@@ -9,7 +11,9 @@ our $commands;
 sub import {
 	( undef, $commands ) =  @_;
 
-	$commands =  [ split ';', $commands ];
+	$commands =~ s/^\$(.)//s;
+	my $endline =  $1 // ';';
+	$commands =  [ split $endline, $commands ];
 
 	shift->SUPER::import( @_ );
 }
