@@ -818,12 +818,12 @@ sub DB {
 	}
 
 	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
+	return   if $DB::steps_left && --$DB::steps_left;
 
 	my $stop =  0;
 	my $traps =  DB::traps();
 	if( my $trap =  $traps->{ $DB::line } ) {
 		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
-
 		# NOTE: the stop events are not exclusive so we can not use elsif
 		# FIX: rename: action -> actions
 		if( exists $trap->{ action } ) {

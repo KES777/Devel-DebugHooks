@@ -44,6 +44,16 @@ is
 	,$files->{ 'sbs' }
 	,"Step-by-step debugging. Step over";
 
+is
+	n( `perl $lib -d:DbInteract='s 1;q' -e '$script'` )
+	,$files->{ 'sbs' }
+	,"'n 1' and 'n' should do same";
+
+is
+	n( `perl $lib -d:DbInteract='n 2;q' -e '$script'` )
+	,$files->{ 'do n steps' }
+	,"Do N steps at once";
+
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -113,11 +123,20 @@ is
 	,$files->{ 'step over sub #2' }
 	,"Step over sub in a sub";
 
+is
+	n( `perl $lib -d:DbInteract='go 5;n 2;q' -e '$script'` )
+	,$files->{ 'do n steps in sub' }
+	,"Do N steps at once in sub";
+
+
 
 __DATA__
 @@ sbs
 -e:0001  1;
 -e:0002  2;
+@@ do n steps
+-e:0001  1;
+-e:0003  3;
 @@ step over sub
 -e:0008  t2();
 -e:0009  3;
@@ -137,3 +156,7 @@ __DATA__
 -e:0008  t2();
 -e:0005    t1();
 -e:0006    t1();
+@@ do n steps in sub
+-e:0008  t2();
+-e:0005    t1();
+-e:0009  3;

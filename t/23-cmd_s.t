@@ -44,6 +44,11 @@ is
 	,$files->{ 'sbs' }
 	,"Step-by-step debugging. Step into";
 
+is
+	n( `perl $lib -d:DbInteract='s 1;q' -e '$script'` )
+	,$files->{ 'sbs' }
+	,"'s 1' and 's' should do same";
+
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
@@ -67,6 +72,11 @@ is
 	n( `perl $lib -d:DbInteract='go 2;s;q' -e '$script'` )
 	,$files->{ 'step from sub' }
 	,"Step from sub";
+
+is
+	n( `perl $lib -d:DbInteract='s 4;q' -e '$script'` )
+	,$files->{ 'do n steps' }
+	,"Do N steps at once";
 
 
 
@@ -107,6 +117,9 @@ __DATA__
 -e:0008  t2();
 -e:0002    1;
 -e:0006    2;
+@@ do n steps
+-e:0008  t2();
+-e:0009  3;
 @@ step into goto
 -e:0008  t2();
 -e:0005    goto &t1;
