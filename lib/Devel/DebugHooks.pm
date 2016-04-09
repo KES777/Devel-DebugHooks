@@ -1014,7 +1014,7 @@ sub pop_frame {
 	# The point this sub was called from is: (--the sub we are returning from)
 	# FIX: when the action exists at the line while running the 'n' or 's' command
 	# it will break $DB::file, $DB::line. See description for action
-	( $DB::package, $DB::file, $DB::line ) =  @{ $DB::goto_frames[0] }[0..2];
+	( $DB::package, $DB::file, $DB::line ) =  @{ $last->{ caller } };
 
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
@@ -1028,20 +1028,21 @@ sub push_frame {
 		if $DB::options{ ddd };
 
 	if( $_[1] ne 'G' ) {
-		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
-		# Most actual info we get when we trace script step-by-step at this case
-		# those vars have sharp last opcode location.
-		( $DB::package, $DB::file, $DB::line ) =  caller 1;
-
 		push @DB::stack, {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
+			caller      =>  [ $DB::package, $DB::file, $DB::line ],
 			goto_frames =>  [ @DB::goto_frames ],
 			type        =>  $_[1],
 		};
 
 		@DB::goto_frames =  ();
+
+		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+		# Most actual info we get when we trace script step-by-step at this case
+		# those vars have sharp last opcode location.
+		( $DB::package, $DB::file, $DB::line ) =  caller 1;
 	}
 	else {
 		push @DB::goto_frames,

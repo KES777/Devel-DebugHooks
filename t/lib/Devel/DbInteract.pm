@@ -45,6 +45,18 @@ sub interact {
 
 
 
+sub trace_subs {
+	print $DB::OUT "CALL FROM: $DB::package $DB::file $DB::line\n";
+}
+
+
+
+sub trace_returns {
+	print $DB::OUT "BACK TO  : $DB::package $DB::file $DB::line\n";
+}
+
+
+
 use parent '-norequire', 'Devel::DebugHooks';
 use Devel::DebugHooks();
 

@@ -27,14 +27,6 @@ sub n {
 	$_;
 }
 
-sub nn {
-        $_ =  n( @_ );
-
-        s#( at ).*#$1...#;
-
-        $_;
-}
-
 
 
 my $cmds;
@@ -57,6 +49,30 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t0 {
+		2;
+	}
+	sub t1 {
+		1;
+	}
+	sub t2 {
+		t1();
+		t0();
+	}
+	t2();
+	3;
+PERL
+
+$cmds =  'go,trace_returns,trace_subs';
+is
+	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'position in subs' }
+	,'Position should be updated when call and return to/from subs';
+# print n( `perl $lib -d:DbInteract='$cmds' -e '$script'` );
+
+
+
 __DATA__
 @@ position
 -e:0001  1;
@@ -65,3 +81,11 @@ __DATA__
 ["main", "-e", 2]
 -e:0003  3;
 ["main", "-e", 3]
+@@ position in subs
+-e:0011  t2();
+CALL FROM: main -e 11
+CALL FROM: main -e 8
+BACK TO  : main -e 8
+CALL FROM: main -e 9
+BACK TO  : main -e 9
+BACK TO  : main -e 11
