@@ -505,6 +505,8 @@ BEGIN { # Initialization goes here
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $DB::package;\n$expr";
+		#NOTICE: perl implicitly add semicolon at the end of expression
+		#HOWTO reproduce. Run command: X::X;1+2
 	}
 
 
