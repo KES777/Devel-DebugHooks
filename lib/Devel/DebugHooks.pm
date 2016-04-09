@@ -702,11 +702,14 @@ use Guard;
 				if $DB::options{ ddd };
 		}   if $DB::options{ dd };
 
+		local $options{ ddd } =  $options{ ddd }   if $DB::options{ dd };
+
 
 		if( $DB::options{ dd } ) {
 			print $DB::OUT "$_[1] IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
-			$DB::options{ dd } =  0;
+			$DB::options{ dd  } =  0;
+			$DB::options{ ddd } =  0;
 			$DB::ddlvl++;
 			spy( 1 );
 			$ext_call   =  0;
