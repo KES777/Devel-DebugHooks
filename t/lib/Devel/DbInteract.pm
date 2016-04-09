@@ -52,7 +52,7 @@ sub trace_subs {
 
 
 sub trace_returns {
-	print $DB::OUT "BACK TO  : $DB::package $DB::file $DB::line\n";
+	printf $DB::OUT "BACK TO  : %s %s %s\n", @{ $DB::stack[-1]->{ caller } };
 }
 
 

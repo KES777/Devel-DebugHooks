@@ -69,7 +69,12 @@ is
 	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
-# print n( `perl $lib -d:DbInteract='$cmds' -e '$script'` );
+
+$cmds =  'off;go 8;go,trace_returns,trace_subs';
+is
+	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'position in subs' }
+	,'Position should be updated when call and return to/from subs';
 
 
 

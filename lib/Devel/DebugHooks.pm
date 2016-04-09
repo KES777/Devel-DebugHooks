@@ -1028,6 +1028,12 @@ sub push_frame {
 		if $DB::options{ ddd };
 
 	if( $_[1] ne 'G' ) {
+		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+		# Most actual info we get when we trace script step-by-step at this case
+		# those vars have sharp last opcode location.
+		( $DB::package, $DB::file, $DB::line ) =  caller 1;
+
 		push @DB::stack, {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
@@ -1037,12 +1043,6 @@ sub push_frame {
 		};
 
 		@DB::goto_frames =  ();
-
-		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
-		# Most actual info we get when we trace script step-by-step at this case
-		# those vars have sharp last opcode location.
-		( $DB::package, $DB::file, $DB::line ) =  caller 1;
 	}
 	else {
 		push @DB::goto_frames,
