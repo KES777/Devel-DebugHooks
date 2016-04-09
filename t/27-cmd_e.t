@@ -22,11 +22,18 @@ sub n {
 	$_ =  join '', @_;
 
 	s#\t#  #gm;
-	s#(?:.*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
+	s#([^/]*)(?:.*?)?([^/]+\.p(?:m|l))#$1xxx/$2#gm;
 
 	$_;
 }
 
+sub nn {
+	$_ =  n( @_ );
+
+	s#( at ).*#$1...#;
+
+	$_;
+}
 
 
 my $cmd;
@@ -66,6 +73,20 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	1;
+	use strict; use warnings;
+	2;
+PERL
+
+$cmd =  ' $x;s;$x;q';
+is
+	nn( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	,$files->{ 'pragma and warnings' }
+	,'pragma and warnings from client\'s current scope should be applyed';
+
+
+
 __DATA__
 @@ eval
 -e:0001  $x =  1;
@@ -89,3 +110,9 @@ __DATA__
 -e:0002    1;
 3
 [1, [], {}]
+@@ pragma and warnings
+-e:0001  1;
+undef
+-e:0003  2;
+undef
+ERROR: Global symbol "$x" requires explicit package name (did you forget to declare "my $x"?) at ...
