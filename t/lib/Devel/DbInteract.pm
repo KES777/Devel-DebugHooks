@@ -9,13 +9,13 @@ our $commands;
 
 
 sub import {
-	( undef, $commands ) =  @_;
+	( my $class, $commands ) =  ( shift, shift );
 
 	$commands =~ s/^\$(.)//s;
 	my $endline =  $1 // ';';
 	$commands =  [ split $endline, $commands ];
 
-	shift->SUPER::import( @_ );
+	$class->SUPER::import( @_ );
 }
 
 
