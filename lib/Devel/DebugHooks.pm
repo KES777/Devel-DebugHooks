@@ -685,14 +685,13 @@ use Guard;
 		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
 		# Another:
 		local $ext_call      =  $ext_call +1;
-		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
-		local $ddlvl         =  $ddlvl           if $DB::options{ dd };
-		local $options{ dd } =  $options{ dd }   if $DB::options{ dd };
+
 
 		# Manual localization
 		my $osingle =  $DB::single;
 		scope_guard {
 			spy( $osingle );
+
 			print $DB::OUT "scall END ($file:$line) -- $sub\n"
 				if $DB::options{ ddd };
 		};
@@ -702,16 +701,21 @@ use Guard;
 				if $DB::options{ ddd };
 		}   if $DB::options{ dd };
 
+		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
+		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
+		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
 		local $options{ ddd } =  $options{ ddd }   if $DB::options{ dd };
 
 
 		if( $DB::options{ dd } ) {
+			spy( 1 );
+
 			print $DB::OUT "$_[1] IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
+
+			$DB::ddlvl++;
 			$DB::options{ dd  } =  0;
 			$DB::options{ ddd } =  0;
-			$DB::ddlvl++;
-			spy( 1 );
 			$ext_call   =  0;
 		}
 		else {
