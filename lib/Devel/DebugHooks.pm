@@ -999,7 +999,7 @@ sub pop_frame {
 
 	my $last;
 	do{ $last =  pop @DB::stack } while $last->{ type } eq 'G';
-	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl  --  $last->{ sub }\n"
+	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
