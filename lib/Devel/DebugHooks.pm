@@ -503,7 +503,7 @@ BEGIN { # Initialization goes here
 
 		local $^D;
 
-		local @_ =  @{ $DB::context[0] }; # TODO: testcase
+		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $DB::package;\n$expr";
 	}
 

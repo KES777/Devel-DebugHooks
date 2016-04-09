@@ -51,6 +51,21 @@ is
 
 
 
+$script =  <<'PERL' =~ s#^\t##rgm;
+	sub t {
+		1;
+	}
+	t( 1, [], {} );
+PERL
+
+$cmd =  's;@_;e \@_';
+is
+	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	,$files->{ '@_ not clash' }
+	,'Debugger\'s @_ should not clash with client\'s one';
+
+
+
 __DATA__
 @@ eval
 -e:0001  $x =  1;
@@ -69,3 +84,8 @@ __DATA__
 -e:0006  2;
 1/8
 { a => 1 }
+@@ @_ not clash
+-e:0004  t( 1, [], {} );
+-e:0002    1;
+3
+[1, [], {}]
