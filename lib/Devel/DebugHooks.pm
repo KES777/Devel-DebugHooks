@@ -661,7 +661,7 @@ use Guard;
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
 		if( $DB::options{ ddd } ) {
-			$lvl =  0;
+			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
 				$sub =  "$DB::args[1]::$DB::args[0]";
