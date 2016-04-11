@@ -1005,6 +1005,10 @@ sub goto {
 { package DB::Tools;
 # my $x = 0;
 # use Data::Dump qw/ pp /;
+sub test {
+	1;
+}
+
 sub pop_frame {
 	# $ext_call++; scall( sub{
 	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
@@ -1037,6 +1041,10 @@ sub pop_frame {
 
 
 sub push_frame {
+	# this two lines exists for testing purpose
+	test();
+	2;
+
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
