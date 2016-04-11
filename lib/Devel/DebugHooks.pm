@@ -1029,8 +1029,7 @@ sub pop_frame {
 	# 	}
 	# });
 
-	my $last;
-	do{ $last =  pop @DB::stack } while $last->{ type } eq 'G';
+	my $last =  pop @DB::stack;
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
 		if $DB::options{ ddd };
