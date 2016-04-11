@@ -718,7 +718,7 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			spy( 1 );
 
-			push @DB::stack, {};
+			push @DB::stack, { caller => [], goto_frames => [] };
 
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
