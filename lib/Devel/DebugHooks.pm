@@ -1118,7 +1118,7 @@ sub sub {
 		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
-	if( $ext_call || $ddlvl
+	if( $ext_call
 		||  $DB::sub eq 'DB::spy'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
