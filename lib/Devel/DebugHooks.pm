@@ -112,6 +112,7 @@ sub process {
 
 
 
+# NOTICE: &DB::sub is not called because of DB::namespace
 sub abreak {
 }
 
@@ -658,17 +659,22 @@ use Guard;
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
-		my $sub;
+		my( $from, $f, $l, $sub );
 		if( $DB::options{ ddd } ) {
-			$sub =  (caller 1)[3];
-			if( $sub eq 'DB::mcall' ) {
+			$lvl =  0;
+			if( (caller 1)[3] eq 'DB::mcall' ) {
+				$lvl++;
 				$sub =  "$DB::args[1]::$DB::args[0]";
 			}
+			else {
+				$sub =  $DB::_sub;
+			}
 
-			my($file, $line) =  (caller 1)[1,2];
+			($f, $l) =  (caller $lvl)[1,2];
+			$f =~ s".*?([^/]+)$"$1";
+			$from =  (caller $lvl+1)[3];
 
-			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "scall from $file:$line -- $sub\n"
+			print $DB::OUT "scall from $from($f:$l) --> $sub\n"
 		}
 
 
@@ -692,7 +698,7 @@ use Guard;
 		scope_guard {
 			spy( $osingle );
 
-			print $DB::OUT "scall END ($file:$line) -- $sub\n"
+			print $DB::OUT "scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
 		};
 
@@ -710,7 +716,7 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			spy( 1 );
 
-			print $DB::OUT "$_[1] IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
+			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
 
 			$DB::ddlvl++;
@@ -820,7 +826,8 @@ sub DB {
 
 	&save_context;
 
-	print $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace << $file::$line\n"
+	print $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace <-- $file:$line\n"
+		."    cursor(DB) => $DB::package, $DB::file, $DB::line\n"
 		if $DB::options{ _debug } || $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		$ext_call++; scall( $DB::commands->{ T } );
@@ -920,6 +927,7 @@ sub init {
 	# Also we should do same thing at &DB::sub
 	( $DB::package, $DB::file, $DB::line ) = caller(1);
 
+
 	# Commented out because of:
 	# https://rt.perl.org/Ticket/Display.html?id=127249
 	# die ">$DB::file< ne >" .file( $DB::file ) ."<"
@@ -1007,6 +1015,7 @@ sub pop_frame {
 	my $last;
 	do{ $last =  pop @DB::stack } while $last->{ type } eq 'G';
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
+		. "    @{ $last->{ caller } }\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
@@ -1036,7 +1045,9 @@ sub push_frame {
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
-		( $DB::package, $DB::file, $DB::line ) =  caller 1;
+		( $DB::package, $DB::file, $DB::line ) =  caller 2;
+		print $DB::OUT "    cursor(PF) => $DB::package, $DB::file, $DB::line\n"
+			if $DB::options{ ddd };
 
 		push @DB::stack, {
 			single      =>  $_[0],
@@ -1077,10 +1088,28 @@ sub trace_returns {
 
 
 
+sub push_frame {
+	$ext_call++; scall( \&DB::Tools::push_frame, @_ );
+
+	if( $DB::options{ ddd } ) {
+		print $DB::OUT "STACK:\n";
+		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub }
+			." -- @{ $_->{ caller } }\n"
+			for @DB::stack;
+		print $DB::OUT "Frame created for $DB::sub\n\n";
+	}
+}
+
+
+sub _caller_info {
+	return " $DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}";
+}
+
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single"
-		." $DB::sub <-- @{[ map{ s'.*?([^/]+)$'$1'er } (caller 0)[1,2] ]}\n"
+		._caller_info ."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
 	if( $ext_call
@@ -1107,13 +1136,8 @@ sub sub {
 	# start to guard frame before any external call
 
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
-	$ext_call++; scall( \&DB::Tools::push_frame, $old, 'C' );
+	push_frame( $old, 'C' );
 
-	if( $DB::options{ ddd } ) {
-		print $DB::OUT "STACK:\n";
-		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub } ."\n"   for @DB::stack;
-		print $DB::OUT "Frame created for $DB::sub\n\n";
-	}
 	spy( 0 )   if $DB::single & 2;
 
 	{
