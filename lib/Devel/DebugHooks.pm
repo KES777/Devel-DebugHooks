@@ -1138,7 +1138,7 @@ sub sub {
 	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
 	push_frame( $old, 'C' );
 
-	spy( 0 )   if $DB::single & 2;
+	sub{ spy( 0 ) }->()   if $DB::single & 2;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
