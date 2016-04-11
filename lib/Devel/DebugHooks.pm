@@ -909,15 +909,22 @@ sub DB {
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
 
+	# TODO: remove this useless localization
 	local $ext_call =  $ext_call +1;
 	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
 	# WRONG!!! It has. See mcall/scall
 
 	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
 		if $DB::options{ ddd };
-	$ext_call++; mcall( 'bbreak', $DB::dbg );
+	{
+		local $DB::options{ dd } =  0;
+		$ext_call++; mcall( 'bbreak', $DB::dbg );
+	}
 	1 while( defined interact() );
-	$ext_call++; mcall( 'abreak', $DB::dbg );
+	{
+		local $DB::options{ dd } =  0;
+		$ext_call++; mcall( 'abreak', $DB::dbg );
+	}
 }
 
 
