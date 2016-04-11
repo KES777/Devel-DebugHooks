@@ -1015,7 +1015,7 @@ sub pop_frame {
 	my $last;
 	do{ $last =  pop @DB::stack } while $last->{ type } eq 'G';
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
-		. "    @{ $last->{ caller } }\n"
+		. "    @{ $last->{ caller } }\n\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
@@ -1101,15 +1101,13 @@ sub push_frame {
 }
 
 
-sub _caller_info {
-	return " $DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}";
-}
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	$DB::_sub =  $DB::sub;
-	print $DB::OUT "DB::sub called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single"
-		._caller_info ."\n"
+	print $DB::OUT "DB::sub called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single  --  "
+		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}" }->()
+		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
 	if( $ext_call
