@@ -1055,7 +1055,7 @@ sub push_frame {
 
 
 	if( $options{ trace_subs } ) {
-		$ext_call++; mcall( 'trace_subs', $DB::dbg, @_ );
+		$DB::dbg->trace_subs();
 	}
 
 	# Stop on the first OP in a given subroutine
