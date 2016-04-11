@@ -6,7 +6,7 @@ BEGIN {
         $DB::options{ trace_load }  //=  0;
         $DB::options{ trace_subs }  //=  0;
         $DB::options{ trace_returns }  //=  0;
-        $DB::options{ _debug }      //=  1;
+        $DB::options{ _debug }      //=  0;
         $DB::options{ dbg_frames }  //=  0;
         @DB::options{ qw/ w s / } = ( 1, 1 );
         push @ISA, 'Devel::DebugHooks';
@@ -21,7 +21,8 @@ sub import {
 sub bbreak {
 	my $self =  shift;
 
-	print " -- $DB::file:$DB::line\n  " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
+	# print " -- $DB::file:$DB::line\n  " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
+	$self->process( 'l .' );
 }
 
 
