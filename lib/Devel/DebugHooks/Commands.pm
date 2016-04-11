@@ -415,7 +415,7 @@ $DB::commands =  {
 	}
 
 	# Quit from the debugger
-	,q => sub { DB::spy( 0 ); exit; }
+	,q => sub { DB::spy( 0, 1 ); exit; } # FIX: remove forcing
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
