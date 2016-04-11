@@ -376,7 +376,7 @@ $DB::commands =  {
 		$frames_out =  @DB::stack   if $frames_out > @DB::stack;
 
 		# Skip the current frame we are in ...
-		$DB::single =  0;;
+		DB::spy( 0 );
 
 		# ... skip N next frames
 		$_->{ single } =  0   for @DB::stack[ -($frames_out-1) .. -1 ];
@@ -393,7 +393,7 @@ $DB::commands =  {
 	# the outer frame. And so on.
 	,s => sub {
 		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
-		$DB::single =  1;
+		DB::spy( 1 );
 		$_->{ single } =  1   for @DB::stack;
 
 		return;
@@ -407,7 +407,7 @@ $DB::commands =  {
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
-		$DB::single =  2;
+		DB::spy( 2 );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @DB::stack;
 
@@ -415,7 +415,7 @@ $DB::commands =  {
 	}
 
 	# Quit from the debugger
-	,q => sub { $DB::single =  0; exit; }
+	,q => sub { DB::spy( 0 ); exit; }
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
@@ -664,7 +664,7 @@ $DB::commands =  {
 		}
 
 
-		$DB::single =  0;
+		DB::spy( 0 );
 		$_->{ single } =  0   for @DB::stack;
 
 
