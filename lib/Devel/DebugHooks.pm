@@ -995,6 +995,7 @@ sub goto {
 	return   unless $options{ trace_goto };
 	return   if $ext_call;
 
+
 	spy( 0 )   if $DB::single & 2;
 	my $old =  $DB::single;
 	$ext_call++; scall( \&DB::Tools::push_frame, $old, 'G' );
@@ -1007,6 +1008,7 @@ sub goto {
 # use Data::Dump qw/ pp /;
 sub test {
 	1;
+	2;
 }
 
 sub pop_frame {
@@ -1043,7 +1045,7 @@ sub pop_frame {
 sub push_frame {
 	# this two lines exists for testing purpose
 	test();
-	2;
+	3;
 
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };

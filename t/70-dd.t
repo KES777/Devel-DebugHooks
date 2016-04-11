@@ -52,7 +52,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
-$cmds =  ' $DB::options{ dd } =  1;n;s;s;q';
+$cmds =  ' $DB::options{ dd } =  1;n;s;s 2;q';
 is
 	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'step into debugger' }
@@ -72,9 +72,9 @@ __DATA__
 1
 xxx/DebugHooks.pm:XXXX    test();
 xxx/DebugHooks.pm:XXXX    1;
-xxx/DebugHooks.pm:XXXX    2;
+xxx/DebugHooks.pm:XXXX    3;
 @@ step over
 -e:0004  t1();
 1
 xxx/DebugHooks.pm:XXXX    test();
-xxx/DebugHooks.pm:XXXX    2;
+xxx/DebugHooks.pm:XXXX    3;
