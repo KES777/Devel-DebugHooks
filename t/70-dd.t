@@ -64,6 +64,11 @@ is
 	,$files->{ 'step over' }
 	,"Step over at debugger";
 
+$cmds =  ' $DB::options{ dd } =  1;n;s;r;r;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'return' }
+	,"Return from debugger";
 
 
 __DATA__
@@ -78,3 +83,10 @@ xxx/DebugHooks.pm:XXXX    3;
 1
 xxx/DebugHooks.pm:XXXX    test();
 xxx/DebugHooks.pm:XXXX    3;
+@@ return
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    test();
+xxx/DebugHooks.pm:XXXX    1;
+xxx/DebugHooks.pm:XXXX    3;
+-e:0005  2;
