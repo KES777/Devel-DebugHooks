@@ -1065,8 +1065,10 @@ sub pop_frame {
 	# The point this sub was called from is: (--the sub we are returning from)
 	# FIX: when the action exists at the line while running the 'n' or 's' command
 	# it will break $DB::file, $DB::line. See description for action
-	( $DB::package, $DB::file, $DB::line ) =  @{ $last->{ caller } };
-	# DB::state( 'package' ) # DEEP RECURSION
+	my( $p, $f, $l ) =  @{ $last->{ caller } };
+	DB::state( 'package', $p );
+	DB::state( 'file',    $f );
+	DB::state( 'line',    $l );
 
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
@@ -1158,6 +1160,7 @@ sub sub {
 
 	if( $ext_call
 		||  $DB::sub eq 'DB::spy'
+		||  $DB::sub eq 'DB::state'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
