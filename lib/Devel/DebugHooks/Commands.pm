@@ -38,10 +38,10 @@ my $line_cursor;
 my $old_DB_line  =  -1;
 my $curr_file;
 sub update_fl {
-	if( $old_DB_line != $DB::line ) {
-		$old_DB_line =  $DB::line;
-		$line_cursor =  $DB::line;
-		$curr_file   =  $DB::file;
+	my $line =  DB::state( 'line' );
+	if( $old_DB_line != $line ) {
+		$line_cursor =  $old_DB_line =  $line;
+		$curr_file   =  DB::state( 'file' );
 	}
 }
 
@@ -72,8 +72,8 @@ my %cmd_T = (
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
 	my( $from, $to, $file, $run_file, $run_line ) =  @_;
-	$run_file //=  $DB::file;
-	$run_line //=  $DB::line;
+	$run_file //=  DB::state( 'file' );
+	$run_line //=  DB::state( 'line' );
 
 
 	$file =  file( $file );
@@ -137,8 +137,8 @@ sub list {
 			}
 			elsif( $line_cursor eq '.' ) {
 				# TODO: 'current' means file and line! FIX this in other places too
-				$file        =  $DB::file;
-				$line_cursor =  $DB::line;
+				$file        =  DB::state( 'file' );
+				$line_cursor =  DB::state( 'line' );
 			}
 
 			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
@@ -209,7 +209,7 @@ sub list {
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
-	$line     =  $DB::line   if $line eq '.';
+	$line     =  DB::state( 'line' )   if $line eq '.';
 	$file     =  file( $file );
 
 	my $traps =  DB::traps( $file );
@@ -305,7 +305,7 @@ sub trace_variable {
 sub action {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))$/;
 
-	$line     =  $DB::line   if $line eq '.';
+	$line     =  DB::state( 'line' )   if $line eq '.';
 	$file     =  file( $file );
 
 	my $traps =  DB::traps( $file );
@@ -340,10 +340,10 @@ sub action {
 
 $DB::commands =  {
 	'.' => sub {
-		$curr_file =  $DB::file;
-		$line_cursor =  $DB::line;
+		$curr_file   =  DB::state( 'file' );
+		$line_cursor =  DB::state( 'line' );
 
-		print $DB::OUT "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
+		print $DB::OUT "$curr_file:$line_cursor    " .(DB::source()->[ $line_cursor ] =~ s/^(\s+)//r); #/
 
 		1;
 	},
@@ -457,10 +457,10 @@ $DB::commands =  {
 		}
 
 		if( $type & 4 ) {
-			my $stash =  Package::Stash->new( $DB::package )->get_all_symbols();
+			my $stash =  Package::Stash->new( DB::state( 'package' ) )->get_all_symbols();
 			# Show only user defined variables
 			# TODO? implement verbose flag
-			if( $DB::package eq 'main' ) {
+			if( DB::state( 'package' ) eq 'main' ) {
 				for( keys %$stash ) {
 					delete $stash->{ $_ }   if /::$/;
 					delete $stash->{ $_ }   if /^_</;
@@ -475,7 +475,7 @@ $DB::commands =  {
 				delete @$stash{ qw# % - : = ^ ~ # };
 				delete @$stash{ qw# ! @ ? # };
 			}
-			delete $stash->{ sub }   if $DB::package eq 'DB';
+			delete $stash->{ sub }   if DB::state( 'package' ) eq 'DB';
 
 			my @globals =  ();
 			my %sigil =  ( SCALAR => '$', ARRAY => '@', HASH => '%' );
@@ -550,7 +550,7 @@ $DB::commands =  {
 			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
-			$line     =  $DB::line   if $line eq '.';
+			$line     =  DB::state( 'line' )   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
@@ -584,7 +584,7 @@ $DB::commands =  {
 		}
 
 
-		$line     =  $DB::line   if $line eq '.';
+		$line     =  DB::state( 'line' )   if $line eq '.';
 		$file     =  file( $file, 1 );
 
 
@@ -763,7 +763,7 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
-		$line     =  $DB::line   if $line eq '.';
+		$line     =  DB::state( 'line' )   if $line eq '.';
 		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
@@ -779,7 +779,7 @@ $DB::commands =  {
 	}
 	,ge   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
-		$line =  $DB::line   unless defined $line;
+		$line =  DB::state( 'line' )   unless defined $line;
 		$file =  file( $file );
 
 		`rsub $file`;
@@ -788,7 +788,7 @@ $DB::commands =  {
 	}
 	,gef   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
-		$line =  $DB::line   unless defined $line;
+		$line =  DB::state( 'line' )   unless defined $line;
 		$file =  file( $file );
 
 		`rsub -f $file`;

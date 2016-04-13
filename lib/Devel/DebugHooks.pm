@@ -59,7 +59,7 @@ sub trace_load {
 
 # This sub is called for each DB::DB call when $DB::trace is true
 sub trace_line {
-	print "$DB::line\n";
+	print DB::state( 'line' ) ."\n";
 }
 
 
@@ -88,7 +88,11 @@ sub watch {
 sub bbreak {
 	my $info =  "\n" .' =' x30 ."$DB::ext_call\n";
 
-	$info .=  "$DB::file:$DB::line    " .DB::source()->[ $DB::line ];
+	$info .=  sprintf "%s:%s    %s"
+		,state( 'file' )
+		,state( 'line' )
+		,DB::source()->[ state( 'line' ) ]
+	;
 
 	return $info;
 }
@@ -277,6 +281,7 @@ sub applyOptions {
 
 
 
+BEGIN{ $DB::state->{ stack } =  []; }
 sub state {
 	my( $name, $value ) =  @_;
 
@@ -429,7 +434,7 @@ BEGIN { # Initialization goes here
 		# The file is evaled if it looks like (eval 34)
 		# But this may be changed by #file:line. See ??? for info
 		sub file {
-			my $filename =  shift // $DB::file;
+			my $filename =  shift // state( 'file' );
 
 			unless( exists ${ 'main::' }{ "_<$filename" } ) {
 				warn "File '$filename' is not compiled yet";
@@ -444,7 +449,7 @@ BEGIN { # Initialization goes here
 
 		# Returns source for $filename
 		sub source {
-			my $filename =  shift // $DB::file;
+			my $filename =  shift // state( 'file' );
 
 			return   unless file( $filename );
 
@@ -463,7 +468,7 @@ BEGIN { # Initialization goes here
 
 		# Returns hashref of traps for $filename keyed by $line
 		sub traps {
-			my $filename =  shift // $DB::file;
+			my $filename =  shift // state( 'file' );
 
 			return   unless file( $filename );
 
@@ -517,7 +522,7 @@ BEGIN { # Initialization goes here
 		local $^D;
 
 		local @_ =  @{ $DB::context[0] };
-		eval "$usercontext; package $DB::package;\n$expr";
+		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
 	}
@@ -718,7 +723,7 @@ use Guard;
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
 
-			pop @DB::stack;
+			pop @DB::stack; #pop @{ state( 'stack' ) };
 		}   if $DB::options{ dd };
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
@@ -842,8 +847,9 @@ sub DB {
 
 	&save_context;
 
-	print $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace <-- $file:$line\n"
-		."    cursor(DB) => $DB::package, $DB::file, $DB::line\n"
+	printf $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace <-- $file:$line\n"
+		."    cursor(DB) => %s, %s, %s\n"
+		,state( 'package' ), state( 'file' ) ,state( 'line' )
 		if $DB::options{ _debug } || $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		$ext_call++; scall( $DB::commands->{ T } );
@@ -854,8 +860,9 @@ sub DB {
 
 	my $stop =  0;
 	my $traps =  DB::traps();
-	if( my $trap =  $traps->{ $DB::line } ) {
-		print $DB::OUT "Meet breakpoint $DB::file:$DB::line\n"   if $DB::options{ _debug };
+	if( my $trap =  $traps->{ state( 'line' ) } ) {
+		print $DB::OUT "Meet breakpoint %s:%s\n" ,state( 'file' ) ,state( 'line' )
+			if $DB::options{ _debug };
 		# NOTE: the stop events are not exclusive so we can not use elsif
 		# FIX: rename: action -> actions
 		if( exists $trap->{ action } ) {
@@ -894,8 +901,8 @@ sub DB {
 			unless( keys %$trap ) {
 				# Just trap deleting does not help. We should signal internals
 				# about that we should not stop here anymore
-				$traps->{ $DB::line } =  0; # Perl does not do this automanically. Why?
-				delete $traps->{ $DB::line };
+				$traps->{ state( 'line' ) } =  0; # Perl does not do this automanically. Why?
+				delete $traps->{ state( 'line' ) };
 			}
 
 			$stop ||=  1;
@@ -1044,7 +1051,7 @@ sub pop_frame {
 	# 	}
 	# });
 
-	my $last =  pop @DB::stack;
+	my $last =  pop @DB::stack; # pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
 		if $DB::options{ ddd };
@@ -1059,6 +1066,7 @@ sub pop_frame {
 	# FIX: when the action exists at the line while running the 'n' or 's' command
 	# it will break $DB::file, $DB::line. See description for action
 	( $DB::package, $DB::file, $DB::line ) =  @{ $last->{ caller } };
+	# DB::state( 'package' ) # DEEP RECURSION
 
 	@DB::goto_frames =  @{ $last->{ goto_frames } };
 
@@ -1080,14 +1088,17 @@ sub push_frame {
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
-		( $DB::package, $DB::file, $DB::line ) =  caller 2;
-		print $DB::OUT "    cursor(PF) => $DB::package, $DB::file, $DB::line\n"
-			if $DB::options{ ddd };
+		my( $p, $f, $l ) =  caller 2;
+		DB::state( 'package', $p );
+		DB::state( 'file',    $f );
+		DB::state( 'line',    $l );
+		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
 		push @DB::stack, {
+		# push @{ DB::state( 'stack' ) }, {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
-			caller      =>  [ $DB::package, $DB::file, $DB::line ],
+			caller      =>  [ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ) ],
 			goto_frames =>  [ @DB::goto_frames ],
 			type        =>  $_[1],
 		};
@@ -1096,7 +1107,7 @@ sub push_frame {
 	}
 	else {
 		push @DB::goto_frames,
-			[ $DB::package, $DB::file, $DB::line, $DB::sub, $_[1] ]
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[1] ]
 	}
 
 
