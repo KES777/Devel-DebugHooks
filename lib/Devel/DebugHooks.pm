@@ -149,10 +149,10 @@ sub trace_subs {
 	$" =  ', ';
 	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $orig_frame->[1] };
 	$info =
-	    "\n" .' =' x15 ."\n"
-	    ."DEEP: ". @DB::stack ."\n"
+		"\n" .' =' x15 ."\n"
+		."DEEP: ". @DB::stack ."\n"
 		."CNTX: $context\n"
-	    .$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
+		.$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
 		# NOTICE: even before function call $DB::sub changes its value to DB::location
 		# A: Because @_ keep the reference to args. So
@@ -160,8 +160,8 @@ sub trace_subs {
 		# 2. The DB::location is called
 		# 3. The value of $DB::sub is changed to DB::location
 		# 4. my( $sub ) =  @_; # Here is too late to get the orig value of $DB::sub
-	    ."TEXT: " .DB::location( $last_frame->[5] ) ."\n\n"
-	    .$info;
+		."TEXT: " .DB::location( $last_frame->[5] ) ."\n\n"
+		.$info;
 
 	$info .=  ' =' x15 ."\n";
 
@@ -244,7 +244,7 @@ sub bbreak {
 
 
 package    # hide the package from the PAUSE indexer
-    DB;
+	DB;
 
 
 
@@ -277,6 +277,18 @@ sub applyOptions {
 
 
 
+sub state {
+	my( $name, $value ) =  @_;
+
+	if( @_ == 2 ) {
+		no strict "refs";
+		${ "DB::$name" }             =  $value;
+		return $DB::state->{ $name } =  $value;
+	}
+
+	return $DB::state->{ $name };
+}
+
 # Used perl internal variables:
 # ${ ::_<filename }  # maintained at 'file' and 'sources'
 # @{ ::_<filename }  # maintained at 'source' and 'can_break'
@@ -300,7 +312,7 @@ our $ext_call;       # keep silent at DB::sub/lsub while do external call from D
 our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
-                     # This allows us to spy the DB::'s values for a given frame
+					 # This allows us to spy the DB::'s values for a given frame
 our $ddlvl;          # Level of debugger debugging
 # TODO? does it better to implement TTY object?
 our $IN;
@@ -308,7 +320,7 @@ our $OUT;
 our %options;
 our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
-                     # maintained at 'trace_subs'
+					 # maintained at 'trace_subs'
 
 
 
