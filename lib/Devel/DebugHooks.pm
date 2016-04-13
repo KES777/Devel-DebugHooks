@@ -948,7 +948,10 @@ sub DB {
 sub init {
 	# For each step at client's script we should update current position
 	# Also we should do same thing at &DB::sub
-	( $DB::package, $DB::file, $DB::line ) = caller(1);
+	my( $p, $f, $l ) = caller(1);
+	state( 'package', $p );
+	state( 'file',    $f );
+	state( 'line',    $l );
 
 
 	# Commented out because of:
