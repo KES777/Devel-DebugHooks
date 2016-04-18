@@ -863,7 +863,8 @@ sub DB {
 	}
 
 	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
-	return   if $DB::steps_left && --$DB::steps_left;
+	my $steps_left =  DB::state( 'steps_left' );
+	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
 
 	my $stop =  0;
 	my $traps =  DB::traps();

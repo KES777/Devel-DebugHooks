@@ -182,7 +182,7 @@ sub list {
 
 
 			# 3. List sub from source
-			$subname =  "${ DB::package }::${ subname }"
+			$subname =  DB::state( 'package' ) ."::${ subname }"
 				if $subname !~ m/::/;
 
 			# The location format is 'file:from-to'
@@ -393,7 +393,7 @@ $DB::commands =  {
 	# Because current OP maybe the last OP in sub. It also maybe the last OP in
 	# the outer frame. And so on.
 	,s => sub {
-		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
+		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 		DB::spy( 1 );
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
@@ -407,7 +407,7 @@ $DB::commands =  {
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
-		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
+		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 		DB::spy( 2 );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
