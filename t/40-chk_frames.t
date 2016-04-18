@@ -47,7 +47,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	4;
 PERL
 
-$cmds =  'e \@DB::stack;s;'x3 .'s;e \@DB::stack;'x2;
+$cmds =  'e $DB::stack;s;'x3 .'s;e $DB::stack;'x2;
 is
 	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames' }
@@ -72,7 +72,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	4;
 PERL
 
-$cmds =  'e \@DB::stack;s;'x4;
+$cmds =  'e $DB::stack;s;'x4;
 is
 	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames with goto' }
@@ -102,7 +102,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	3;
 PERL
 
-$cmds =  'e \@DB::stack;s;'x3 .'s;e \@DB::stack;'x5;
+$cmds =  'e $DB::stack;s;'x3 .'s;e $DB::stack;'x5;
 is
 	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames with nested goto' }

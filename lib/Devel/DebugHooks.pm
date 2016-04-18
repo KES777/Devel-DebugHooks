@@ -154,7 +154,7 @@ sub trace_subs {
 	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $orig_frame->[1] };
 	$info =
 		"\n" .' =' x15 ."\n"
-		."DEEP: ". @DB::stack ."\n"
+		."DEEP: ". @$DB::stack ."\n"
 		."CNTX: $context\n"
 		.$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
 		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
@@ -196,7 +196,7 @@ package
 
 sub x { # This is 'invader' :)
 	# When we returns from this sub the $DB::single is restored at 'DB::sub_returns'
-	$DB::stack[-1]{ single } =  1   if !@_  ||  $_[0];
+	$DB::stack->[-1]{ single } =  1   if !@_  ||  $_[0];
 	# TODO: Allow to disable trap
 }
 
@@ -206,7 +206,7 @@ package
 	X;
 sub X {
 	local $^D |= (1<<30);
-	$DB::stack[-1]{ single } =  1;
+	$DB::stack->[-1]{ single } =  1;
 	$DB::single =  1;
 	1;
 }
@@ -332,6 +332,7 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 # Do DB:: configuration stuff here
 BEGIN {
 	$DB::goto_frames =  [];
+	$DB::stack       =  [];
 
 	$IN                        //= \*STDIN;
 	#TODO: cache output until debugger is connected
@@ -725,7 +726,7 @@ use Guard;
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
 
-			pop @DB::stack; #pop @{ state( 'stack' ) };
+			pop @$DB::stack; #pop @{ state( 'stack' ) };
 		}   if $DB::options{ dd };
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
@@ -737,7 +738,7 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			spy( 1 );
 
-			push @DB::stack, { caller => [], goto_frames => [] };
+			push @$DB::stack, { caller => [], goto_frames => [] };
 
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
@@ -1049,16 +1050,16 @@ sub test {
 sub pop_frame {
 	# $ext_call++; scall( sub{
 	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
-	# 		print $DB::OUT pp( \@DB::stack, \@DB::goto_frames );
+	# 		print $DB::OUT pp( $DB::stack, $DB::goto_frames );
 	# 	}
 	# });
 
-	my $last =  pop @DB::stack; # pop @{ DB::state( 'stack' ) };
+	my $last =  pop @$DB::stack; # pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
-		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @DB::stack ."\n";
+		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @$DB::stack ."\n";
 	}
 
 	# The current FILE:LINE is the subroutine call place.
@@ -1098,7 +1099,7 @@ sub push_frame {
 		DB::state( 'line',    $l );
 		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
-		push @DB::stack, {
+		push @$DB::stack, {
 		# push @{ DB::state( 'stack' ) }, {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
@@ -1145,7 +1146,7 @@ sub push_frame {
 		print $DB::OUT "STACK:\n";
 		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub }
 			." -- @{ $_->{ caller } }\n"
-			for @DB::stack;
+			for @$DB::stack;
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
 }
@@ -1231,7 +1232,7 @@ sub lsub : lvalue {
 
 	# manual localization
 	Hook::Scope::POST( \&sub_returns );
-	push @DB::stack, {
+	push @$DB::stack, {
 		single      =>  $DB::single,
 		sub         =>  $DB::sub,
 		goto_frames =>  $DB::goto_frames,

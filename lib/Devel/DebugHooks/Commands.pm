@@ -166,7 +166,7 @@ sub list {
 				$level //=  0;
 				# FIX: 'eval' does not update @DB::stack.
 				# Eval exists at real stack but ot does not at our
-				my $coderef =  $DB::stack[ -$level -1 ]{ sub };
+				my $coderef =  $DB::stack->[ -$level -1 ]{ sub };
 				print $DB::OUT "sub $coderef ";
 				$coderef =  \&$coderef   unless ref $coderef;
 				return $deparse->( $coderef );
@@ -362,27 +362,27 @@ $DB::commands =  {
 	# we set $DB::single value to 1 which will be restored at &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
-		return -1   unless @DB::stack;
+		return -1   unless @$DB::stack;
 
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
 		$frames_out //=  1;
 
-		$frames_out =  @DB::stack -$frames_out   if $sharp;
+		$frames_out =  @$DB::stack -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
 		# Return to the last possible frame
 		# Q: Should we return from whole script?
-		$frames_out =  @DB::stack   if $frames_out > @DB::stack;
+		$frames_out =  @$DB::stack   if $frames_out > @$DB::stack;
 
 		# Skip the current frame we are in ...
 		DB::spy( 0 );
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @DB::stack[ -($frames_out-1) .. -1 ];
+		$_->{ single } =  0   for @$DB::stack[ -($frames_out-1) .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @DB::stack[ -@DB::stack .. -$frames_out ];
+		$_->{ single } =  1   for @$DB::stack[ -@$DB::stack .. -$frames_out ];
 
 		return;
 	}
@@ -394,7 +394,7 @@ $DB::commands =  {
 	,s => sub {
 		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
 		DB::spy( 1 );
-		$_->{ single } =  1   for @DB::stack;
+		$_->{ single } =  1   for @$DB::stack;
 
 		return;
 	}
@@ -409,7 +409,7 @@ $DB::commands =  {
 		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
 		DB::spy( 2 );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
-		$_->{ single } =  2   for @DB::stack;
+		$_->{ single } =  2   for @$DB::stack;
 
 		return;
 	}
@@ -495,7 +495,7 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
+			my $sub =  $DB::stack->[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
 				# convert this to subroutine refs
@@ -510,7 +510,7 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
+			my $sub =  $DB::stack->[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
@@ -665,7 +665,7 @@ $DB::commands =  {
 
 
 		DB::spy( 0 );
-		$_->{ single } =  0   for @DB::stack;
+		$_->{ single } =  0   for @$DB::stack;
 
 
 		return;
