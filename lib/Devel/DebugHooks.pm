@@ -288,10 +288,10 @@ sub state {
 	if( @_ == 2 ) {
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
-		return $DB::state->{ $name } =  $value;
+		return $DB::state->[-1]{ $name } =  $value;
 	}
 
-	return $DB::state->{ $name };
+	return $DB::state->[-1]{ $name };
 }
 
 # Used perl internal variables:
@@ -331,7 +331,7 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$DB::state =  {()
+	$DB::state =  [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
@@ -339,7 +339,7 @@ BEGIN {
 		,trace       =>  $DB::trace
 		,stack       =>  []
 		,goto_frames =>  []
-	};
+	} ];
 
 
 	$IN                        //= \*STDIN;
