@@ -181,7 +181,7 @@ sub trace_returns {
 	$info =  $DB::options{ trace_subs } ? '' : "\n" .' =' x15 ."\n";
 	# FIX: uninitializind value while 'n'
 	# A: Can not reproduce...
-	$info .= join '->', map { $_->[3] } @$DB::goto_frames;
+	$info .= join '->', map { $_->[3] } @{ DB::state( 'goto_frames' ) };
 	$info .= " RETURNS:\n";
 
 	$info .=  @_ ?
@@ -281,7 +281,6 @@ sub applyOptions {
 
 
 
-BEGIN{ $DB::state->{ stack } =  []; }
 sub state {
 	my( $name, $value ) =  @_;
 
@@ -331,8 +330,12 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$DB::goto_frames =  [];
 	$DB::stack       =  [];
+	$DB::state =  {()
+		,stack       =>  []
+		,goto_frames =>  []
+	};
+
 
 	$IN                        //= \*STDIN;
 	#TODO: cache output until debugger is connected
@@ -632,11 +635,11 @@ BEGIN { # Initialization goes here
 		}
 
 		my $count =  $options{ frames };
-		my $ogf =  my $gf =  $DB::goto_frames;
+		my $ogf =  my $gf =  DB::state( 'goto_frames' );
 		while( $count  &&  (my @frame =  caller( $level++ )) ) {
 			# The call to DB::trace_subs replaces right sub name of last call
 			# We fix that here:
-			$frame[3] =  $goto_frames[-1][3]
+			$frame[3] =  DB::state( 'goto_frames' )->[-1][3]
 				if $count == $options{ frames }  && $frame[3] eq 'DB::trace_subs';
 
 			my $args =  [ @DB::args ];
@@ -1073,7 +1076,7 @@ sub pop_frame {
 	DB::state( 'file',    $f );
 	DB::state( 'line',    $l );
 
-	$DB::goto_frames =  $last->{ goto_frames };
+	DB::state( 'goto_frames', $last->{ goto_frames } );
 
 	DB::spy( $last->{ single } );
 }
@@ -1104,14 +1107,14 @@ sub push_frame {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
 			caller      =>  [ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ) ],
-			goto_frames =>  $DB::goto_frames,
+			goto_frames =>  DB::state( 'goto_frames' ),
 			type        =>  $_[1],
 		};
 
-		$DB::goto_frames =  [];
+		DB::state( 'goto_frames', [] );
 	}
 	else {
-		push @$DB::goto_frames,
+		push @{ DB::state( 'goto_frames' ) },
 			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[1] ]
 	}
 
@@ -1235,10 +1238,10 @@ sub lsub : lvalue {
 	push @$DB::stack, {
 		single      =>  $DB::single,
 		sub         =>  $DB::sub,
-		goto_frames =>  $DB::goto_frames,
+		goto_frames =>  DB::state( 'goto_frames' ),
 	};
 
-	$DB::goto_frames =  [];
+	DB::state( 'goto_frames', [] );
 
 
 	# HERE TOO client's code 'caller' return wrong info

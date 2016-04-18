@@ -350,7 +350,7 @@ $DB::commands =  {
 
 	,st => sub {
 		require Data::Dump;
-		print $DB::OUT Data::Dump::pp( $DB::stack, $DB::goto_frames );
+		print $DB::OUT Data::Dump::pp( $DB::stack, DB::state( 'goto_frames' ) );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
 		1;
@@ -542,7 +542,7 @@ $DB::commands =  {
 
 		if( defined $subname ) {
 			if( $subname eq '&' ) {
-				$subname =  $DB::goto_frames->[ -1 ][ 3 ];
+				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
 			delete $DB::stop_in_sub{ $subname };
@@ -575,7 +575,7 @@ $DB::commands =  {
 
 		if( defined $subname ) {
 			if( $subname eq '&' ) {
-				$subname =  $DB::goto_frames->[ -1 ][ 3 ];
+				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
 			$DB::stop_in_sub{ $subname } =
