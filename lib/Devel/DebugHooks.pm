@@ -6,6 +6,7 @@ BEGIN {
 	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 }
 
+
 our $VERSION =  '0.01';
 
 
@@ -207,7 +208,7 @@ package
 sub X {
 	local $^D |= (1<<30);
 	DB::state( 'stack' )->[-1]{ single } =  1;
-	$DB::single =  1;
+	spy( 1 );
 	1;
 }
 
@@ -716,7 +717,7 @@ use Guard;
 
 
 		# Manual localization
-		my $osingle =  $DB::single;
+		my $osingle =  DB::state( 'single' );
 		scope_guard {
 			spy( $osingle );
 
@@ -776,17 +777,18 @@ use Guard;
 
 	my $x;
 	sub spy {
-		return $DB::single   unless @_;
+		return DB::state( 'single' )   unless @_;
 
 		if( $DB::options{ ddd } ) {
 			my($file, $line) =  (caller 0)[1,2];
 			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "!! DB::single state changed $DB::single -> $_[0]"
+			print $DB::OUT "!! DB::single state changed "
+				.DB::state( 'single' ) ." -> $_[0]"
 				." at $file:$line\n"
 				unless $x;
 		}
 
-		$DB::single =  $_[0]   unless $x;
+		DB::state( 'single', $_[0] )   unless $x;
 		$x =  $_[1];
 	}
 } # end of provided DB::API
@@ -1034,9 +1036,8 @@ sub goto {
 	return   if $ext_call;
 
 
-	spy( 0 )   if $DB::single & 2;
-	my $old =  $DB::single;
-	$ext_call++; scall( \&DB::Tools::push_frame, $old, 'G' );
+	spy( 0 )   if DB::state( 'single' ) & 2;
+	$ext_call++; scall( \&DB::Tools::push_frame, DB::state( 'single' ), 'G' );
 };
 
 
@@ -1173,7 +1174,7 @@ sub sub {
 	}
 
 	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
-		$DB::single =  0   unless $DB::options{ dd };
+		spy( 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
@@ -1187,10 +1188,9 @@ sub sub {
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
-	my $old =  $DB::single; # WORKAROUND FOR GLOBALS (see Guide)
-	push_frame( $old, 'C' );
+	push_frame( DB::state( 'single' ), 'C' );
 
-	sub{ spy( 0 ) }->()   if $DB::single & 2;
+	sub{ spy( 0 ) }->()   if DB::state( 'single' ) & 2;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1235,7 +1235,7 @@ sub lsub : lvalue {
 	# manual localization
 	Hook::Scope::POST( \&sub_returns );
 	push @{ DB::state( 'stack' ) }, {
-		single      =>  $DB::single,
+		single      =>  DB::state( 'single' ),
 		sub         =>  $DB::sub,
 		goto_frames =>  DB::state( 'goto_frames' ),
 	};
@@ -1246,7 +1246,7 @@ sub lsub : lvalue {
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
-	spy( 0 )   if $DB::single & 2;
+	spy( 0 )   if DB::state( 'single' ) & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
