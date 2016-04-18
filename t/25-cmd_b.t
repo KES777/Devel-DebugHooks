@@ -103,12 +103,12 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b 9;go;go;\@\$DB::stack' -e '$script'` )
+	n( `perl $lib -d:DbInteract='b 2;b 9;go;go;\@{ DB::state( "stack" ) }' -e '$script'` )
 	,$files->{ 'stop by line in sub' }
 	,"Stop on trap by line in sub then outside of it";
 
 is
-	n( `perl $lib -d:DbInteract='b t1;go;s;\@\$DB::stack;s' -e '$script'` )
+	n( `perl $lib -d:DbInteract='b t1;go;s;\@{ DB::state( "stack" ) };s' -e '$script'` )
 	,$files->{ 'stop by sub name' }
 	,"Stop on trap by subroutine name";
 
@@ -116,7 +116,7 @@ is
 
 $script =~  s/t1\(\)/goto &t1/;
 is
-	n( `perl $lib -d:DbInteract='b t1;go;s;\@\$DB::stack' -e '$script'` )
+	n( `perl $lib -d:DbInteract='b t1;go;s;\@{ DB::state( "stack" ) }' -e '$script'` )
 	,$files->{ 'stop by sub name. goto' }
 	,"Stop on trap by subroutine name reached from goto";
 
