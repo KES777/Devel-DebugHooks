@@ -38,10 +38,10 @@ my $line_cursor;
 my $old_DB_line  =  -1;
 my $curr_file;
 sub update_fl {
-	if( $old_DB_line != $DB::line ) {
-		$old_DB_line =  $DB::line;
-		$line_cursor =  $DB::line;
-		$curr_file   =  $DB::file;
+	my $line =  DB::state( 'line' );
+	if( $old_DB_line != $line ) {
+		$line_cursor =  $old_DB_line =  $line;
+		$curr_file   =  DB::state( 'file' );
 	}
 }
 
@@ -72,8 +72,8 @@ my %cmd_T = (
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
 	my( $from, $to, $file, $run_file, $run_line ) =  @_;
-	$run_file //=  $DB::file;
-	$run_line //=  $DB::line;
+	$run_file //=  DB::state( 'file' );
+	$run_line //=  DB::state( 'line' );
 
 
 	$file =  file( $file );
@@ -137,8 +137,8 @@ sub list {
 			}
 			elsif( $line_cursor eq '.' ) {
 				# TODO: 'current' means file and line! FIX this in other places too
-				$file        =  $DB::file;
-				$line_cursor =  $DB::line;
+				$file        =  DB::state( 'file' );
+				$line_cursor =  DB::state( 'line' );
 			}
 
 			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
@@ -166,7 +166,7 @@ sub list {
 				$level //=  0;
 				# FIX: 'eval' does not update @DB::stack.
 				# Eval exists at real stack but ot does not at our
-				my $coderef =  $DB::stack[ -$level -1 ]{ sub };
+				my $coderef =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 				print $DB::OUT "sub $coderef ";
 				$coderef =  \&$coderef   unless ref $coderef;
 				return $deparse->( $coderef );
@@ -182,7 +182,7 @@ sub list {
 
 
 			# 3. List sub from source
-			$subname =  "${ DB::package }::${ subname }"
+			$subname =  DB::state( 'package' ) ."::${ subname }"
 				if $subname !~ m/::/;
 
 			# The location format is 'file:from-to'
@@ -209,7 +209,7 @@ sub list {
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
-	$line     =  $DB::line   if $line eq '.';
+	$line     =  DB::state( 'line' )   if $line eq '.';
 	$file     =  file( $file );
 
 	my $traps =  DB::traps( $file );
@@ -305,7 +305,7 @@ sub trace_variable {
 sub action {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))$/;
 
-	$line     =  $DB::line   if $line eq '.';
+	$line     =  DB::state( 'line' )   if $line eq '.';
 	$file     =  file( $file );
 
 	my $traps =  DB::traps( $file );
@@ -340,17 +340,17 @@ sub action {
 
 $DB::commands =  {
 	'.' => sub {
-		$curr_file =  $DB::file;
-		$line_cursor =  $DB::line;
+		$curr_file   =  DB::state( 'file' );
+		$line_cursor =  DB::state( 'line' );
 
-		print $DB::OUT "$DB::file:$DB::line    " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
+		print $DB::OUT "$curr_file:$line_cursor    " .(DB::source()->[ $line_cursor ] =~ s/^(\s+)//r); #/
 
 		1;
 	},
 
 	,st => sub {
 		require Data::Dump;
-		print $DB::OUT Data::Dump::pp( \@DB::stack, \@DB::goto_frames );
+		print $DB::OUT Data::Dump::pp( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
 		1;
@@ -362,27 +362,28 @@ $DB::commands =  {
 	# we set $DB::single value to 1 which will be restored at &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
-		return -1   unless @DB::stack;
+		return -1   unless @{ DB::state( 'stack' ) };
 
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
 		$frames_out //=  1;
 
-		$frames_out =  @DB::stack -$frames_out   if $sharp;
+		my $stack_size =  @{ DB::state( 'stack' ) };
+		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
 		# Return to the last possible frame
 		# Q: Should we return from whole script?
-		$frames_out =  @DB::stack   if $frames_out > @DB::stack;
+		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# Skip the current frame we are in ...
 		DB::spy( 0 );
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @DB::stack[ -($frames_out-1) .. -1 ];
+		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -($frames_out-1) .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @DB::stack[ -@DB::stack .. -$frames_out ];
+		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out ];
 
 		return;
 	}
@@ -392,9 +393,9 @@ $DB::commands =  {
 	# Because current OP maybe the last OP in sub. It also maybe the last OP in
 	# the outer frame. And so on.
 	,s => sub {
-		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
+		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 		DB::spy( 1 );
-		$_->{ single } =  1   for @DB::stack;
+		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
 		return;
 	}
@@ -406,10 +407,10 @@ $DB::commands =  {
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
-		( $DB::steps_left ) =  shift =~ m/^(\d+)$/;
+		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 		DB::spy( 2 );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
-		$_->{ single } =  2   for @DB::stack;
+		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
 
 		return;
 	}
@@ -457,10 +458,10 @@ $DB::commands =  {
 		}
 
 		if( $type & 4 ) {
-			my $stash =  Package::Stash->new( $DB::package )->get_all_symbols();
+			my $stash =  Package::Stash->new( DB::state( 'package' ) )->get_all_symbols();
 			# Show only user defined variables
 			# TODO? implement verbose flag
-			if( $DB::package eq 'main' ) {
+			if( DB::state( 'package' ) eq 'main' ) {
 				for( keys %$stash ) {
 					delete $stash->{ $_ }   if /::$/;
 					delete $stash->{ $_ }   if /^_</;
@@ -475,7 +476,7 @@ $DB::commands =  {
 				delete @$stash{ qw# % - : = ^ ~ # };
 				delete @$stash{ qw# ! @ ? # };
 			}
-			delete $stash->{ sub }   if $DB::package eq 'DB';
+			delete $stash->{ sub }   if DB::state( 'package' ) eq 'DB';
 
 			my @globals =  ();
 			my %sigil =  ( SCALAR => '$', ARRAY => '@', HASH => '%' );
@@ -495,7 +496,7 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
+			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
 				# convert this to subroutine refs
@@ -510,7 +511,7 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			my $sub =  $DB::stack[ -$level +$dbg_frames -1 ]{ sub };
+			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
@@ -542,7 +543,7 @@ $DB::commands =  {
 
 		if( defined $subname ) {
 			if( $subname eq '&' ) {
-				$subname =  $DB::goto_frames[ -1 ][ 3 ];
+				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
 			delete $DB::stop_in_sub{ $subname };
@@ -550,7 +551,7 @@ $DB::commands =  {
 			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
-			$line     =  $DB::line   if $line eq '.';
+			$line     =  DB::state( 'line' )   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
@@ -575,7 +576,7 @@ $DB::commands =  {
 
 		if( defined $subname ) {
 			if( $subname eq '&' ) {
-				$subname =  $DB::goto_frames[ -1 ][ 3 ];
+				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
 			$DB::stop_in_sub{ $subname } =
@@ -584,7 +585,7 @@ $DB::commands =  {
 		}
 
 
-		$line     =  $DB::line   if $line eq '.';
+		$line     =  DB::state( 'line' )   if $line eq '.';
 		$file     =  file( $file, 1 );
 
 
@@ -665,7 +666,7 @@ $DB::commands =  {
 
 
 		DB::spy( 0 );
-		$_->{ single } =  0   for @DB::stack;
+		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
 
 		return;
@@ -763,7 +764,7 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
-		$line     =  $DB::line   if $line eq '.';
+		$line     =  DB::state( 'line' )   if $line eq '.';
 		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
@@ -779,7 +780,7 @@ $DB::commands =  {
 	}
 	,ge   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
-		$line =  $DB::line   unless defined $line;
+		$line =  DB::state( 'line' )   unless defined $line;
 		$file =  file( $file );
 
 		`rsub $file`;
@@ -788,7 +789,7 @@ $DB::commands =  {
 	}
 	,gef   => sub {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
-		$line =  $DB::line   unless defined $line;
+		$line =  DB::state( 'line' )   unless defined $line;
 		$file =  file( $file );
 
 		`rsub -f $file`;
