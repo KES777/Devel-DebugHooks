@@ -945,11 +945,6 @@ sub DB {
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
 
-	# TODO: remove this useless localization
-	local $ext_call =  $ext_call +1;
-	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	# WRONG!!! It has. See mcall/scall
-
 	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
 		if $DB::options{ ddd };
 	{
@@ -1001,7 +996,8 @@ sub process {
 		# TRUE    : command found, keep interaction
 		# HASHREF : eval given { expr } and pass results to { code }
 		# negative: something wrong happened while running the command
-		my $result =  $code->( @args );
+		$ext_call++;
+		my $result =  scall( $code, @args );
 		return   unless defined $result;
 		if( $result ) {
 			return $result   unless ref $result  &&  ref $result eq 'HASH';
