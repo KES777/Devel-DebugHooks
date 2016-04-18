@@ -332,6 +332,11 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 # Do DB:: configuration stuff here
 BEGIN {
 	$DB::state =  {()
+		#TODO: testcase to catch warnings
+		# Use of uninitialized value in scalar assignment at state:+5
+		,single      =>  $DB::single
+		,signal      =>  $DB::signal
+		,trace       =>  $DB::trace
 		,stack       =>  []
 		,goto_frames =>  []
 	};
