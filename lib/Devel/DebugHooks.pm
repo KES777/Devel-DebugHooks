@@ -967,6 +967,14 @@ sub init {
 	state( 'file',    $f );
 	state( 'line',    $l );
 
+	# Someone may stop client's code running through perl interface
+	# For example until the first line of client's code the $DB::singe == 0
+	# When $^P & 0x20 perl set $DB::single before execution of first line
+	# So we should update our state
+	DB::state( 'single', $DB::single );
+	DB::state( 'signal', $DB::signal );
+	DB::state( 'trace',  $DB::trace  );
+
 
 	# Commented out because of:
 	# https://rt.perl.org/Ticket/Display.html?id=127249
