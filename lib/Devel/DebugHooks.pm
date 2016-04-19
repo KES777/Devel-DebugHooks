@@ -288,6 +288,14 @@ sub state {
 	return $DB::state   if $name eq 'state';
 
 	if( @_ == 2 ) {
+		if( $DB::options{ ddd } && $name eq 'single' ) {
+			my($file, $line) =  (caller 0)[1,2];
+			$file =~ s'.*?([^/]+)$'$1'e;
+			print $DB::OUT "!! DB::single state changed "
+				.$DB::single ." -> $value"
+				." at $file:$line\n"
+		}
+
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
 		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
@@ -1063,6 +1071,28 @@ sub goto {
 sub test {
 	1;
 	2;
+}
+
+sub state {
+	my( $name, $value ) =  @_;
+
+	return $DB::state   if $name eq 'state';
+
+	if( @_ == 2 ) {
+		if( $DB::options{ ddd } && $name eq 'single' ) {
+			my($file, $line) =  (caller 0)[1,2];
+			$file =~ s'.*?([^/]+)$'$1'e;
+			print $DB::OUT "!! DB::single state changed "
+				.$DB::single ." -> $value"
+				." at $file:$line\n"
+		}
+
+		no strict "refs";
+		${ "DB::$name" }             =  $value;
+		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
+	}
+
+	return $DB::state->[ $DB::ddlvl ]{ $name };
 }
 
 sub pop_frame {
