@@ -290,10 +290,10 @@ sub state {
 	if( @_ == 2 ) {
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
-		return $DB::state->[-1]{ $name } =  $value;
+		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
 	}
 
-	return $DB::state->[-1]{ $name };
+	return $DB::state->[ $DB::ddlvl ]{ $name };
 }
 
 # Used perl internal variables:
@@ -533,6 +533,7 @@ BEGIN { # Initialization goes here
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
 		local $^D;
+		local $ddlvl =  $ddlvl -1;
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
@@ -737,6 +738,7 @@ use Guard;
 				if $DB::options{ ddd };
 
 			pop @{ DB::state( 'stack' ) };
+			pop @{ DB::state( 'state' ) };
 		}   if $DB::options{ dd };
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
@@ -748,6 +750,7 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			spy( 1 );
 
+			push @{ DB::state( 'state' ) }, { stack => [] };
 			push @{ DB::state( 'stack' ) }, { caller => [], goto_frames => [] };
 
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
@@ -1115,7 +1118,6 @@ sub push_frame {
 		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
 		push @{ DB::state( 'stack' ) }, {
-		# push @{ DB::state( 'stack' ) }, {
 			single      =>  $_[0],
 			sub         =>  $DB::sub,
 			caller      =>  [ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ) ],
