@@ -285,6 +285,8 @@ sub applyOptions {
 sub state {
 	my( $name, $value ) =  @_;
 
+	return $DB::state   if $name eq 'state';
+
 	if( @_ == 2 ) {
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
