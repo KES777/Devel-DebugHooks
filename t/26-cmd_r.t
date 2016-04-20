@@ -122,7 +122,12 @@ is
 
 is
 	n( `perl $lib -d:DbInteract='go 2;r 1^;q' -e '$script'` )
-	,$files->{ 'return 2 and stop' }
+	,$files->{ 'return to first' }
+	,'Return to second frame';
+
+is
+	n( `perl $lib -d:DbInteract='go 2;r 2^;q' -e '$script'` )
+	,$files->{ 'return to second' }
 	,'Return to second frame';
 
 is
@@ -170,7 +175,6 @@ __DATA__
 -e:0010  4;
 @@ return from main
 -e:0009  t2();
--e:0006    t1();
 @@ return 1
 -e:0012  t2();
 -e:0009    t1();
@@ -204,7 +208,14 @@ __DATA__
 @@ return all and stop
 -e:0012  t2();
 -e:0002    1;
+@@ return to first
+-e:0012  t2();
+-e:0002    1;
 -e:0013  4;
+@@ return to second
+-e:0012  t2();
+-e:0002    1;
+-e:0010    3;
 @@ return to unexisting
 -e:0012  t2();
 -e:0002    1;
