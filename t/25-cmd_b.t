@@ -224,18 +224,18 @@ Stop on subs:
 -e:0008  t2();
 -e:0002    1;
 -e:0009  3;
-0
+1
 @@ stop by sub name
 -e:0008  t2();
 -e:0002    1;
 -e:0006    2;
-1
+2
 -e:0009  3;
 @@ stop by sub name. goto
 -e:0008  t2();
 -e:0002    1;
 -e:0009  3;
-0
+1
 @@ !stop on disabled
 -e:0008  t2();
 @@ stop on enabled

@@ -286,6 +286,7 @@ sub state {
 	my( $name, $value ) =  @_;
 
 	return $DB::state   if $name eq 'state';
+	return $DB::state->[0]   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
 		return $DB::steps_left   unless @_ == 2;
 		return $DB::steps_left =  $value;
@@ -302,10 +303,10 @@ sub state {
 
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
-		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
+		return $DB::state->[ 0 ][ -1 ]{ $name } =  $value;
 	}
 
-	return $DB::state->[ $DB::ddlvl ]{ $name };
+	return $DB::state->[ 0 ][ -1 ]{ $name };
 }
 
 # Used perl internal variables:
@@ -345,13 +346,12 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$DB::state =  [ {()
+	$DB::state =  [ [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
-		,stack       =>  []
 		,goto_frames =>  []
-	} ];
+	} ] ];
 
 
 	$IN                        //= \*STDIN;
@@ -747,7 +747,6 @@ use Guard;
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
 
-			pop @{ DB::state( 'stack' ) };
 			pop @{ DB::state( 'state' ) };
 		}   if $DB::options{ dd };
 
@@ -760,8 +759,10 @@ use Guard;
 		if( $DB::options{ dd } ) {
 			spy( 1 );
 
-			push @{ DB::state( 'state' ) }, { stack => [] };
-			push @{ DB::state( 'stack' ) }, { caller => [], goto_frames => [] };
+			push @{ DB::state( 'state' ) }, [ {()
+				,goto_frames => []
+				,type        => 'D'
+			} ];
 
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
@@ -1147,15 +1148,17 @@ sub push_frame {
 		DB::state( 'line',    $l );
 		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
-		push @{ DB::state( 'stack' ) }, {
-			single      =>  $_[0],
-			sub         =>  $DB::sub,
-			caller      =>  [ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ) ],
-			goto_frames =>  DB::state( 'goto_frames' ),
-			type        =>  $_[1],
+		push @{ DB::state( 'stack' ) }, {()
+			,package     =>  DB::state( 'package' )
+			,file        =>  DB::state( 'file' )
+			,line        =>  DB::state( 'line' )
+			,single      =>  $_[0]
+			,sub         =>  $DB::sub
+			,goto_frames =>  []
+			,type        =>  $_[1]
 		};
 
-		DB::state( 'goto_frames', [] );
+		# DB::state( 'goto_frames', [] );
 	}
 	else {
 		push @{ DB::state( 'goto_frames' ) },

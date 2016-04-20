@@ -56,7 +56,9 @@ sub trace_subs {
 
 
 sub trace_returns {
-	printf $DB::OUT "BACK TO  : %s %s %s\n", @{ DB::state( "stack" )->[-1]->{ caller } };
+	printf $DB::OUT "BACK TO  : %s %s %s\n"
+		,@{ DB::state( "stack" )->[-2] }{ qw/ package file line / }
+	;
 }
 
 

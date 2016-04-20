@@ -362,8 +362,6 @@ $DB::commands =  {
 	# we set $DB::single value to 1 which will be restored at &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
-		return -1   unless @{ DB::state( 'stack' ) };
-
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
 		$frames_out //=  1;
