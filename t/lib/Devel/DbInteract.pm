@@ -32,9 +32,9 @@ sub bbreak {
 	return   if $off;
 
 	printf $DB::OUT "%s:%04s  %s"
-		,$DB::file
-		,$DB::line
-		,DB::source()->[ $DB::line ];
+		,DB::state( 'file' )
+		,DB::state( 'line' )
+		,DB::source()->[ DB::state( 'line' ) ];
 }
 
 
@@ -46,7 +46,11 @@ sub interact {
 
 
 sub trace_subs {
-	print $DB::OUT "CALL FROM: $DB::package $DB::file $DB::line\n";
+	printf $DB::OUT "CALL FROM: %s %s %s\n"
+		,DB::state( 'package' )
+		,DB::state( 'file' )
+		,DB::state( 'line' )
+	;
 }
 
 
