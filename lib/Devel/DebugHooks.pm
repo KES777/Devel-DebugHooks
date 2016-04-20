@@ -773,7 +773,7 @@ use Guard;
 			$ext_call   =  0;
 		}
 		else {
-			spy( 0 ); # Prevent debugging for next call # THIS CONTROLS NESTING
+			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
 		return shift->( @_[ 1..$#_ ] );
