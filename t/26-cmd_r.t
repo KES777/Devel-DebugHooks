@@ -60,7 +60,7 @@ is
 is
 	n( `perl $lib -d:DbInteract='r;s;q' -e '$script'` )
 	,$files->{ 'return from main' }
-	,'Return from main:: should do nothing';
+	,'Return from main:: should finish script';
 
 
 

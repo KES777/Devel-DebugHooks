@@ -370,8 +370,7 @@ $DB::commands =  {
 		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
-		# Return to the last possible frame
-		# Q: Should we return from whole script?
+		# Return to the last possible frame. If no frames then exit from script
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# ... skip N next frames
