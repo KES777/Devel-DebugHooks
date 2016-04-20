@@ -286,6 +286,10 @@ sub state {
 	my( $name, $value ) =  @_;
 
 	return $DB::state   if $name eq 'state';
+	if( $name eq 'steps_left' ) {
+		return $DB::steps_left   unless @_ == 2;
+		return $DB::steps_left =  $value;
+	}
 
 	if( @_ == 2 ) {
 		if( $DB::options{ ddd } && $name eq 'single' ) {
