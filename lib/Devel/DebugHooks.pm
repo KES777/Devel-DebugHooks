@@ -349,8 +349,6 @@ BEGIN {
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
-		,signal      =>  $DB::signal
-		,trace       =>  $DB::trace
 		,stack       =>  []
 		,goto_frames =>  []
 	} ];
@@ -990,8 +988,6 @@ sub init {
 	# When $^P & 0x20 perl set $DB::single before execution of first line
 	# So we should update our state
 	DB::state( 'single', $DB::single );
-	DB::state( 'signal', $DB::signal );
-	DB::state( 'trace',  $DB::trace  );
 
 
 	# Commented out because of:
