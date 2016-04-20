@@ -374,9 +374,6 @@ $DB::commands =  {
 		# Q: Should we return from whole script?
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
-		# Skip the current frame we are in ...
-		DB::spy( 0, 1 );
-
 		# ... skip N next frames
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -($frames_out-1) .. -1 ];
 
@@ -392,7 +389,7 @@ $DB::commands =  {
 	# the outer frame. And so on.
 	,s => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
-		DB::spy( 1, 1 );
+
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
 		return;
@@ -406,7 +403,7 @@ $DB::commands =  {
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
-		DB::spy( 2, 1 );
+
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
 
@@ -662,8 +659,6 @@ $DB::commands =  {
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
-
-		DB::spy( 0, 1 );
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
 

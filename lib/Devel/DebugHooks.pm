@@ -733,11 +733,9 @@ use Guard;
 		# Another:
 		local $ext_call      =  $ext_call +1;
 
-
 		# Manual localization
-		my $osingle =  DB::state( 'single' );
 		scope_guard {
-			spy( $osingle );
+			spy( DB::state( 'single' ) );
 
 			print $DB::OUT "scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
