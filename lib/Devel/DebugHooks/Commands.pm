@@ -397,7 +397,7 @@ $DB::commands =  {
 	# Do single step to the next OP. If current OP is sub call. Step over it
 	# ...As for the 's' command we stop at each OP in the script. But when the
 	# sub is called we turn off debugging for that sub at DB::sub.
-	# spy( 0 )   if $DB::single & 2;
+	# DB::state( 'single', 0 )   if $DB::single & 2;
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
@@ -410,7 +410,7 @@ $DB::commands =  {
 	}
 
 	# Quit from the debugger
-	,q => sub { DB::spy( 0, 1 ); exit; } # FIX: remove forcing
+	,q => sub { DB::state( 'single', 0 ); exit; } # FIX: remove forcing
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {

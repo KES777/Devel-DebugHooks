@@ -208,7 +208,7 @@ package
 sub X {
 	local $^D |= (1<<30);
 	DB::state( 'stack' )->[-1]{ single } =  1;
-	spy( 1 );
+	DB::state( 'single', 1 );
 	1;
 }
 
@@ -735,7 +735,8 @@ use Guard;
 
 		# Manual localization
 		scope_guard {
-			spy( DB::state( 'single' ) );
+			# $DB::single =  DB::state( 'single' );
+			DB::state( 'single', DB::state( 'single' ) );
 
 			print $DB::OUT "scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
@@ -755,7 +756,8 @@ use Guard;
 
 
 		if( $DB::options{ dd } ) {
-			spy( 1 );
+			# DB::state( 'single', 1 );
+			$DB::single =  1;
 
 			push @{ DB::state( 'state' ) }, [ {()
 				,goto_frames => []
@@ -771,6 +773,7 @@ use Guard;
 			$ext_call   =  0;
 		}
 		else {
+			# DB::state( 'single', 0 );
 			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
@@ -790,25 +793,6 @@ use Guard;
 
 
 	sub restore_context {
-	}
-
-
-
-	my $x;
-	sub spy {
-		return DB::state( 'single' )   unless @_;
-
-		if( $DB::options{ ddd } ) {
-			my($file, $line) =  (caller 0)[1,2];
-			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "!! DB::single state changed "
-				.DB::state( 'single' ) ." -> $_[0]"
-				." at $file:$line\n"
-				unless $x;
-		}
-
-		DB::state( 'single', $_[0] )   unless $x;
-		$x =  $_[1];
 	}
 } # end of provided DB::API
 
@@ -1058,7 +1042,7 @@ sub goto {
 	return   if $ext_call;
 
 
-	spy( 0 )   if DB::state( 'single' ) & 2;
+	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
 	$ext_call++; scall( \&DB::Tools::push_frame, DB::state( 'single' ), 'G' );
 };
 
@@ -1103,7 +1087,7 @@ sub pop_frame {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
 	}
 
-	DB::spy( DB::state( 'single' ) );
+	DB::state( 'single', DB::state( 'single' ) );
 }
 
 
@@ -1151,7 +1135,7 @@ sub push_frame {
 
 	# Stop on the first OP in a given subroutine
 	my $sis =  \%DB::stop_in_sub;
-	DB::spy( 1, 1 )
+	DB::state( 'single', 1 )
 		# First of all we check full match ...
 		if $sis->{ $DB::sub }
 		# ... then check not disabled partially matched subnames
@@ -1191,7 +1175,6 @@ sub sub {
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
 	if( $ext_call
-		||  $DB::sub eq 'DB::spy'
 		||  $DB::sub eq 'DB::state'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1200,7 +1183,7 @@ sub sub {
 	}
 
 	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
-		spy( 0 )   unless $DB::options{ dd };
+		DB::state( 'single', 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
@@ -1216,7 +1199,7 @@ sub sub {
 
 	push_frame( DB::state( 'single' ), 'C' );
 
-	sub{ spy( 0 ) }->()   if DB::state( 'single' ) & 2;
+	sub{ DB::state( 'single', 0 ) }->()   if DB::state( 'single' ) & 2;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1272,7 +1255,7 @@ sub lsub : lvalue {
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
-	spy( 0 )   if DB::state( 'single' ) & 2;
+	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
