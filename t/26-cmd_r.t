@@ -128,7 +128,7 @@ is
 is
 	n( `perl $lib -d:DbInteract='go 2;r 5^;s;q' -e '$script'` )
 	,$files->{ 'return to unexisting' }
-	,'Return to unexisting frame does noting';
+	,'Return to unexisting frame do noting';
 
 
 

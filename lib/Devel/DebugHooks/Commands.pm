@@ -654,7 +654,7 @@ $DB::commands =  {
 	}
 
 	,go => sub {
-		# If we supply line to go to we set temporary trap in it
+		# If we supply line to go to we just set temporary trap there
 		if( defined $_[0]  &&  $_[0] ne '' ) {
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
