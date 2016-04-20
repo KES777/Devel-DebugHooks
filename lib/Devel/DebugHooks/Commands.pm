@@ -3,7 +3,7 @@ package Devel::DebugHooks::Commands;
 # BEGIN {
 # 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
-#	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
+# 	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
 
 # TODO: implement 'hard_go' to go over all traps to the 'line' or end
@@ -374,10 +374,10 @@ $DB::commands =  {
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -($frames_out-1) .. -1 ];
+		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -$frames_out .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out ];
+		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out-1 ];
 
 		return;
 	}
