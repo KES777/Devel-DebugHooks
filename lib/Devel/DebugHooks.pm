@@ -1097,12 +1097,6 @@ sub state {
 }
 
 sub pop_frame {
-	# $ext_call++; scall( sub{
-	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
-	# 		print $DB::OUT pp( $DB::stack, $DB::goto_frames );
-	# 	}
-	# });
-
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
@@ -1111,20 +1105,7 @@ sub pop_frame {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
 	}
 
-	# The current FILE:LINE is the subroutine call place.
-	# That is the first frame in the @DB::goto_frames, which is recorded at
-	# 'trace_subs' by calling 'caller' like DB::DB does. You may read code as:
-	# The point this sub was called from is: (--the sub we are returning from)
-	# FIX: when the action exists at the line while running the 'n' or 's' command
-	# it will break $DB::file, $DB::line. See description for action
-	my( $p, $f, $l ) =  @{ $last->{ caller } };
-	DB::state( 'package', $p );
-	DB::state( 'file',    $f );
-	DB::state( 'line',    $l );
-
-	DB::state( 'goto_frames', $last->{ goto_frames } );
-
-	DB::spy( $last->{ single } );
+	DB::spy( DB::state( 'single' ) );
 }
 
 
