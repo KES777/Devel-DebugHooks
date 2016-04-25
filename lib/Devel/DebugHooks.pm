@@ -286,7 +286,7 @@ sub state {
 	my( $name, $value ) =  @_;
 
 	return $DB::state   if $name eq 'state';
-	return $DB::state->[0]   if $name eq 'stack';
+	return $DB::state->[ $DB::ddlvl ]   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
 		return $DB::steps_left   unless @_ == 2;
 		return $DB::steps_left =  $value;
@@ -303,10 +303,10 @@ sub state {
 
 		no strict "refs";
 		${ "DB::$name" }             =  $value;
-		return $DB::state->[ 0 ][ -1 ]{ $name } =  $value;
+		return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name } =  $value;
 	}
 
-	return $DB::state->[ 0 ][ -1 ]{ $name };
+	return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name };
 }
 
 # Used perl internal variables:
@@ -543,7 +543,6 @@ BEGIN { # Initialization goes here
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
 		local $^D;
-		local $ddlvl =  $ddlvl -1;
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
@@ -756,18 +755,17 @@ use Guard;
 
 
 		if( $DB::options{ dd } ) {
-			# DB::state( 'single', 1 );
-			$DB::single =  1;
+			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
+				if $DB::options{ ddd };
 
 			push @{ DB::state( 'state' ) }, [ {()
 				,goto_frames => []
 				,type        => 'D'
 			} ];
-
-			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
-				if $DB::options{ ddd };
-
 			$DB::ddlvl++;
+			DB::state( 'single', 1 );
+			# $^D |=  1<<30;
+
 			$DB::options{ dd  } =  0;
 			$DB::options{ ddd } =  0;
 			$ext_call   =  0;
@@ -999,11 +997,13 @@ sub process {
 			return $result   unless ref $result  &&  ref $result eq 'HASH';
 
 			$code =  $result->{ code };
+			local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 			@args =  DB::eval( $result->{ expr } );
 			redo PROCESS;
 		}
 	}
 
+	local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT ( DB::eval( $str ) // 'undef' ) ."\n";
