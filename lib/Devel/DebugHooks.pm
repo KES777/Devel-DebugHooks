@@ -1197,7 +1197,7 @@ sub sub {
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
-	push_frame( DB::state( 'single' ), 'C' );
+	push_frame( sub{ DB::state( 'single' ) }->(), 'C' );
 
 	sub{ DB::state( 'single', 0 ) }->()   if DB::state( 'single' ) & 2;
 
