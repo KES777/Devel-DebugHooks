@@ -742,10 +742,10 @@ use Guard;
 		};
 
 		scope_guard {
+			pop @{ DB::state( 'state' ) };
+
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
-
-			pop @{ DB::state( 'state' ) };
 		}   if $DB::options{ dd };
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
