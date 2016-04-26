@@ -410,7 +410,15 @@ $DB::commands =  {
 	}
 
 	# Quit from the debugger
-	,q => sub { DB::state( 'single', 0 ); exit; } # FIX: remove forcing
+	,q => sub {
+		for( @$DB::state ) {
+			for( @$_ ) {
+				$_->{ single } =  0;
+			}
+		}
+
+		exit;
+	}
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
