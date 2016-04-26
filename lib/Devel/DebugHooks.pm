@@ -1087,7 +1087,13 @@ sub pop_frame {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
 	}
 
-	DB::state( 'single', DB::state( 'single' ) );
+	if( @{ DB::state( 'stack' ) } ) {
+		DB::state( 'single', DB::state( 'single' ) );
+	} else {
+		# Something nasty happened at &push_frame, because of we are at
+		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
+		$DB::single =  0;
+	}
 }
 
 
