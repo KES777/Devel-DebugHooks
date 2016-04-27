@@ -296,11 +296,11 @@ sub state {
 	return $DB::state   if $name eq 'state';
 	return $DB::state->[ $DB::ddlvl ]   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
-		return $DB::steps_left   unless @_ == 2;
+		return $DB::steps_left   unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
-	if( @_ == 2 ) {
+	if( @_ >= 2 ) {
 		if( $DB::options{ ddd } && $name eq 'single' ) {
 			print $DB::OUT "!! DB::single state changed "
 				.$DB::single ." -> $value"
@@ -308,8 +308,9 @@ sub state {
 		}
 
 		no strict "refs";
-		${ "DB::$name" }             =  $value;
-		return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name } =  $value;
+		${ "DB::$name" } =  $value;
+		$DB::state->[ $DB::ddlvl ][ -1 ]{ $name } =  $value
+			unless @_ == 3;
 	}
 
 	return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name };
@@ -777,8 +778,7 @@ use Guard;
 			$ext_call   =  0;
 		}
 		else {
-			# DB::state( 'single', 0 );
-			$DB::single =  0; # Prevent debugging for next call # THIS CONTROLS NESTING
+			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
 		return shift->( @_[ 1..$#_ ] );
