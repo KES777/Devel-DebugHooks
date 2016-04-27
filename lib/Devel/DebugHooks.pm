@@ -309,7 +309,8 @@ sub state {
 	}
 
 
-	unless( @{ $DB::state->[ $DB::ddlvl ] } ) {
+	my $stack =  $DB::state->[ $DB::ddlvl ];
+	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
 		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
@@ -317,14 +318,15 @@ sub state {
 	}
 
 	return $DB::state                   if $name eq 'state';
-	return $DB::state->[ $DB::ddlvl ]   if $name eq 'stack';
+	return $stack   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
 		return $DB::steps_left   unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
 
-	print $DB::OUT $DB::state->[ $DB::ddlvl ][ -1 ]{ $name }
+	my $frame =  $stack->[ -1 ];
+	print $DB::OUT $frame->{ $name }
 		if $DB::options{ ddd };
 
 
@@ -335,7 +337,7 @@ sub state {
 		}
 
 		${ "DB::$name" } =  $value;
-		$DB::state->[ $DB::ddlvl ][ -1 ]{ $name } =  $value
+		$frame->{ $name } =  $value
 			unless @_ == 3;
 	}
 
@@ -343,7 +345,7 @@ sub state {
 	print $DB::OUT "\n\n"   if $DB::options{ ddd };
 
 
-	return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name };
+	return $frame->{ $name };
 }
 
 # Used perl internal variables:
