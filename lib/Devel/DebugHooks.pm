@@ -286,33 +286,62 @@ sub applyOptions {
 sub state {
 	my( $name, $value ) =  @_;
 
-	my($file, $line) =  (caller 0)[1,2];
-	$file =~ s'.*?([^/]+)$'$1'e;
+
+	if( $DB::options{ ddd } ) {
+		print $DB::OUT "\nDB::state: l:$DB::ddlvl e:$DB::ext_call\n";
+
+		for( @$DB::state ) {
+			print $DB::OUT "***\n";
+			for( @$_ ) {
+				for my $key ( sort keys %$_ ) {
+					next   if ref $_->{ $key };
+					print $DB::OUT "  $key => " .$_->{ $key } .";";
+				}
+				print $DB::OUT "\n";
+			}
+		}
+
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
+		print $DB::OUT '-'x20 ."\n"."$file:$line: \$DB::$name -- ";
+
+		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
+	}
+
 
 	unless( @{ $DB::state->[ $DB::ddlvl ] } ) {
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
 		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
 		return;
 	}
 
-	return $DB::state   if $name eq 'state';
+	return $DB::state                   if $name eq 'state';
 	return $DB::state->[ $DB::ddlvl ]   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
 		return $DB::steps_left   unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
+
+	print $DB::OUT $DB::state->[ $DB::ddlvl ][ -1 ]{ $name }
+		if $DB::options{ ddd };
+
+
 	if( @_ >= 2 ) {
-		if( $DB::options{ ddd } && $name eq 'single' ) {
-			print $DB::OUT "!! DB::single state changed "
-				.$DB::single ." -> $value"
-				." at $file:$line\n"
+		no strict "refs";
+		if( $DB::options{ ddd } ) {
+			print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
 		}
 
-		no strict "refs";
 		${ "DB::$name" } =  $value;
 		$DB::state->[ $DB::ddlvl ][ -1 ]{ $name } =  $value
 			unless @_ == 3;
 	}
+
+
+	print $DB::OUT "\n\n"   if $DB::options{ ddd };
+
 
 	return $DB::state->[ $DB::ddlvl ][ -1 ]{ $name };
 }
