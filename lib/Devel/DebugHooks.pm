@@ -729,7 +729,7 @@ use Guard;
 			$f =~ s".*?([^/]+)$"$1";
 			$from =  (caller $lvl+1)[3];
 
-			print $DB::OUT "scall from $from($f:$l) --> $sub\n"
+			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n"
 		}
 
 
@@ -752,7 +752,7 @@ use Guard;
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
-			print $DB::OUT "scall back $from($f:$l) <-- $sub\n"
+			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
 		};
 
