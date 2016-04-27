@@ -285,6 +285,14 @@ sub applyOptions {
 sub state {
 	my( $name, $value ) =  @_;
 
+	my($file, $line) =  (caller 0)[1,2];
+	$file =~ s'.*?([^/]+)$'$1'e;
+
+	unless( @{ $DB::state->[ $DB::ddlvl ] } ) {
+		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
+		return;
+	}
+
 	return $DB::state   if $name eq 'state';
 	return $DB::state->[ $DB::ddlvl ]   if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
@@ -294,8 +302,6 @@ sub state {
 
 	if( @_ == 2 ) {
 		if( $DB::options{ ddd } && $name eq 'single' ) {
-			my($file, $line) =  (caller 0)[1,2];
-			$file =~ s'.*?([^/]+)$'$1'e;
 			print $DB::OUT "!! DB::single state changed "
 				.$DB::single ." -> $value"
 				." at $file:$line\n"
