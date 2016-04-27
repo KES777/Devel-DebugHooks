@@ -1131,11 +1131,12 @@ sub push_frame {
 		DB::state( 'line',    $l );
 		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
-		push @{ DB::state( 'stack' ) }, {()
-			,package     =>  DB::state( 'package' )
-			,file        =>  DB::state( 'file' )
-			,line        =>  DB::state( 'line' )
-			,single      =>  $_[0]
+		my $stack =  DB::state( 'stack' );
+		push @{ $stack }, {()
+			,package     =>  $stack->[-1]{ package }
+			,file        =>  $stack->[-1]{ file    }
+			,line        =>  $stack->[-1]{ line    }
+			,single      =>  $stack->[-1]{ single  }
 			,sub         =>  $DB::sub
 			,goto_frames =>  []
 			,type        =>  $_[1]
