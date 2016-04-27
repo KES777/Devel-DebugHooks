@@ -1211,7 +1211,7 @@ sub sub {
 
 	push_frame( sub{ DB::state( 'single' ) }->(), 'C' );
 
-	sub{ DB::state( 'single', 0 ) }->()   if DB::state( 'single' ) & 2;
+	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
