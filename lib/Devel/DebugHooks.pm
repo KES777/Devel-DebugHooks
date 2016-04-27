@@ -495,6 +495,13 @@ BEGIN { # Initialization goes here
 			return grep{ s/^_<//r } keys %{ 'main::' }; #/
 		}
 
+		sub deparse {
+			my( $coderef ) =  shift;
+			require B::Deparse;
+			return $coderef   unless ref $coderef;
+			return B::Deparse->new("-p", "-sC")->coderef2text( $coderef );
+		}
+
 
 
 		# Returns hashref of traps for $filename keyed by $line
