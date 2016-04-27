@@ -1057,7 +1057,7 @@ sub goto {
 
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	$ext_call++; scall( \&DB::Tools::push_frame, DB::state( 'single' ), 'G' );
+	$ext_call++; scall( \&DB::Tools::push_frame, 'G' );
 };
 
 
@@ -1120,7 +1120,7 @@ sub push_frame {
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
-	if( $_[1] ne 'G' ) {
+	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
@@ -1139,14 +1139,14 @@ sub push_frame {
 			,single      =>  $stack->[-1]{ single  }
 			,sub         =>  $DB::sub
 			,goto_frames =>  []
-			,type        =>  $_[1]
+			,type        =>  $_[0]
 		};
 
 		# DB::state( 'goto_frames', [] );
 	}
 	else {
 		push @{ DB::state( 'goto_frames' ) },
-			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[1] ]
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[0] ]
 	}
 
 
@@ -1218,7 +1218,7 @@ sub sub {
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
-	push_frame( sub{ DB::state( 'single' ) }->(), 'C' );
+	push_frame( 'C' );
 
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
