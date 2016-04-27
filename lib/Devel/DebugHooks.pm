@@ -256,17 +256,18 @@ package    # hide the package from the PAUSE indexer
 ## Utility subs
 sub _all_frames {
 	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
-	my( $count ) =  @_;
+	my( $count, $warn ) =  @_;
 	$count //=  -1; # infinite
 
 	my $lvl =  0;
 	# $x  &&  $y = 3 in this case '=' op precedence should be higher then &&
-	while( $count--  &&  (my @frame =  caller( $lvl )) ) {
-		print $DB::OUT "ORIG: @frame[0..3,5]\n";
-		$lvl++;
+	while( $count--  &&  (my @frame =  caller( $lvl++ )) ) {
+		$_ =  "ORIG: @frame[0..3,5]\n";
+		print $DB::OUT $_   unless $warn;
+		warn $_             if $warn;
 	}
 
-	print $DB::OUT "\n";
+	print $DB::OUT "\n"   unless $warn;
 }
 
 
