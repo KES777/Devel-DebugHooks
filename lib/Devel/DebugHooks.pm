@@ -1069,9 +1069,14 @@ sub interact {
 
 	local $DB::interaction =  $DB::interaction +1;
 
-	$ext_call++;
+	my $old =  $DB::options{ dd };
+	$ext_call++; $DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+		$DB::options{ dd } =  $old;
 		return process( $str );
+	}
+	else {
+		$DB::options{ dd } =  $old;
 	}
 
 	return;
@@ -1088,12 +1093,14 @@ sub goto {
 
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	$ext_call++; scall( \&DB::Tools::push_frame, 'G' );
+	# $ext_call++; scall( \&push_frame2, 'G' );
+	push_frame2( 'G' );
 };
 
 
 
-{ package DB::Tools;
+{
+#package DB::Tools;
 # my $x = 0;
 # use Data::Dump qw/ pp /;
 sub test {
@@ -1101,27 +1108,27 @@ sub test {
 	2;
 }
 
-sub state {
-	my( $name, $value ) =  @_;
+# sub state {
+# 	my( $name, $value ) =  @_;
 
-	return $DB::state   if $name eq 'state';
+# 	return $DB::state   if $name eq 'state';
 
-	if( @_ == 2 ) {
-		if( $DB::options{ ddd } && $name eq 'single' ) {
-			my($file, $line) =  (caller 0)[1,2];
-			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "!! DB::single state changed "
-				.$DB::single ." -> $value"
-				." at $file:$line\n"
-		}
+# 	if( @_ == 2 ) {
+# 		if( $DB::options{ ddd } && $name eq 'single' ) {
+# 			my($file, $line) =  (caller 0)[1,2];
+# 			$file =~ s'.*?([^/]+)$'$1'e;
+# 			print $DB::OUT "!! DB::single state changed "
+# 				.$DB::single ." -> $value"
+# 				." at $file:$line\n"
+# 		}
 
-		no strict "refs";
-		${ "DB::$name" }             =  $value;
-		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
-	}
+# 		no strict "refs";
+# 		${ "DB::$name" }             =  $value;
+# 		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
+# 	}
 
-	return $DB::state->[ $DB::ddlvl ]{ $name };
-}
+# 	return $DB::state->[ $DB::ddlvl ]{ $name };
+# }
 
 sub pop_frame {
 	my $last =  pop @{ DB::state( 'stack' ) };
@@ -1143,7 +1150,7 @@ sub pop_frame {
 
 
 
-sub push_frame {
+sub push_frame2 {
 	# this two lines exists for testing purpose
 	test();
 	3;
@@ -1205,7 +1212,7 @@ sub trace_returns {
 
 
 sub push_frame {
-	$ext_call++; scall( \&DB::Tools::push_frame, @_ );
+	$ext_call++; scall( \&push_frame2, @_ );
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
@@ -1234,7 +1241,7 @@ sub sub {
 		return &$DB::sub
 	}
 
-	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
+	if( $DB::sub eq 'DB::pop_frame' ) {
 		DB::state( 'single', 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1246,7 +1253,7 @@ sub sub {
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
-	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
+	scope_guard \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	push_frame( 'C' );
