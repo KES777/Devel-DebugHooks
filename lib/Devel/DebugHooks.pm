@@ -208,7 +208,7 @@ package
 sub X {
 	local $^D |= (1<<30);
 	DB::state( 'stack' )->[-1]{ single } =  1;
-	spy( 1 );
+	DB::state( 'single', 1 );
 	1;
 }
 
@@ -256,17 +256,18 @@ package    # hide the package from the PAUSE indexer
 ## Utility subs
 sub _all_frames {
 	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
-	my( $count ) =  @_;
+	my( $count, $warn ) =  @_;
 	$count //=  -1; # infinite
 
 	my $lvl =  0;
 	# $x  &&  $y = 3 in this case '=' op precedence should be higher then &&
-	while( $count--  &&  (my @frame =  caller( $lvl )) ) {
-		print $DB::OUT "ORIG: @frame[0..3,5]\n";
-		$lvl++;
+	while( $count--  &&  (my @frame =  caller( $lvl++ )) ) {
+		$_ =  "ORIG: @frame[0..3,5]\n";
+		print $DB::OUT $_   unless $warn;
+		warn $_             if $warn;
 	}
 
-	print $DB::OUT "\n";
+	print $DB::OUT "\n"   unless $warn;
 }
 
 
@@ -285,13 +286,66 @@ sub applyOptions {
 sub state {
 	my( $name, $value ) =  @_;
 
-	if( @_ == 2 ) {
-		no strict "refs";
-		${ "DB::$name" }             =  $value;
-		return $DB::state->{ $name } =  $value;
+
+	if( $DB::options{ ddd } ) {
+		print $DB::OUT "\nDB::state: l:$DB::ddlvl e:$DB::ext_call\n";
+
+		for( @$DB::state ) {
+			print $DB::OUT "***\n";
+			for( @$_ ) {
+				for my $key ( sort keys %$_ ) {
+					next   if ref $_->{ $key };
+					print $DB::OUT "  $key => " .$_->{ $key } .";";
+				}
+				print $DB::OUT "\n";
+			}
+		}
+
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
+		print $DB::OUT '-'x20 ."\n"."$file:$line: \$DB::$name -- ";
+
+		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
-	return $DB::state->{ $name };
+
+	my $stack =  $DB::state->[ $DB::ddlvl ];
+	unless( @$stack ) {
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
+		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
+		return;
+	}
+
+	return $DB::state                   if $name eq 'state';
+	return $stack   if $name eq 'stack';
+	if( $name eq 'steps_left' ) {
+		return $DB::steps_left   unless @_ >= 2;
+		return $DB::steps_left =  $value;
+	}
+
+
+	my $frame =  $stack->[ -1 ];
+	print $DB::OUT $frame->{ $name }
+		if $DB::options{ ddd };
+
+
+	if( @_ >= 2 ) {
+		no strict "refs";
+		if( $DB::options{ ddd } ) {
+			print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
+		}
+
+		${ "DB::$name" } =  $value;
+		$frame->{ $name } =  $value
+			unless @_ == 3;
+	}
+
+
+	print $DB::OUT "\n\n"   if $DB::options{ ddd };
+
+
+	return $frame->{ $name };
 }
 
 # Used perl internal variables:
@@ -331,15 +385,12 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 
 # Do DB:: configuration stuff here
 BEGIN {
-	$DB::state =  {()
+	$DB::state =  [ [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
-		,signal      =>  $DB::signal
-		,trace       =>  $DB::trace
-		,stack       =>  []
 		,goto_frames =>  []
-	};
+	} ] ];
 
 
 	$IN                        //= \*STDIN;
@@ -473,6 +524,13 @@ BEGIN { # Initialization goes here
 		# The $filename for evaled strings looks like (eval 34)
 		sub sources {
 			return grep{ s/^_<//r } keys %{ 'main::' }; #/
+		}
+
+		sub deparse {
+			my( $coderef ) =  shift;
+			require B::Deparse;
+			return $coderef   unless ref $coderef;
+			return B::Deparse->new("-p", "-sC")->coderef2text( $coderef );
 		}
 
 
@@ -702,7 +760,7 @@ use Guard;
 			$f =~ s".*?([^/]+)$"$1";
 			$from =  (caller $lvl+1)[3];
 
-			print $DB::OUT "scall from $from($f:$l) --> $sub\n"
+			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n"
 		}
 
 
@@ -720,21 +778,20 @@ use Guard;
 		# Another:
 		local $ext_call      =  $ext_call +1;
 
-
 		# Manual localization
-		my $osingle =  DB::state( 'single' );
 		scope_guard {
-			spy( $osingle );
+			# $DB::single =  DB::state( 'single' );
+			DB::state( 'single', DB::state( 'single' ) );
 
-			print $DB::OUT "scall back $from($f:$l) <-- $sub\n"
+			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
 		};
 
 		scope_guard {
+			pop @{ DB::state( 'state' ) };
+
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
-
-			pop @{ DB::state( 'stack' ) };
 		}   if $DB::options{ dd };
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
@@ -744,20 +801,23 @@ use Guard;
 
 
 		if( $DB::options{ dd } ) {
-			spy( 1 );
-
-			push @{ DB::state( 'stack' ) }, { caller => [], goto_frames => [] };
-
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
 
+			push @{ DB::state( 'state' ) }, [ {()
+				,goto_frames => []
+				,type        => 'D'
+			} ];
 			$DB::ddlvl++;
+			DB::state( 'single', 1 );
+			# $^D |=  1<<30;
+
 			$DB::options{ dd  } =  0;
 			$DB::options{ ddd } =  0;
 			$ext_call   =  0;
 		}
 		else {
-			spy( 0 ); # Prevent debugging for next call # THIS CONTROLS NESTING
+			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
 		return shift->( @_[ 1..$#_ ] );
@@ -776,25 +836,6 @@ use Guard;
 
 
 	sub restore_context {
-	}
-
-
-
-	my $x;
-	sub spy {
-		return DB::state( 'single' )   unless @_;
-
-		if( $DB::options{ ddd } ) {
-			my($file, $line) =  (caller 0)[1,2];
-			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "!! DB::single state changed "
-				.DB::state( 'single' ) ." -> $_[0]"
-				." at $file:$line\n"
-				unless $x;
-		}
-
-		DB::state( 'single', $_[0] )   unless $x;
-		$x =  $_[1];
 	}
 } # end of provided DB::API
 
@@ -945,11 +986,6 @@ sub DB {
 	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
 
 
-	# TODO: remove this useless localization
-	local $ext_call =  $ext_call +1;
-	# local $DB::single =  0;          # Inside DB::DB the $DB::single has no effect
-	# WRONG!!! It has. See mcall/scall
-
 	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
 		if $DB::options{ ddd };
 	{
@@ -978,8 +1014,6 @@ sub init {
 	# When $^P & 0x20 perl set $DB::single before execution of first line
 	# So we should update our state
 	DB::state( 'single', $DB::single );
-	DB::state( 'signal', $DB::signal );
-	DB::state( 'trace',  $DB::trace  );
 
 
 	# Commented out because of:
@@ -1001,17 +1035,20 @@ sub process {
 		# TRUE    : command found, keep interaction
 		# HASHREF : eval given { expr } and pass results to { code }
 		# negative: something wrong happened while running the command
-		my $result =  $code->( @args );
+		$ext_call++;
+		my $result =  scall( $code, @args );
 		return   unless defined $result;
 		if( $result ) {
 			return $result   unless ref $result  &&  ref $result eq 'HASH';
 
 			$code =  $result->{ code };
+			local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 			@args =  DB::eval( $result->{ expr } );
 			redo PROCESS;
 		}
 	}
 
+	local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT ( DB::eval( $str ) // 'undef' ) ."\n";
@@ -1050,8 +1087,8 @@ sub goto {
 	return   if $ext_call;
 
 
-	spy( 0 )   if DB::state( 'single' ) & 2;
-	$ext_call++; scall( \&DB::Tools::push_frame, DB::state( 'single' ), 'G' );
+	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
+	$ext_call++; scall( \&DB::Tools::push_frame, 'G' );
 };
 
 
@@ -1064,13 +1101,29 @@ sub test {
 	2;
 }
 
-sub pop_frame {
-	# $ext_call++; scall( sub{
-	# 	if( $x++ > 0 ) { # SEGFAULT when $x == 0 (run tests)
-	# 		print $DB::OUT pp( $DB::stack, $DB::goto_frames );
-	# 	}
-	# });
+sub state {
+	my( $name, $value ) =  @_;
 
+	return $DB::state   if $name eq 'state';
+
+	if( @_ == 2 ) {
+		if( $DB::options{ ddd } && $name eq 'single' ) {
+			my($file, $line) =  (caller 0)[1,2];
+			$file =~ s'.*?([^/]+)$'$1'e;
+			print $DB::OUT "!! DB::single state changed "
+				.$DB::single ." -> $value"
+				." at $file:$line\n"
+		}
+
+		no strict "refs";
+		${ "DB::$name" }             =  $value;
+		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
+	}
+
+	return $DB::state->[ $DB::ddlvl ]{ $name };
+}
+
+sub pop_frame {
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
@@ -1079,20 +1132,13 @@ sub pop_frame {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
 	}
 
-	# The current FILE:LINE is the subroutine call place.
-	# That is the first frame in the @DB::goto_frames, which is recorded at
-	# 'trace_subs' by calling 'caller' like DB::DB does. You may read code as:
-	# The point this sub was called from is: (--the sub we are returning from)
-	# FIX: when the action exists at the line while running the 'n' or 's' command
-	# it will break $DB::file, $DB::line. See description for action
-	my( $p, $f, $l ) =  @{ $last->{ caller } };
-	DB::state( 'package', $p );
-	DB::state( 'file',    $f );
-	DB::state( 'line',    $l );
-
-	DB::state( 'goto_frames', $last->{ goto_frames } );
-
-	DB::spy( $last->{ single } );
+	if( @{ DB::state( 'stack' ) } ) {
+		DB::state( 'single', DB::state( 'single' ) );
+	} else {
+		# Something nasty happened at &push_frame, because of we are at
+		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
+		$DB::single =  0;
+	}
 }
 
 
@@ -1105,7 +1151,7 @@ sub push_frame {
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
-	if( $_[1] ne 'G' ) {
+	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
@@ -1116,20 +1162,22 @@ sub push_frame {
 		DB::state( 'line',    $l );
 		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
 
-		push @{ DB::state( 'stack' ) }, {
-		# push @{ DB::state( 'stack' ) }, {
-			single      =>  $_[0],
-			sub         =>  $DB::sub,
-			caller      =>  [ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ) ],
-			goto_frames =>  DB::state( 'goto_frames' ),
-			type        =>  $_[1],
+		my $stack =  DB::state( 'stack' );
+		push @{ $stack }, {()
+			,package     =>  $stack->[-1]{ package }
+			,file        =>  $stack->[-1]{ file    }
+			,line        =>  $stack->[-1]{ line    }
+			,single      =>  $stack->[-1]{ single  }
+			,sub         =>  $DB::sub
+			,goto_frames =>  []
+			,type        =>  $_[0]
 		};
 
-		DB::state( 'goto_frames', [] );
+		# DB::state( 'goto_frames', [] );
 	}
 	else {
 		push @{ DB::state( 'goto_frames' ) },
-			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[1] ]
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[0] ]
 	}
 
 
@@ -1139,7 +1187,7 @@ sub push_frame {
 
 	# Stop on the first OP in a given subroutine
 	my $sis =  \%DB::stop_in_sub;
-	DB::spy( 1, 1 )
+	DB::state( 'single', 1 )
 		# First of all we check full match ...
 		if $sis->{ $DB::sub }
 		# ... then check not disabled partially matched subnames
@@ -1179,7 +1227,6 @@ sub sub {
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
 	if( $ext_call
-		||  $DB::sub eq 'DB::spy'
 		||  $DB::sub eq 'DB::state'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1188,7 +1235,7 @@ sub sub {
 	}
 
 	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
-		spy( 0 )   unless $DB::options{ dd };
+		DB::state( 'single', 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
@@ -1202,9 +1249,9 @@ sub sub {
 	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
-	push_frame( DB::state( 'single' ), 'C' );
+	push_frame( 'C' );
 
-	sub{ spy( 0 ) }->()   if DB::state( 'single' ) & 2;
+	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1260,7 +1307,7 @@ sub lsub : lvalue {
 	# HERE TOO client's code 'caller' return wrong info
 	trace_subs( 'L' );
 
-	spy( 0 )   if DB::state( 'single' ) & 2;
+	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;

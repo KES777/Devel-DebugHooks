@@ -138,12 +138,17 @@ is
 __DATA__
 @@ subroutine frames
 -e:0009  t2();
-[]
+[
+  { file => "-e", goto_frames => [], line => 9, package => "main", single => 1 },
+]
 -e:0006    t1();
 [
+  { file => "-e", goto_frames => [], line => 9, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 9],
+    file => "-e",
     goto_frames => [],
+    line => 6,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
@@ -151,16 +156,21 @@ __DATA__
 ]
 -e:0002    1;
 [
+  { file => "-e", goto_frames => [], line => 9, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 9],
+    file => "-e",
     goto_frames => [],
+    line => 6,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
   {
-    caller => ["main", "-e", 6],
+    file => "-e",
     goto_frames => [],
+    line => 2,
+    package => "main",
     single => 1,
     sub => "main::t1",
     type => "C",
@@ -169,16 +179,21 @@ __DATA__
 -e:0003    2;
 -e:0007    3;
 [
+  { file => "-e", goto_frames => [], line => 9, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 9],
+    file => "-e",
     goto_frames => [],
+    line => 7,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
 ]
 -e:0010  4;
-[]
+[
+  { file => "-e", goto_frames => [], line => 10, package => "main", single => 1 },
+]
 @@ goto frames
 -e:0009  t2();
 []
@@ -193,12 +208,17 @@ __DATA__
 []
 @@ subroutine frames with goto
 -e:0007  t2();
-[]
+[
+  { file => "-e", goto_frames => [], line => 7, package => "main", single => 1 },
+]
 -e:0005    goto &t1;
 [
+  { file => "-e", goto_frames => [], line => 7, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 7],
+    file => "-e",
     goto_frames => [],
+    line => 5,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
@@ -206,16 +226,21 @@ __DATA__
 ]
 -e:0002    1;
 [
+  { file => "-e", goto_frames => [], line => 7, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 7],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [["main", "-e", 5, "main::t1", "G"]],
+    line => 2,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
 ]
 -e:0008  4;
-[]
+[
+  { file => "-e", goto_frames => [], line => 8, package => "main", single => 1 },
+]
 @@ goto frames with goto
 -e:0007  t2();
 []
@@ -227,12 +252,17 @@ __DATA__
 []
 @@ subroutine frames with nested goto
 -e:0012  t2();
-[]
+[
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
+]
 -e:0008    goto &t2 if $x++ < 2;
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
+    file => "-e",
     goto_frames => [],
+    line => 8,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
@@ -240,9 +270,12 @@ __DATA__
 ]
 -e:0008    goto &t2 if $x++ < 2;
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [["main", "-e", 8, "main::t2", "G"]],
+    line => 8,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
@@ -251,9 +284,15 @@ __DATA__
 -e:0008    goto &t2 if $x++ < 2;
 -e:0009    t1();
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [
+      ["main", "-e", 8, "main::t2", "G"],
+      ["main", "-e", 8, "main::t2", "G"],
+    ],
+    line => 9,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
@@ -261,19 +300,24 @@ __DATA__
 ]
 -e:0005    goto &t0;
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [
+      ["main", "-e", 8, "main::t2", "G"],
+      ["main", "-e", 8, "main::t2", "G"],
+    ],
+    line => 9,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
   {
-    caller => ["main", "-e", 9],
-    goto_frames => [
-      ["main", "-e", 8, "main::t2", "G"],
-      ["main", "-e", 8, "main::t2", "G"],
-    ],
+    file => "-e",
+    goto_frames => [],
+    line => 5,
+    package => "main",
     single => 1,
     sub => "main::t1",
     type => "C",
@@ -281,19 +325,24 @@ __DATA__
 ]
 -e:0002    1;
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [
+      ["main", "-e", 8, "main::t2", "G"],
+      ["main", "-e", 8, "main::t2", "G"],
+    ],
+    line => 9,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
   {
-    caller => ["main", "-e", 9],
-    goto_frames => [
-      ["main", "-e", 8, "main::t2", "G"],
-      ["main", "-e", 8, "main::t2", "G"],
-    ],
+    file => "-e",
+    goto_frames => [["main", "-e", 5, "main::t0", "G"]],
+    line => 2,
+    package => "main",
     single => 1,
     sub => "main::t1",
     type => "C",
@@ -301,16 +350,24 @@ __DATA__
 ]
 -e:0010    2;
 [
+  { file => "-e", goto_frames => [], line => 12, package => "main", single => 1 },
   {
-    caller => ["main", "-e", 12],
-    goto_frames => [],
+    file => "-e",
+    goto_frames => [
+      ["main", "-e", 8, "main::t2", "G"],
+      ["main", "-e", 8, "main::t2", "G"],
+    ],
+    line => 10,
+    package => "main",
     single => 1,
     sub => "main::t2",
     type => "C",
   },
 ]
 -e:0013  3;
-[]
+[
+  { file => "-e", goto_frames => [], line => 13, package => "main", single => 1 },
+]
 @@ goto frames with nested goto
 -e:0012  t2();
 []

@@ -3,7 +3,7 @@ package Devel::DebugHooks::Commands;
 # BEGIN {
 # 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
-#	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
+# 	if( $options{ d } ) { require 'Data/Dump.pm'; 'Data::Dump'->import( 'pp'); }
 # }
 
 # TODO: implement 'hard_go' to go over all traps to the 'line' or end
@@ -362,8 +362,6 @@ $DB::commands =  {
 	# we set $DB::single value to 1 which will be restored at &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
-		return -1   unless @{ DB::state( 'stack' ) };
-
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
 		$frames_out //=  1;
@@ -372,18 +370,14 @@ $DB::commands =  {
 		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
-		# Return to the last possible frame
-		# Q: Should we return from whole script?
+		# Return to the last possible frame. If no frames then exit from script
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
-		# Skip the current frame we are in ...
-		DB::spy( 0 );
-
 		# ... skip N next frames
-		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -($frames_out-1) .. -1 ];
+		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -$frames_out .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out ];
+		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out-1 ];
 
 		return;
 	}
@@ -394,7 +388,7 @@ $DB::commands =  {
 	# the outer frame. And so on.
 	,s => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
-		DB::spy( 1 );
+
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
 		return;
@@ -403,12 +397,12 @@ $DB::commands =  {
 	# Do single step to the next OP. If current OP is sub call. Step over it
 	# ...As for the 's' command we stop at each OP in the script. But when the
 	# sub is called we turn off debugging for that sub at DB::sub.
-	# spy( 0 )   if $DB::single & 2;
+	# DB::state( 'single', 0 )   if $DB::single & 2;
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
-		DB::spy( 2 );
+
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
 
@@ -416,7 +410,15 @@ $DB::commands =  {
 	}
 
 	# Quit from the debugger
-	,q => sub { DB::spy( 0, 1 ); exit; } # FIX: remove forcing
+	,q => sub {
+		for( @$DB::state ) {
+			for( @$_ ) {
+				$_->{ single } =  0;
+			}
+		}
+
+		exit;
+	}
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
@@ -659,13 +661,11 @@ $DB::commands =  {
 	}
 
 	,go => sub {
-		# If we supply line to go to we set temporary trap in it
+		# If we supply line to go to we just set temporary trap there
 		if( defined $_[0]  &&  $_[0] ne '' ) {
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
-
-		DB::spy( 0 );
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
 
