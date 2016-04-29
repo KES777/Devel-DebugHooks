@@ -1164,9 +1164,11 @@ sub pop_frame {
 
 
 sub push_frame2 {
-	# this two lines exists for testing purpose
-	test();
-	3;
+	{ # these lines exists for testing purpose
+		no warnings 'void';
+		test();
+		3;
+	}
 
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
