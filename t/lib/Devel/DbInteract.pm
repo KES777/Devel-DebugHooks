@@ -28,6 +28,22 @@ $DB::commands->{ off } =  sub {
 	return 1;
 };
 
+{
+no warnings 'void';
+sub nested {
+	2;
+	printf $DB::OUT "%s at %s:%s\n"
+		,DB::state( 'single' ), DB::state( 'file' ), DB::state( 'line' );
+	3;
+}
+
+$DB::commands->{ debug } =  sub {
+	1;
+	nested();
+	4;
+}
+}
+
 sub bbreak {
 	return   if $off;
 
