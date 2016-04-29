@@ -795,6 +795,8 @@ use Guard;
 		scope_guard {
 			pop @{ DB::state( 'state' ) };
 
+			$options{ dd } =  0;
+
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
 		}   if $DB::options{ dd };
