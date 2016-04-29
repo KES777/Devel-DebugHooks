@@ -309,6 +309,7 @@ sub state {
 	}
 
 	my $low   =  ( $DB::ddlvl && !$DB::ext_call ? 1 : 0 );
+	$low =  0   if $low  &&  $DB::inDB == 2;
 	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
@@ -373,6 +374,7 @@ our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
 our $ddlvl;          # Level of debugger debugging
+our $inDB;           # Flag which shows we are currently stopped
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
@@ -479,6 +481,7 @@ BEGIN { # Initialization goes here
 	# If we do not we can still init them when define
 	$DB::ext_call //=  0;
 	$DB::ddlvl    //=  0;
+	$DB::inDB     //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 	applyOptions();
@@ -810,7 +813,7 @@ use Guard;
 			} ];
 			$DB::ddlvl++;
 			DB::state( 'single', 1 );
-			# $^D |=  1<<30;
+			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
 			$DB::options{ ddd } =  0;
@@ -896,6 +899,7 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
+	local $DB::inDB =  $DB::inDB +1;
 	init();
 
 	&save_context;
