@@ -1267,6 +1267,7 @@ sub sub {
 
 	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
+	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
 	$DB::inSUB =  1;
 
 
@@ -1280,6 +1281,7 @@ sub sub {
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	$DB::inSUB =  0;
+	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
