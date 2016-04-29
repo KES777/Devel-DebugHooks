@@ -317,10 +317,10 @@ sub state {
 		return;
 	}
 
-	return $DB::state                   if $name eq 'state';
-	return $stack   if $name eq 'stack';
+	return $DB::state   if $name eq 'state';
+	return $stack       if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
-		return $DB::steps_left   unless @_ >= 2;
+		return $DB::steps_left    unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
