@@ -76,6 +76,22 @@ is
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
 
+
+
+$cmds =  ' $DB::options{ dd } =  1;s;r;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'outer step into' }
+	,"Step into at client's scipt after debugger debugging";
+
+$cmds =  ' $DB::options{ dd } =  1;n;r;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'outer step over' }
+	,"Step over at client's scipt after debugger debugging";
+
+
+
 $cmds =  ' $DB::options{ dd } =  1;n;s;s 2;q';
 is
 	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
@@ -138,6 +154,16 @@ xxx/DbInteract.pm:XXXX    4;
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
+@@ outer step into
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+-e:0002    1;
+@@ outer step over
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+-e:0005  2;
 @@ step into debugger
 -e:0004  t1();
 1
