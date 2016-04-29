@@ -288,7 +288,7 @@ sub state {
 
 
 	if( $DB::options{ ddd } ) {
-		print $DB::OUT "\nDB::state: l:$DB::ddlvl e:$DB::ext_call\n";
+		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n";
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
@@ -303,13 +303,14 @@ sub state {
 
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n"."$file:$line: \$DB::$name -- ";
+		print $DB::OUT '-'x20 ."\n"."$file:$line: >> \$DB::$name <<";
 
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
-
-	my $stack =  $DB::state->[ $DB::ddlvl ];
+	my $low   =  ( $DB::ddlvl  &&  (!$DB::ext_call && !$DB::inSUB) ? 1 : 0 );
+	$low =  0   if $low  &&  $DB::inDB == 2;
+	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
@@ -317,16 +318,16 @@ sub state {
 		return;
 	}
 
-	return $DB::state                   if $name eq 'state';
-	return $stack   if $name eq 'stack';
+	return $DB::state   if $name eq 'state';
+	return $stack       if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
-		return $DB::steps_left   unless @_ >= 2;
+		return $DB::steps_left    unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
 
 	my $frame =  $stack->[ -1 ];
-	print $DB::OUT $frame->{ $name }
+	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
 		if $DB::options{ ddd };
 
 
@@ -373,6 +374,8 @@ our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
 our $ddlvl;          # Level of debugger debugging
+our $inDB;           # Flag which shows we are currently in debugger
+our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
@@ -479,6 +482,8 @@ BEGIN { # Initialization goes here
 	# If we do not we can still init them when define
 	$DB::ext_call //=  0;
 	$DB::ddlvl    //=  0;
+	$DB::inDB     //=  0;
+	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 	applyOptions();
@@ -790,6 +795,8 @@ use Guard;
 		scope_guard {
 			pop @{ DB::state( 'state' ) };
 
+			$options{ dd } =  0;
+
 			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 				if $DB::options{ ddd };
 		}   if $DB::options{ dd };
@@ -810,7 +817,7 @@ use Guard;
 			} ];
 			$DB::ddlvl++;
 			DB::state( 'single', 1 );
-			# $^D |=  1<<30;
+			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
 			$DB::options{ ddd } =  0;
@@ -896,6 +903,13 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
+	scope_guard {
+		print $DB::OUT "\nTRAPPED OUT: $DB::ddlvl\n";
+		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n\n";
+	}   if $DB::options{ ddd };
+	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
+		if $DB::options{ ddd };
+	local $DB::inDB =  $DB::inDB +1;
 	init();
 
 	&save_context;
@@ -1069,9 +1083,14 @@ sub interact {
 
 	local $DB::interaction =  $DB::interaction +1;
 
-	$ext_call++;
+	my $old =  $DB::options{ dd };
+	$ext_call++; $DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+		$DB::options{ dd } =  $old;
 		return process( $str );
+	}
+	else {
+		$DB::options{ dd } =  $old;
 	}
 
 	return;
@@ -1088,12 +1107,14 @@ sub goto {
 
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	$ext_call++; scall( \&DB::Tools::push_frame, 'G' );
+	# $ext_call++; scall( \&push_frame2, 'G' );
+	push_frame2( 'G' );
 };
 
 
 
-{ package DB::Tools;
+{
+#package DB::Tools;
 # my $x = 0;
 # use Data::Dump qw/ pp /;
 sub test {
@@ -1101,29 +1122,30 @@ sub test {
 	2;
 }
 
-sub state {
-	my( $name, $value ) =  @_;
+# sub state {
+# 	my( $name, $value ) =  @_;
 
-	return $DB::state   if $name eq 'state';
+# 	return $DB::state   if $name eq 'state';
 
-	if( @_ == 2 ) {
-		if( $DB::options{ ddd } && $name eq 'single' ) {
-			my($file, $line) =  (caller 0)[1,2];
-			$file =~ s'.*?([^/]+)$'$1'e;
-			print $DB::OUT "!! DB::single state changed "
-				.$DB::single ." -> $value"
-				." at $file:$line\n"
-		}
+# 	if( @_ == 2 ) {
+# 		if( $DB::options{ ddd } && $name eq 'single' ) {
+# 			my($file, $line) =  (caller 0)[1,2];
+# 			$file =~ s'.*?([^/]+)$'$1'e;
+# 			print $DB::OUT "!! DB::single state changed "
+# 				.$DB::single ." -> $value"
+# 				." at $file:$line\n"
+# 		}
 
-		no strict "refs";
-		${ "DB::$name" }             =  $value;
-		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
-	}
+# 		no strict "refs";
+# 		${ "DB::$name" }             =  $value;
+# 		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
+# 	}
 
-	return $DB::state->[ $DB::ddlvl ]{ $name };
-}
+# 	return $DB::state->[ $DB::ddlvl ]{ $name };
+# }
 
 sub pop_frame {
+	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
@@ -1143,10 +1165,12 @@ sub pop_frame {
 
 
 
-sub push_frame {
-	# this two lines exists for testing purpose
-	test();
-	3;
+sub push_frame2 {
+	{ # these lines exists for testing purpose
+		no warnings 'void';
+		test();
+		3;
+	}
 
 	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
 		if $DB::options{ ddd };
@@ -1205,7 +1229,7 @@ sub trace_returns {
 
 
 sub push_frame {
-	$ext_call++; scall( \&DB::Tools::push_frame, @_ );
+	$ext_call++; scall( \&push_frame2, @_ );
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
@@ -1234,7 +1258,7 @@ sub sub {
 		return &$DB::sub
 	}
 
-	if( $DB::sub eq 'DB::Tools::pop_frame' ) {
+	if( $DB::sub eq 'DB::pop_frame' ) {
 		DB::state( 'single', 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1243,15 +1267,21 @@ sub sub {
 
 	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
+	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
+	$DB::inSUB =  1;
+
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
-	scope_guard \&DB::Tools::pop_frame; # This should be first because we should
+	scope_guard \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	push_frame( 'C' );
 
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
+
+	$DB::inSUB =  0;
+	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }

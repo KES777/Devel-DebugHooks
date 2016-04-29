@@ -22,7 +22,7 @@ sub n {
 	$_ =  join '', @_;
 
 	s#\t#  #gm;
-	s#(?:.*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
+	s#(?:[^\s]*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
 
 	$_;
 }
@@ -52,6 +52,30 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
+$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;s;s;s;s;r 2;s;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'debug cmd sbs' }
+	,"Debug command step-by-step";
+
+$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;n;r 2;s;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'debug cmd step over' }
+	,"Debug command with step over";
+
+$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;r;r 2;s;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'debug cmd return' }
+	,"Debug command with return";
+
+$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'debug cmd quit' }
+	,"Quit from debug debugger command process";
+
 $cmds =  ' $DB::options{ dd } =  1;n;s;s 2;q';
 is
 	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
@@ -78,6 +102,42 @@ is
 
 
 __DATA__
+@@ debug cmd sbs
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+xxx/DbInteract.pm:XXXX    nested();
+xxx/DbInteract.pm:XXXX    2;
+xxx/DbInteract.pm:XXXX    printf $DB::OUT "%s at %s:%s\n"
+1 at -e:4
+xxx/DbInteract.pm:XXXX    3;
+xxx/DbInteract.pm:XXXX    4;
+-e:0002    1;
+@@ debug cmd step over
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+xxx/DbInteract.pm:XXXX    nested();
+1 at -e:4
+xxx/DbInteract.pm:XXXX    4;
+-e:0002    1;
+@@ debug cmd return
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+xxx/DbInteract.pm:XXXX    2;
+1 at -e:4
+xxx/DbInteract.pm:XXXX    4;
+-e:0002    1;
+@@ debug cmd quit
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+xxx/DbInteract.pm:XXXX    2;
 @@ step into debugger
 -e:0004  t1();
 1
