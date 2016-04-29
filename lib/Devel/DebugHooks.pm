@@ -326,7 +326,7 @@ sub state {
 
 
 	my $frame =  $stack->[ -1 ];
-	print $DB::OUT $frame->{ $name }
+	print $DB::OUT ( $frame->{ $name } // '&undef' )
 		if $DB::options{ ddd };
 
 
