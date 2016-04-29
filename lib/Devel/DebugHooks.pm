@@ -1148,7 +1148,7 @@ sub pop_frame {
 	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
-		. "    @{ $last->{ caller } }\n\n"
+		. "    $last->{ file }:$last->{ line } }\n\n"
 		if $DB::options{ ddd };
 	if( $DB::options{ _debug } ) {
 		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
