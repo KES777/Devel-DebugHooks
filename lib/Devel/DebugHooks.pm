@@ -308,7 +308,7 @@ sub state {
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
-	my $low   =  ( $DB::ddlvl && !$DB::ext_call ? 1 : 0 );
+	my $low   =  ( $DB::ddlvl  &&  (!$DB::ext_call && !$DB::inSUB) ? 1 : 0 );
 	$low =  0   if $low  &&  $DB::inDB == 2;
 	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
@@ -374,7 +374,8 @@ our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
 our $ddlvl;          # Level of debugger debugging
-our $inDB;           # Flag which shows we are currently stopped
+our $inDB;           # Flag which shows we are currently in debugger
+our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
@@ -482,6 +483,7 @@ BEGIN { # Initialization goes here
 	$DB::ext_call //=  0;
 	$DB::ddlvl    //=  0;
 	$DB::inDB     //=  0;
+	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 	applyOptions();
@@ -1261,6 +1263,8 @@ sub sub {
 
 	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
+	$DB::inSUB =  1;
+
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
@@ -1270,6 +1274,8 @@ sub sub {
 	push_frame( 'C' );
 
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
+
+	$DB::inSUB =  0;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
