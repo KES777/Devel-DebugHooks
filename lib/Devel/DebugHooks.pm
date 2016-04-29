@@ -288,7 +288,7 @@ sub state {
 
 
 	if( $DB::options{ ddd } ) {
-		print $DB::OUT "\nDB::state: l:$DB::ddlvl e:$DB::ext_call\n";
+		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n";
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
@@ -303,7 +303,7 @@ sub state {
 
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n"."$file:$line: \$DB::$name -- ";
+		print $DB::OUT '-'x20 ."\n"."$file:$line: >> \$DB::$name <<";
 
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
@@ -327,7 +327,7 @@ sub state {
 
 
 	my $frame =  $stack->[ -1 ];
-	print $DB::OUT ( $frame->{ $name } // '&undef' )
+	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
 		if $DB::options{ ddd };
 
 
@@ -899,6 +899,12 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
+	scope_guard {
+		print $DB::OUT "\nTRAPPED OUT: $DB::ddlvl\n";
+		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n\n";
+	}   if $DB::options{ ddd };
+	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
+		if $DB::options{ ddd };
 	local $DB::inDB =  $DB::inDB +1;
 	init();
 
