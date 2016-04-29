@@ -308,8 +308,8 @@ sub state {
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
-
-	my $stack =  $DB::state->[ $DB::ddlvl ];
+	my $low   =  ( $DB::ddlvl && !$DB::ext_call ? 1 : 0 );
+	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
@@ -1131,6 +1131,7 @@ sub test {
 # }
 
 sub pop_frame {
+	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
 		. "    @{ $last->{ caller } }\n\n"
