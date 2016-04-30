@@ -28,9 +28,10 @@ $DB::commands->{ off } =  sub {
 	return 1;
 };
 
-{
-no warnings 'void';
+
+
 sub nested {
+	no warnings 'void';
 	2;
 	printf $DB::OUT "%s at %s:%s\n"
 		,DB::state( 'single' ), DB::state( 'file' ), DB::state( 'line' );
@@ -38,11 +39,13 @@ sub nested {
 }
 
 $DB::commands->{ debug } =  sub {
+	no warnings 'void';
 	1;
 	nested();
 	4;
-}
-}
+};
+
+
 
 sub bbreak {
 	return   if $off;
