@@ -528,7 +528,7 @@ BEGIN { # Initialization goes here
 		# Returns list of compiled files/evaled strings
 		# The $filename for evaled strings looks like (eval 34)
 		sub sources {
-			return grep{ s/^_<//r } keys %{ 'main::' }; #/
+			return grep{ s/^_<// } keys %{ 'main::' }; #/
 		}
 
 		sub deparse {
