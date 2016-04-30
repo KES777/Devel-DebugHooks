@@ -87,6 +87,20 @@ is
 
 
 
+is
+	nl( `perl $lib -d:DbInteract='2+3;DB::state("file");q' -e '$script'` )
+	,$files->{ 'eval expr' }
+	,"EXPR evaluation should not chagne debugger state";
+
+TODO: {
+	local $TODO =  'Create its own frame for evaluation';
+	is
+		nl( `perl $lib -d:DbInteract='t();DB::state("file");q' -e '$script'` )
+		,$files->{ 'eval sub' }
+		,"Subroutine evaluation should not chagne debugger state";
+}
+
+
 __DATA__
 @@ list
 -e:0008  1;
@@ -109,3 +123,11 @@ undef
 -e:0008  1;
 
 ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 7.
+@@ eval expr
+-e:0008  1;
+5
+-e
+@@ eval sub
+-e:0008  1;
+1   2
+-e
