@@ -30,7 +30,7 @@ sub n {
 sub nn {
 	$_ =  n( @_ );
 
-	s#( at ).*#$1...#;
+	s#( at ).*$#$1...#gm;
 
 	$_;
 }
@@ -79,9 +79,9 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
-$cmd =  ' $DB::options{ undef }="undef";$x;s;$x;q';
+$cmd =  '$#$DB::options{ undef }="undef"#3;4#$x#s#3;4#$x#q';
 is
-	nn( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	nn( `perl $lib -d:DbInteract='$cmd' -e '$script' 2>&1` )
 	,$files->{ 'pragma and warnings' }
 	,'pragma and warnings from client\'s current scope should be applyed';
 
@@ -113,9 +113,14 @@ a 1
 3
 [1, [], {}]
 @@ pragma and warnings
+Useless use of a constant (2) in void context at ...
+Useless use of a constant (3) in void context at ...
+Variable "$x" is not imported at ...
 -e:0001  1;
 undef
+4
 undef
 -e:0003  2;
+4
 
 ERROR: Global symbol "$x" requires explicit package name (did you forget to declare "my $x"?) at ...
