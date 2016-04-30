@@ -1065,6 +1065,7 @@ sub process {
 	local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
+	print $DB::OUT "No command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
 	print $DB::OUT ( DB::eval( $str ) // 'undef' ) ."\n";
 	print $DB::OUT "ERROR: $@"   if $@;
 
