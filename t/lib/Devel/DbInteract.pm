@@ -30,6 +30,10 @@ $DB::commands->{ off } =  sub {
 
 
 
+sub right { 'scope' };
+
+
+
 sub nested {
 	no warnings 'void';
 	2;

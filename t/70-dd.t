@@ -52,6 +52,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
+# FIX: we should not require last 's' to see '-e:0002    1;'
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;s;s;s;s;r 2;s;q';
 is
 	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
@@ -75,6 +76,14 @@ is
 	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
+
+
+
+$cmds =  ' $DB::options{ dd } =  1;debug;s 9;right();q';
+is
+	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'call debugger sub' }
+	,"Subroutine call from debugger scope when debug debugger command";
 
 
 
@@ -154,6 +163,12 @@ xxx/DbInteract.pm:XXXX    4;
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
+@@ call debugger sub
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+scope
 @@ outer step into
 -e:0004  t1();
 1
