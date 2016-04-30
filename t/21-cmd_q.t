@@ -22,13 +22,24 @@ sub n {
 	$_ =  join '', @_;
 
 	s#\t#  #gm;
-	s#(?:.*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
+	s#(?:[^\s]*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
 
 	$_;
 }
 
 
 
+sub nl {
+	$_ =  n( @_ );
+
+	s#(xxx/.*?pm:)\d+#$1XXXX#gm;
+
+	$_;
+}
+
+
+
+my $cmds;
 my $script;
 my $files =  get_data_section();
 
@@ -42,7 +53,7 @@ PERL
 
 is
 	n( `perl $lib -d:DbInteract='q' -e '$script'` )
-	,$files->{ quit }
+	,$files->{ 'quit' }
 	,"Quit debugger. Do not trace END/DESTROY";
 
 
