@@ -50,7 +50,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
-$cmd =  's;$x;e $x;$x++;e $x;s;e $x;s;e $x;s;@x;e \@x;s;%x;e \%x;';
+$cmd =  's;$x;e $x;$x++;e $x;s;e $x;s;e $x;s;@x;scalar @x;e \@x;s;%x;scalar %x;e \%x;';
 is
 	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ 'eval' }
@@ -65,7 +65,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	t( 1, [], {} );
 PERL
 
-$cmd =  's;@_;e \@_';
+$cmd =  's;scalar @_;e \@_';
 is
 	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ '@_ not clash' }
@@ -79,7 +79,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	2;
 PERL
 
-$cmd =  ' $x;s;$x;q';
+$cmd =  ' $DB::options{ undef }="undef";$x;s;$x;q';
 is
 	nn( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ 'pragma and warnings' }
@@ -100,9 +100,11 @@ __DATA__
 -e:0004  @x =  ( a => 1 );
 { a => 1 }
 -e:0005  %x =  ( a => 1 );
+a 1
 2
 ["a", 1]
 -e:0006  2;
+a 1
 1/8
 { a => 1 }
 @@ @_ not clash
@@ -113,6 +115,7 @@ __DATA__
 @@ pragma and warnings
 -e:0001  1;
 undef
--e:0003  2;
 undef
+-e:0003  2;
+
 ERROR: Global symbol "$x" requires explicit package name (did you forget to declare "my $x"?) at ...
