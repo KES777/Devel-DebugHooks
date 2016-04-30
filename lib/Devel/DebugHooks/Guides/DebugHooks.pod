@@ -40,3 +40,12 @@ But it will be cool not create frame only for &$DB::sub sub call
 
 
 When you do internal call to &subname from DB::sub the CORE::caller will see client's $file:$line and your &subname. You should check $DB::sub to see name for original subroutine
+
+NOTE:
+You can not do such thing:
+
+    package Other;
+    sub DB::DB {}
+    sub DB::sub { &$DB::sub }
+
+Because the &DB::sub is compiled at Other namespace the &$DB::sub will recursively call itself. So you **MUST** compile &DB::sub in the DB namespace to prevent that
