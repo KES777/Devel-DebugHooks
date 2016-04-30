@@ -90,9 +90,9 @@ sub bbreak {
 	my $info =  "\n" .' =' x30 ."$DB::ext_call\n";
 
 	$info .=  sprintf "%s:%s    %s"
-		,state( 'file' )
-		,state( 'line' )
-		,DB::source()->[ state( 'line' ) ]
+		,DB::state( 'file' )
+		,DB::state( 'line' )
+		,DB::source()->[ DB::state( 'line' ) ]
 	;
 
 	return $info;
