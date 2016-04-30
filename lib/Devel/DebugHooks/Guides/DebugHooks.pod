@@ -1,0 +1,42 @@
+There are some different context where DB::sub may be called or not.
+You should keep these cases in mind:
+
+The DB::sub is not called when you call a subroutine from DB:: namespace
+
+	sdf {
+		package Test;
+		sub x1 {}
+		sub x2{ x1() }  # Only here DB::sub
+	}
+
+
+	sub init {}
+
+	sub DB {
+		init();      # DB::sub not called
+		Test::x1();  # DB::sub not called
+		Test::x2();  # DB::sub not called
+		...
+	}
+
+
+
+NEVER PASS DB:: GLOBALS AS ARGUMENTS TO SUBS
+Because of the @_ has aliases to arguments
+
+	sub test {
+		$DB::single =  1;  # or call to sub which do this change
+		print $_[0]; # Will print "1" instead of "0"
+	}
+
+	$DB::single =  0;
+	test( $DB::single );
+
+
+When you are in DB::sub
+Frame for target subroutine is NOT created. It is when you pass control by the chain making `return &$DB::sub`. This is the good design to hide debugger frame from client's code. But you probably will have problem making call to some debugger's subs. The problem is the `caller` will show that call is maden from client's code instead of real source -- &DB::sub
+Probably Perl should create origin frame before &DB::sub call and not create frames for any sub call from &DB::sub (to simplify code)
+But it will be cool not create frame only for &$DB::sub sub call
+
+
+When you do internal call to &subname from DB::sub the CORE::caller will see client's $file:$line and your &subname. You should check $DB::sub to see name for original subroutine

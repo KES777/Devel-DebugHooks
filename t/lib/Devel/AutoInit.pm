@@ -1,8 +1,10 @@
 package Devel::AutoInit;
 
-use Devel::DebugHooks();
+BEGIN {
+	push @ISA, 'Devel::DebugHooks';
+}
 
-push @ISA, 'Devel::DebugHooks';
+use Devel::DebugHooks();
 
 print $DB::dbg;
 

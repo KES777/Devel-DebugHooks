@@ -1,0 +1,7 @@
+lib/Devel/ImportArgs.pm
+lib/Devel/KillPrintTest.pm
+lib/Devel/KillPrint_scope.pm
+lib/Devel/PkgAtCompileTime.pm
+lib/Devel/t.pl
+fix/
+*.tar
