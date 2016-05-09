@@ -74,6 +74,19 @@ is
 
 
 $script =  <<'PERL' =~ s#^\t##rgm;
+	$_ =  7;
+	@_ = ( 1..$_ );
+	1;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='s 2;e \$_;e \\\@_;q' -e '$script'` )
+	,$files->{ '$_ not clash' }
+	,"EXPR evaluation should see user's \@_ and \$_";
+
+
+
+$script =  <<'PERL' =~ s#^\t##rgm;
 	1;
 	use strict; use warnings;
 	2;
@@ -112,6 +125,11 @@ a 1
 -e:0002    1;
 3
 [1, [], {}]
+@@ $_ not clash
+-e:0001  $_ =  7;
+-e:0003  1;
+7
+[1 .. 7]
 @@ pragma and warnings
 Useless use of a constant (2) in void context at ...
 Useless use of a constant (3) in void context at ...
