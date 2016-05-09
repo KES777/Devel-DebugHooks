@@ -2,7 +2,9 @@ package Devel::DebugHooks::KillPrint;
 
 
 
-my $actions =  {};
+my $actions  =  {};
+my @profiles =  ();
+
 
 #FIX: Do this after script is compiled. Look for some hook...
 sub trace_load {
@@ -33,7 +35,15 @@ sub import {
 	# We do not expect here that we would be used twice or more times!
 	filter_add( bless $actions );
 
-	shift->SUPER::import( @_[ 1..$#_ ] )
+	my $class =  shift;
+
+	while( @_ && $_[0] ne '--' ) {
+		push @profiles, shift;
+	}
+
+	shift   if @_; # Remove '--'. Here the @_ exists only if '--' was supplied
+
+	$class->SUPER::import( @_ );
 }
 
 
@@ -44,9 +54,12 @@ sub filter {
 	my $status;
 	if( ( $status =  filter_read() ) > 0 ) {
 
-		if( /#DBG: (.*) #$/ ) {
-			my( $file, $line ) =  (caller 0)[1,2];
-			$self->{ "$file:$line" } =  $1;
+		if( /#DBG:(\w*) (.*) #$/ ) {
+			my $profile =  $1 || 'default';
+			if( !@profiles  ||  grep{ $_ eq $profile } @profiles ) {
+				my( $file, $line ) =  (caller 0)[1,2];
+				$self->{ "$file:$line" } =  $2;
+			}
 		}
 	}
 
