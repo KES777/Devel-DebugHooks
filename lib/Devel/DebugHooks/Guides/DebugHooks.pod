@@ -49,3 +49,18 @@ You can not do such thing:
     sub DB::sub { &$DB::sub }
 
 Because the &DB::sub is compiled at Other namespace the &$DB::sub will recursively call itself. So you **MUST** compile &DB::sub in the DB namespace to prevent that
+
+
+BEWARE:
+When you work with global variables in the debugger you affect user's globals.
+So 'eval' that variable will see debugger's value instead of user's one
+For example:
+
+	# Code in the user's script
+	$_ =  7;
+	1; # Stopped here and the debugger is called
+
+	# Code in the debugger:
+	for( 1..3 ) {
+		print DB::eval( '$_' ); # Will show 1,2,3 instead of expected 7,7,7
+	}
