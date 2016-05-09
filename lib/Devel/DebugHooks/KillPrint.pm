@@ -59,6 +59,8 @@ sub filter {
 			if( !@profiles  ||  grep{ $_ eq $profile } @profiles ) {
 				my( $file, $line ) =  (caller 0)[1,2];
 				$self->{ "$file:$line" } =  $2;
+
+				s/^(\s*)(#DBG:\w* .* #)$/${1}1;   $2/;
 			}
 		}
 	}
