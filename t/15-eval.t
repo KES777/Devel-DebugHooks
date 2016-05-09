@@ -101,6 +101,20 @@ TODO: {
 }
 
 
+
+$script =  <<'PERL' =~ s#^\t##rgm;
+	$_ =  7;
+	@_ = ( 1..$_ );
+	1;
+PERL
+
+is
+	n( `perl $lib -d:DbInteract='s 2;e \$_;e \\\@_;q' -e '$script'` )
+	,$files->{ 'restore globals' }
+	,"EXPR evaluation should see user's \@_ and \$_";
+
+
+
 __DATA__
 @@ list
 -e:0008  1;
@@ -131,3 +145,8 @@ ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 7.
 -e:0008  1;
 1   2
 -e
+@@ restore globals
+-e:0001  $_ =  7;
+-e:0003  1;
+7
+[1 .. 7]
