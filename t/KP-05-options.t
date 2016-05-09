@@ -48,7 +48,6 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 	my $x =  { a => 7 };
 	for( 1..3 ) {
 		$x->{ a }++;                     #DBG:iter e $_ #
-		print ">>$_<<\n";
 	}
 	#DBG: e $x; #
 PERL

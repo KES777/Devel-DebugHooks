@@ -935,9 +935,9 @@ sub DB {
 		# FIX: rename: action -> actions
 		if( exists $trap->{ action } ) {
 			# Run all actions
-			for( @{ $trap->{ action } } ) {
+			for my $action ( @{ $trap->{ action } } ) {
 				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				$ext_call++; scall( \&process, $_ );
+				$ext_call++; scall( \&process, $action );
 			}
 
 			# Actions do not stop execution
