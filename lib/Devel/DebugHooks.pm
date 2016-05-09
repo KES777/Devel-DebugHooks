@@ -595,6 +595,12 @@ BEGIN { # Initialization goes here
 
 		local $^D;
 
+		# BEWARE: We should local'ize every global variable the debugger make change
+		# If we forgot that we will hurt user's context.
+		# Here we should localize only those which values are changed implicitly
+		# or indirectly: exceptions, signals...
+		# In a word thouse circumstances you code can not control
+		# local $_ =  $DB::context[4];
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
@@ -837,7 +843,7 @@ use Guard;
 
 
 	sub save_context {
-		@DB::context =  ( \@_, (caller 1)[8..10] );
+		@DB::context =  ( \@_, (caller 1)[8..10], $_ );
 	}
 
 
