@@ -578,8 +578,7 @@ BEGIN { # Initialization goes here
 	# We put code here to execute it only once
 	my $usercontext =  <<'	CODE' =~ s#^\t\t##rgm;
 		BEGIN{
-			( $^H, ${^WARNING_BITS} ) =  @DB::context[1..2];
-			my $hr =  $DB::context[3];
+			( $^H, ${^WARNING_BITS}, my $hr ) =  @DB::context[1..3];
 			%^H =  %$hr   if $hr;
 		}
 	CODE

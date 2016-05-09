@@ -123,7 +123,7 @@ undef
 @@ die
 -e:0008  1;
 
-ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 7.
+ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 6.
 @@ eval expr
 -e:0008  1;
 5
