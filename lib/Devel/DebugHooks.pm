@@ -593,13 +593,15 @@ BEGIN { # Initialization goes here
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
 		local $^D;
+		# FIX: when we eval user's sub the main script frame is changed
 
 		# BEWARE: We should local'ize every global variable the debugger make change
 		# If we forgot that we will hurt user's context.
 		# Here we should localize only those which values are changed implicitly
 		# or indirectly: exceptions, signals...
-		# In a word thouse circumstances you code can not control
+		# In a word those circumstances your code can not control
 		# local $_ =  $DB::context[4];
+
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
@@ -1316,7 +1318,7 @@ sub sub {
 
 
 	die "This should be reached never";
-	#NOTICE: This reached when someone leaves sub by 'next/last'
+	#NOTICE: This reached when someone leaves sub by calling 'next/last' outside of LOOP block
 	#Then 'return' is not called at all???
 };
 

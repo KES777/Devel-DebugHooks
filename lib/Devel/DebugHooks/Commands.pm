@@ -29,6 +29,7 @@ package Devel::DebugHooks::Commands;
 # if() { statement; }
 # TODO: implement command to list all available packages
 # TODO: implement command to list all available subs in package ( DB::subs )
+# TODO: IT: closed variables are created at compile time. We do not see them when just eval at sub
 
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
