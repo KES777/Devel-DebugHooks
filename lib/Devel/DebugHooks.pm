@@ -400,7 +400,6 @@ BEGIN {
 	#TODO: cache output until debugger is connected
 	$OUT                       //= \*STDOUT;
 
-	$options{ _debug }         //=  0;
 	$options{ dd }             //=  0;         # controls debugger debugging
 	$options{ ddd }            //=  0;         # print debug info
 
@@ -924,11 +923,9 @@ sub DB {
 	printf $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace <-- $file:$line\n"
 		."    cursor(DB) => %s, %s, %s\n"
 		,state( 'package' ), state( 'file' ) ,state( 'line' )
-		if $DB::options{ _debug } || $DB::options{ ddd };
-	if( $DB::options{ _debug } ) {
-		$ext_call++; scall( $DB::commands->{ T } );
-	}
+		if $DB::options{ ddd };
 
+	#FIX: actions are skipped for `s 5` command
 	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 	my $steps_left =  DB::state( 'steps_left' );
 	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
@@ -936,8 +933,6 @@ sub DB {
 	my $stop =  0;
 	my $traps =  DB::traps();
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
-		print $DB::OUT "Meet breakpoint %s:%s\n" ,state( 'file' ) ,state( 'line' )
-			if $DB::options{ _debug };
 		# NOTE: the stop events are not exclusive so we can not use elsif
 		# FIX: rename: action -> actions
 		if( exists $trap->{ action } ) {
@@ -1004,8 +999,6 @@ sub DB {
 	# Stop if required or we are in step-by-step mode
 
 	# TODO: Implement on_stop event
-	print $DB::OUT "Stopped\n"   if $DB::options{ _debug };
-
 
 	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
 		if $DB::options{ ddd };
@@ -1093,6 +1086,8 @@ sub interact {
 
 	local $DB::interaction =  $DB::interaction +1;
 
+	# local $DB::options{ dd } =  0; # Localization breaks debugger debugging
+	# TODO: Describe at pod why
 	my $old =  $DB::options{ dd };
 	$ext_call++; $DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
@@ -1132,39 +1127,20 @@ sub test {
 	2;
 }
 
-# sub state {
-# 	my( $name, $value ) =  @_;
 
-# 	return $DB::state   if $name eq 'state';
-
-# 	if( @_ == 2 ) {
-# 		if( $DB::options{ ddd } && $name eq 'single' ) {
-# 			my($file, $line) =  (caller 0)[1,2];
-# 			$file =~ s'.*?([^/]+)$'$1'e;
-# 			print $DB::OUT "!! DB::single state changed "
-# 				.$DB::single ." -> $value"
-# 				." at $file:$line\n"
-# 		}
-
-# 		no strict "refs";
-# 		${ "DB::$name" }             =  $value;
-# 		return $DB::state->[ $DB::ddlvl ]{ $name } =  $value;
-# 	}
-
-# 	return $DB::state->[ $DB::ddlvl ]{ $name };
-# }
 
 sub pop_frame {
+	#NOTICE: We will fall into infinite loop if something dies inside this sub
+	#because this sub is called when flow run out of scope.
+
 	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
-	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\n"
+	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
 		. "    $last->{ file }:$last->{ line } }\n\n"
 		if $DB::options{ ddd };
-	if( $DB::options{ _debug } ) {
-		print $DB::OUT "Returning from " .$last->{ sub } ." to level ". @{ DB::state( 'stack' ) } ."\n";
-	}
 
 	if( @{ DB::state( 'stack' ) } ) {
+		# Restore $DB::single for upper frame
 		DB::state( 'single', DB::state( 'single' ) );
 	} else {
 		# Something nasty happened at &push_frame, because of we are at
@@ -1198,6 +1174,7 @@ sub push_frame2 {
 
 		my $stack =  DB::state( 'stack' );
 		push @{ $stack }, {()
+			# Until we stop at a callee last known cursor position is the caller position
 			,package     =>  $stack->[-1]{ package }
 			,file        =>  $stack->[-1]{ file    }
 			,line        =>  $stack->[-1]{ line    }
@@ -1267,7 +1244,6 @@ sub sub {
 		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
 	}
-	print "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 	if( $DB::sub eq 'DB::pop_frame' ) {
 		DB::state( 'single', 0 )   unless $DB::options{ dd };
@@ -1275,8 +1251,6 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
 	}
-
-	print $DB::OUT "DB::sub called; $DB::sub -- $DB::single\n"   if $DB::options{ _debug };
 
 	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
 	$DB::inSUB =  1;
@@ -1289,6 +1263,7 @@ sub sub {
 
 	push_frame( 'C' );
 
+	# Do not stop inside sub for STEP_OVER debugger command
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	$DB::inSUB =  0;

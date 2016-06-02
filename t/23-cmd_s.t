@@ -78,6 +78,7 @@ is
 	,$files->{ 'do n steps' }
 	,"Do N steps at once";
 
+#IT: do not skip actions when `s N`
 
 
 $script =~  s/t1\(\)/goto &t1/;
