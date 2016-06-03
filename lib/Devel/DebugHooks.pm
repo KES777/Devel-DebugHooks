@@ -1092,10 +1092,12 @@ sub interact {
 	local $DB::interaction =  $DB::interaction +1;
 
 	# local $DB::options{ dd } =  0; # Localization breaks debugger debugging
-	# TODO: Describe at pod why
+	# because it prevents us to turn ON debugging by command: $DB::options{ dd } =  1;
 	my $old =  $DB::options{ dd };
 	$ext_call++; $DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+		#NOTICE: we restore { dd } flag before call to &process and not after
+		# as in case of localization
 		$DB::options{ dd } =  $old;
 		return process( $str );
 	}
