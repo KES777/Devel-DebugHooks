@@ -286,9 +286,10 @@ sub applyOptions {
 sub state {
 	my( $name, $value, $set_only_global ) =  @_;
 
+	my $debug =  $DB::options{ ddd }  &&  $DB::single;
 
-	if( $DB::options{ ddd } ) {
-		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n";
+	if( $debug ) {
+		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n";
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
@@ -328,12 +329,12 @@ sub state {
 
 	my $frame =  $stack->[ -1 ];
 	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
-		if $DB::options{ ddd };
+		if $debug;
 
 
 	if( @_ >= 2 ) {
 		no strict "refs";
-		if( $DB::options{ ddd } ) {
+		if( $debug ) {
 			if( $set_only_global ) {
 				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) ";
 			}
@@ -348,7 +349,7 @@ sub state {
 	}
 
 
-	print $DB::OUT "\n\n"   if $DB::options{ ddd };
+	print $DB::OUT "\n\n"   if $debug;
 
 
 	return $frame->{ $name };
@@ -915,19 +916,19 @@ sub postponed {
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
 	scope_guard {
-		print $DB::OUT "\nTRAPPED OUT: $DB::ddlvl\n";
-		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call\n\n";
+		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n";
+		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
 	}   if $DB::options{ ddd };
 	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
 		if $DB::options{ ddd };
 	local $DB::inDB =  $DB::inDB +1;
-	init();
+	my( $p, $f, $l ) =  init();
 
 	&save_context;
 
-	printf $DB::OUT "DB::DB called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single t:$DB::trace <-- $file:$line\n"
-		."    cursor(DB) => %s, %s, %s\n"
-		,state( 'package' ), state( 'file' ) ,state( 'line' )
+
+	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n"
+		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
 		if $DB::options{ ddd };
 
 	#FIX: actions are skipped for `s 5` command
@@ -1005,7 +1006,7 @@ sub DB {
 
 	# TODO: Implement on_stop event
 
-	print "\n\ne:$DB::ext_call n:$DB::ddlvl s:$DB::single\n\n"
+	print "\n\nl:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n\n"
 		if $DB::options{ ddd };
 	{
 		local $DB::options{ dd } =  0;
@@ -1039,6 +1040,8 @@ sub init {
 	# https://rt.perl.org/Ticket/Display.html?id=127249
 	# die ">$DB::file< ne >" .file( $DB::file ) ."<"
 	# 	if $DB::file ne file( $DB::file );
+
+	return( $p, $f, $l );
 }
 
 
@@ -1096,6 +1099,7 @@ sub interact {
 	my $old =  $DB::options{ dd };
 	$ext_call++; $DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+		print "\n" ."*"x80 ."\n"   if $DB::options{ ddd };
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
 		$DB::options{ dd } =  $old;
@@ -1142,7 +1146,7 @@ sub pop_frame {
 
 	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
-	print $DB::OUT "POP  FRAME <<<< e:$ext_call n:$ddlvl s:$DB::single  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
+	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
 		. "    $last->{ file }:$last->{ line } }\n\n"
 		if $DB::options{ ddd };
 
@@ -1165,7 +1169,7 @@ sub push_frame2 {
 		3;
 	}
 
-	print $DB::OUT "PUSH FRAME >>>>  e:$ext_call n:$ddlvl s:$DB::single  --  $DB::sub\n"
+	print $DB::OUT "PUSH FRAME >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
 	if( $_[0] ne 'G' ) {
@@ -1239,7 +1243,7 @@ sub push_frame {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	$DB::_sub =  $DB::sub;
-	print $DB::OUT "DB::sub called; e:$DB::ext_call n:$DB::ddlvl s:$DB::single  --  "
+	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}" }->()
 		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
