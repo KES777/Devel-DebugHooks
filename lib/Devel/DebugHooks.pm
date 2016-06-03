@@ -334,7 +334,12 @@ sub state {
 	if( @_ >= 2 ) {
 		no strict "refs";
 		if( $DB::options{ ddd } ) {
-			print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
+			if( $set_only_global ) {
+				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) ";
+			}
+			else {
+				print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
+			}
 		}
 
 		${ "DB::$name" } =  $value;
