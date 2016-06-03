@@ -284,7 +284,7 @@ sub applyOptions {
 
 
 sub state {
-	my( $name, $value ) =  @_;
+	my( $name, $value, $set_only_global ) =  @_;
 
 
 	if( $DB::options{ ddd } ) {
@@ -339,7 +339,7 @@ sub state {
 
 		${ "DB::$name" } =  $value;
 		$frame->{ $name } =  $value
-			unless @_ == 3;
+			unless $set_only_global;
 	}
 
 
