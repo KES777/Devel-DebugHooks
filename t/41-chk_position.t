@@ -35,7 +35,7 @@ my $files =  get_data_section();
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	2;
 	3;
@@ -49,7 +49,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t0 {
 		2;
 	}

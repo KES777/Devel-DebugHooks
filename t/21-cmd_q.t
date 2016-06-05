@@ -44,7 +44,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	END{ 4; }
 	1;
 	2;

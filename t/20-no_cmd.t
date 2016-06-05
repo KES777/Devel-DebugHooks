@@ -32,7 +32,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	END{ 4; }
 	1;
 	2;
@@ -46,7 +46,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -65,7 +65,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -87,7 +87,7 @@ is
 TODO: {
 	local $TODO =  "RT#127379";
 
-	$script =  <<'	PERL' =~ s#^\t\t##rgm;
+	($script =  <<'	PERL') =~ s#^\t\t##gm;
 		$x =  1;
 		if( $x > 2 ) {
 			1;

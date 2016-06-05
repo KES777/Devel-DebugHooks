@@ -101,7 +101,8 @@ sub _list {
 		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
-		print $DB::OUT "$line: " . ($source->[ $line ] =~ s/\t/    /rg ); #/
+		(my $tmp =  $source->[ $line ]) =~ s/\t/    /g; #/
+		print $DB::OUT "$line: $tmp";
 	}
 }
 
@@ -344,7 +345,8 @@ $DB::commands =  {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
 
-		print $DB::OUT "$curr_file:$line_cursor    " .(DB::source()->[ $line_cursor ] =~ s/^(\s+)//r); #/
+		(my $tmp=DB::source()->[ $line_cursor ]) =~ s/^\s+//;
+		print $DB::OUT "$curr_file:$line_cursor    $tmp";
 
 		1;
 	},

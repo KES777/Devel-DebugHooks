@@ -41,7 +41,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	$x =  1;
 	$x =  [ a => 1 ];
 	$x =  { a => 1 };
@@ -58,7 +58,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t {
 		1;
 	}
@@ -73,7 +73,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	$_ =  7;
 	@_ = ( 1..$_ );
 	1;
@@ -86,7 +86,7 @@ is
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	use strict; use warnings;
 	2;

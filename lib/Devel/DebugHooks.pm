@@ -597,7 +597,7 @@ BEGIN { # Initialization goes here
 
 
 	# We put code here to execute it only once
-	my $usercontext =  <<'	CODE' =~ s#^\t\t##rgm;
+	(my $usercontext =  <<'	CODE') =~ s#^\t\t##gm;
 		BEGIN{
 			( $^H, ${^WARNING_BITS}, my $hr ) =  @DB::context[1..3];
 			%^H =  %$hr   if $hr;
@@ -1260,7 +1260,7 @@ sub push_frame {
 sub sub {
 	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
-		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}" }->()
+		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1# } (caller 0)[1,2] ]}" }->()
 		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 

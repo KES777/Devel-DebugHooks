@@ -44,7 +44,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	my $x =  { a => 7 };
 	for( 1..3 ) {
 		$x->{ a }++;                     #DBG:iter e $_ #
