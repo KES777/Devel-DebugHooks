@@ -7,7 +7,8 @@ my $build = Module::Build->new(
 	module_name => 'Devel::DebugHooks',
 	dist_author => 'Eugen Konkov <kes-kes@yandex.ru>',
 	requires => {
-		'Guard' =>  0,
+		'Guard'      =>  0,
+		'Data::Dump' =>  0,
 	},
 	recommends         => {
 		'Log::Log4perl'   =>  0,            # Devel::DebugHooks::TraceAccess.pm
