@@ -9,6 +9,22 @@ BEGIN {
 
 our $VERSION =  '0.01';
 
+=head1 NAME
+
+C<Devel::DebugHooks> - Hooks for perl debugger
+
+=head1 SYNOPSIS
+
+ perl -d:DebugHooks::Terminal script.pl
+
+ ## If you want to debug remotely you required additionally install IO::Async
+ # on remote
+ perl -d:DebugHooks::Server script.pl
+ # on local
+ ./dclient.pl 1.2.3.4 9000
+
+=cut
+
 
 # We should init $DB::dbg as soon as possible, because if trace_subs/load are
 # enabled at compile time (at the BEGIN block) the DB:: module will make call
@@ -1357,6 +1373,21 @@ BEGIN {
 1;
 
 __END__
+
+=head1 SUPPORT
+
+Bugs may be reported via RT at
+
+ https://rt.cpan.org/Public/Dist/Display.html?Name=Devel-DebugHooks
+
+Support by IRC may also be found on F<irc.perl.org> in the F<#debughooks>
+channel.
+
+=head1 AUTHOR
+
+Eugen Konkov <kes-kes@yandex.ru>
+
+=cut
 
 Describe what is used by perl internals from DB:: at compile time
 ${ "::_<$filename" } - $filename
