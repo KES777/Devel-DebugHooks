@@ -1330,31 +1330,34 @@ sub sub {
 # The perl may not "...fall back to &DB::sub (args)."
 # http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 sub lsub : lvalue {
+	my $x;
 	if( $ext_call ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } };
-		return &$DB::sub
+		$x =  &$DB::sub
+	}
+	else {
+		# manual localization
+		Hook::Scope::POST( \&sub_returns );
+		push @{ DB::state( 'stack' ) }, {
+			single      =>  DB::state( 'single' ),
+			sub         =>  $DB::sub,
+			goto_frames =>  DB::state( 'goto_frames' ),
+		};
+
+		DB::state( 'goto_frames', [] );
+
+
+		# HERE TOO client's code 'caller' return wrong info
+		trace_subs( 'L' );
+
+		DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
+		{
+			BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+			$x =  &$DB::sub;
+		}
 	}
 
-
-	# manual localization
-	Hook::Scope::POST( \&sub_returns );
-	push @{ DB::state( 'stack' ) }, {
-		single      =>  DB::state( 'single' ),
-		sub         =>  $DB::sub,
-		goto_frames =>  DB::state( 'goto_frames' ),
-	};
-
-	DB::state( 'goto_frames', [] );
-
-
-	# HERE TOO client's code 'caller' return wrong info
-	trace_subs( 'L' );
-
-	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	{
-		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		return &$DB::sub;
-	}
+	$x;
 };
 
 
