@@ -24,7 +24,8 @@ sub TIEHASH {
 
 
 {
-	package ScalarHistory;
+	package             # hide the package from the PAUSE indexer
+		ScalarHistory;
 	my $logger =  Log::Log4perl::get_logger( "LogVars" );
 
 
@@ -61,7 +62,8 @@ sub TIEHASH {
 }
 
 {
-	package HashHistory;
+	package             # hide the package from the PAUSE indexer
+		HashHistory;
 	my $logger =  Log::Log4perl::get_logger( "LogVars" );
 
 
