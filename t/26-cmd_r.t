@@ -48,17 +48,17 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='s;s;r;r' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;r;r' -e '$script'` )
 	,$files->{ return }
 	,"Returning from subroutine";
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r;r' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r;r' -e '$script'` )
 	,$files->{ 'return and stop' }
 	,'Returning from subroutine. Stop at upper frame';
 
 is
-	n( `perl $lib -d:DbInteract='r;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='r;s;q' -e '$script'` )
 	,$files->{ 'return from main' }
 	,'Return from main:: should finish script';
 
@@ -81,57 +81,57 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='s;s;s;r 1;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;s;r 1;q' -e '$script'` )
 	,$files->{ 'return 1' }
 	,'Returning from 1 subroutine';
 
 is
-	n( `perl $lib -d:DbInteract='s;s;s;r 2;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;s;r 2;q' -e '$script'` )
 	,$files->{ 'return 2' }
 	,'Returning from 2 subroutines';
 
 is
-	n( `perl $lib -d:DbInteract='s;s;s;r 3;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;s;r 3;q' -e '$script'` )
 	,$files->{ 'return 3' }
 	,'Returning from 3 subroutines';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 1;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 1;q' -e '$script'` )
 	,$files->{ 'return 1 and stop' }
 	,'Returning from 1 subroutines. Stop at upper frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
 	,$files->{ 'return 2 and stop' }
 	,'Returning from 2 subroutines. Stop at upper frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 3;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 3;q' -e '$script'` )
 	,$files->{ 'return 3 and stop' }
 	,'Returning from 3 subroutines. Stop at upper frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 20;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 20;q' -e '$script'` )
 	,$files->{ 'return all and stop' }
 	,'Returning from all subroutines. Stop when no frames left';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 0^;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 0^;q' -e '$script'` )
 	,$files->{ 'return all and stop' }
 	,'Return to first frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 1^;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 1^;q' -e '$script'` )
 	,$files->{ 'return to first' }
 	,'Return to second frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 2^;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 2^;q' -e '$script'` )
 	,$files->{ 'return to second' }
 	,'Return to second frame';
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 5^;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 5^;s;q' -e '$script'` )
 	,$files->{ 'return to unexisting' }
 	,'Return to unexisting frame do noting';
 
@@ -153,7 +153,7 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;r 2;q' -e '$script'` )
 	,$files->{ 'another additional return' }
 	,'Return from sub which were last OP. Stop at some upper frame';
 

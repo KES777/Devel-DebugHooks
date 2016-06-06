@@ -52,7 +52,7 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='q' -e '$script'` )
 	,$files->{ 'quit' }
 	,"Quit debugger. Do not trace END/DESTROY";
 

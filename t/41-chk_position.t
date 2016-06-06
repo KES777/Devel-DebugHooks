@@ -43,7 +43,7 @@ PERL
 
 $cmds =  'e [ $DB::package => $DB::file => $DB::line ];s;' x3;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position' }
 	,'Position should be updated for each step';
 
@@ -66,13 +66,13 @@ PERL
 
 $cmds =  'go,trace_returns,trace_subs';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
 
 $cmds =  'off;go 8;go,trace_returns,trace_subs';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
 

@@ -52,7 +52,7 @@ PERL
 
 $cmd =  's;$x;e $x;$x++;e $x;s;e $x;s;e $x;s;@x;scalar @x;e \@x;s;%x;scalar %x;e \%x;';
 is
-	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ 'eval' }
 	,'Eval expressions at user context and dump them';
 
@@ -67,7 +67,7 @@ PERL
 
 $cmd =  's;scalar @_;e \@_';
 is
-	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ '@_ not clash' }
 	,'Debugger\'s @_ should not clash with client\'s one';
 
@@ -80,7 +80,7 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='s 2;e \$_;e \\\@_;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s 2;e \$_;e \\\@_;q' -e '$script'` )
 	,$files->{ '$_ not clash' }
 	,"EXPR evaluation should see user's \@_ and \$_";
 
@@ -94,7 +94,7 @@ PERL
 
 $cmd =  '$#$DB::options{ undef }="undef"#3;4#$x#s#3;4#$x#q';
 is
-	nn( `perl $lib -d:DbInteract='$cmd' -e '$script' 2>&1` )
+	nn( `$^X $lib -d:DbInteract='$cmd' -e '$script' 2>&1` )
 	,$files->{ 'pragma and warnings' }
 	,'pragma and warnings from client\'s current scope should be applyed';
 

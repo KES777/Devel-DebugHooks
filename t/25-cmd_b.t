@@ -40,52 +40,52 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b;q' -e '$script'` )
 	,$files->{ 'list empty traps' }
 	,"Empty traps list";
 
 is
-	n( `perl $lib -d:DbInteract='b 1;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 1;b;q' -e '$script'` )
 	,$files->{ 'list one trap' }
 	,"Put one trap. List traps";
 
 is
-	n( `perl $lib -d:DbInteract='b 1;b 3;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 1;b 3;b;q' -e '$script'` )
 	,$files->{ 'list two traps' }
 	,"Put two traps. List traps";
 
 is
-	n( `perl $lib -d:DbInteract='b t1;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b t1;b;q' -e '$script'` )
 	,$files->{ 'list trap on sub name' }
 	,"Put trap by sub name";
 
 is
-	n( `perl $lib -d:DbInteract='b 3;go;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 3;go;q' -e '$script'` )
 	,$files->{ 'stop by line' }
 	,"Stop on trap by line";
 
 is
-	n( `perl $lib -d:DbInteract='b 3 2<7;go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 3 2<7;go' -e '$script'` )
 	,$files->{ 'stop by true expr' }
 	,"Stop on trap with expression evaluated to true";
 
 is
-	n( `perl $lib -d:DbInteract='b 3 2>7;go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 3 2>7;go' -e '$script'` )
 	,$files->{ 'dont stop by false expr' }
 	,"Do not stop on trap with expression evaluated to false";
 
 is
-	n( `perl $lib -d:DbInteract='b 3 2>7;b;b -3 1<3;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 3 2>7;b;b -3 1<3;b;q' -e '$script'` )
 	,$files->{ 'trap state changed' }
 	,"Trap state should be changed by new values";
 
 is
-	n( `perl $lib -d:DbInteract='b -3;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b -3;b;q' -e '$script'` )
 	,$files->{ 'disabled trap' }
 	,"Add disabled trap with default condition";
 
 is
-	n( `perl $lib -d:DbInteract='b +3;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b +3;b;q' -e '$script'` )
 	,$files->{ 'enabled trap' }
 	,"Add enabled trap with default condition";
 
@@ -103,12 +103,12 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b 9;go;go;scalar \@{ DB::state( "stack" ) }' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2;b 9;go;go;scalar \@{ DB::state( "stack" ) }' -e '$script'` )
 	,$files->{ 'stop by line in sub' }
 	,"Stop on trap by line in sub then outside of it";
 
 is
-	n( `perl $lib -d:DbInteract='b t1;go;s;scalar \@{ DB::state( "stack" ) };s' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b t1;go;s;scalar \@{ DB::state( "stack" ) };s' -e '$script'` )
 	,$files->{ 'stop by sub name' }
 	,"Stop on trap by subroutine name";
 
@@ -116,52 +116,52 @@ is
 
 $script =~  s/t1\(\)/goto &t1/;
 is
-	n( `perl $lib -d:DbInteract='b t1;go;s;scalar \@{ DB::state( "stack" ) }' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b t1;go;s;scalar \@{ DB::state( "stack" ) }' -e '$script'` )
 	,$files->{ 'stop by sub name. goto' }
 	,"Stop on trap by subroutine name reached from goto";
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b -2;go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2;b -2;go' -e '$script'` )
 	,$files->{ '!stop on disabled' }
 	,"Do not stop on disabled traps";
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b -2;b +2;go;s' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2;b -2;b +2;go;s' -e '$script'` )
 	,$files->{ 'stop on enabled' }
 	,"Stop on enabled traps";
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b -2;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2;b -2;b;q' -e '$script'` )
 	,$files->{ 'list disabled' }
 	,"List disabled traps";
 
 is
-	n( `perl $lib -d:DbInteract='b 2;b -2;b +2;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2;b -2;b +2;b;q' -e '$script'` )
 	,$files->{ 'list enabled' }
 	,"List enabled traps";
 
 is
-	n( `perl $lib -d:DbInteract='b 2 2>7;b -2;b +2;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2 2>7;b -2;b +2;b;q' -e '$script'` )
 	,$files->{ 'list conditional reenabled' }
 	,"List conditional reenabled trap";
 
 is
-	n( `perl $lib -d:DbInteract='b 2 2<7!;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2 2<7!;b;q' -e '$script'` )
 	,$files->{ 'list onetime trap' }
 	,"List onetime trap";
 
 is
-	n( `perl $lib -d:DbInteract='b 2!;go;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2!;go;b;q' -e '$script'` )
 	,$files->{ 'onetime trap removed' }
 	,"Onetime traps should be removed after triggering";
 
 is
-	n( `perl $lib -d:DbInteract='b -2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b -2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
 	,$files->{ 'onetime trap not affect' }
 	,"Onetime trap does not affect common trap";
 
 is
-	n( `perl $lib -d:DbInteract='b 2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='b 2 2>7;b;b 2!;b;go;b;q' -e '$script'` )
 	,$files->{ 'onetime trap not affected' }
 	,"Onetime trap should not affected by common trap";
 

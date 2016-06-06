@@ -53,17 +53,17 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `perl $lib -d:DebugHooks::KillPrint -e '$script'` )
+	n( `$^X $lib -d:DebugHooks::KillPrint -e '$script'` )
 	,$files->{ 'all' }
 	,"Run debugger commands for all profiles";
 
 is
-	n( `perl $lib -d:DebugHooks::KillPrint=iter -e '$script'` )
+	n( `$^X $lib -d:DebugHooks::KillPrint=iter -e '$script'` )
 	,$files->{ 'iter' }
 	,"Run debugger commands only for 'iter' profile";
 
 is
-	n( `perl $lib -d:DebugHooks::KillPrint=default -e '$script'` )
+	n( `$^X $lib -d:DebugHooks::KillPrint=default -e '$script'` )
 	,$files->{ 'default' }
 	,"Run debugger commands only for 'default' profile";
 

@@ -40,7 +40,7 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `perl $lib -d:DbInteract -e '$script'` )
+	n( `$^X $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'step-by-step' }
 	,"Step-by-step debugging";
 
@@ -59,7 +59,7 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract -e '$script'` )
+	n( `$^X $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'sbs subs' }
 	,"Step-by-step debugging subroutines";
 
@@ -78,7 +78,7 @@ is
 PERL
 
 is
-	n( `perl $lib -d:DbInteract -e '$script'` )
+	n( `$^X $lib -d:DbInteract -e '$script'` )
 	,$files->{ 'sbs goto' }
 	,"Step-by-step debugging goto";
 
@@ -101,7 +101,7 @@ TODO: {
 	PERL
 
 	is
-		n( `perl $lib -d:DbInteract -e'$script'` )
+		n( `$^X $lib -d:DbInteract -e'$script'` )
 		,$files->{ 'sbs if block' }
 		,"Step-by-step debugging if block";
 }

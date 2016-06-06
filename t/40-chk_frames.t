@@ -49,13 +49,13 @@ PERL
 
 $cmds =  'e DB::state( "stack" );s;'x3 .'s;e DB::state( "stack" );'x2;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames' }
 	,"Check subroutine frames";
 
 $cmds =  'e DB::state( "goto_frames" );s;'x3 .'s;e DB::state( "goto_frames" );'x2;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'goto frames' }
 	,"Check goto frames";
 
@@ -74,13 +74,13 @@ PERL
 
 $cmds =  'e DB::state( "stack" );s;'x4;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames with goto' }
 	,"Check subroutine frames with goto";
 
 $cmds =  'e DB::state( "goto_frames" );s;'x4;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'goto frames with goto' }
 	,"Check goto frames with goto";
 
@@ -104,19 +104,19 @@ PERL
 
 $cmds =  'e DB::state( "stack" );s;'x3 .'s;e DB::state( "stack" );'x5;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'subroutine frames with nested goto' }
 	,"Check subroutine frames with nested goto";
 
 $cmds =  'e DB::state( "goto_frames" );s;'x3 .'s;e DB::state( "goto_frames" );'x5;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'goto frames with nested goto' }
 	,"Check goto frames with nested goto";
 
 $cmds =  's 6;e DB::state( "goto_frames" );q';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'trace file:line' }
 	,"package:file:line should be updated as often as possible";
 
@@ -129,7 +129,7 @@ is
 # about file:line where goto is occured like $DB::sub is supplyed for &DB::sub
 $cmds =  'go 2;e DB::state( "goto_frames" );q';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'trace file:line #2' }
 	,"package:file:line should be updated as often as possible. #2";
 
