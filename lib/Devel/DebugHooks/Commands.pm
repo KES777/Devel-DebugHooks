@@ -102,7 +102,8 @@ sub _list {
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
 		(my $tmp =  $source->[ $line ]) =~ s/\t/    /g; #/
-		print $DB::OUT "$line: $tmp";
+		$tmp =  " $tmp"   if length $tmp > 1; # $tmp have at least "\n"
+		print $DB::OUT "$line:$tmp";
 	}
 }
 
