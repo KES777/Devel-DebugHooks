@@ -25,6 +25,8 @@ t/24-cmd_n.t
 t/25-cmd_b.t
 t/26-cmd_r.t
 t/27-cmd_e.t
+t/28-cmd_a.t
+t/29-cmd_l.t
 t/40-chk_frames.t
 t/41-chk_position.t
 t/70-dd.t
