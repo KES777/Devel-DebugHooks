@@ -961,7 +961,7 @@ sub DB {
 			# Run all actions
 			for my $action ( @{ $trap->{ action } } ) {
 				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				$ext_call++; scall( \&process, $action );
+				$ext_call++; scall( \&process, $action, 1 );
 			}
 
 			# Actions do not stop execution
@@ -1064,7 +1064,7 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my( $str ) =  @_;
+	my( $str, $quiet ) =  @_;
 
 	my @args =  ( $DB::dbg, $str );
 	my $code =  $DB::dbg->can( 'process' );
@@ -1092,7 +1092,7 @@ sub process {
 	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
 
 	local $" =  $DB::options{ '"' }  //  $";
-	print $DB::OUT "@result\n";
+	print $DB::OUT "@result\n"   unless $quiet;
 	print $DB::OUT "ERROR: $@"   if $@;
 
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
