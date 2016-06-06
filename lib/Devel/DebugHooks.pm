@@ -1390,6 +1390,14 @@ channel.
 
 Eugen Konkov <kes-kes@yandex.ru>
 
+=head1 COPYRIGHT
+
+The following copyright notice applies to all the files provided in
+this distribution, including binary files, unless explicitly noted
+otherwise.
+
+Copyright 2016 Eugen Konkov
+
 =head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify
