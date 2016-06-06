@@ -30,7 +30,7 @@ sub n {
 sub nn {
 	$_ =  n( @_ );
 
-	s#( at ).*$#$1...#gm;
+	s#( at ).*$#$1...#gm;    # Remove file:line info
 
 	$_;
 }
