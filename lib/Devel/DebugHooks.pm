@@ -570,6 +570,8 @@ BEGIN { # Initialization goes here
 			# Keep list of $filenames we perhaps manipulate traps
 			$DB::_tfiles->{ $filename } =  1;
 
+			*dbline =  $main::{ "_<$filename" }; #WORKRAOUND (see commit)
+
 			return \%{ "::_<$filename" };
 		}
 
