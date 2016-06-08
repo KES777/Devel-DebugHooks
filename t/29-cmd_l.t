@@ -53,8 +53,10 @@ my $files =  get_data_section();
 	t();
 PERL
 
+my $tmp =  n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` );
+$tmp =~ s/x0:/ 0:/; #WORKAROUND: old perl shows zero line as breakable
 is
-	n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` )
+    $tmp
 	,$files->{ 'list' }
 	,"List the source code";
 
@@ -65,7 +67,7 @@ __DATA__
 -e:0005  1;
 -e:0002    2;
 -e
-    x0: use Devel::DbInteract split(/,/,q{b 2;a 2 1;s 2;l .;q});;
+     0: use Devel::DbInteract split(/,/,q{b 2;a 2 1;s 2;l .;q});;
      1: sub t {
 ab>>x2:     2;
      3: }
