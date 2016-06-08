@@ -7,7 +7,23 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.01';
+our $VERSION =  '0.01_05';
+
+=head1 NAME
+
+C<Devel::DebugHooks> - Hooks for perl debugger
+
+=head1 SYNOPSIS
+
+ perl -d:DebugHooks::Terminal script.pl
+
+ ## If you want to debug remotely you required additionally install IO::Async
+ # on remote
+ perl -d:DebugHooks::Server script.pl
+ # on local
+ ./dclient.pl 1.2.3.4 9000
+
+=cut
 
 
 # We should init $DB::dbg as soon as possible, because if trace_subs/load are
@@ -554,6 +570,8 @@ BEGIN { # Initialization goes here
 			# Keep list of $filenames we perhaps manipulate traps
 			$DB::_tfiles->{ $filename } =  1;
 
+			*dbline =  $main::{ "_<$filename" }; #WORKRAOUND RT#119799 (see commit)
+
 			return \%{ "::_<$filename" };
 		}
 
@@ -581,7 +599,7 @@ BEGIN { # Initialization goes here
 
 
 	# We put code here to execute it only once
-	my $usercontext =  <<'	CODE' =~ s#^\t\t##rgm;
+	(my $usercontext =  <<'	CODE') =~ s#^\t\t##gm;
 		BEGIN{
 			( $^H, ${^WARNING_BITS}, my $hr ) =  @DB::context[1..3];
 			%^H =  %$hr   if $hr;
@@ -945,7 +963,7 @@ sub DB {
 			# Run all actions
 			for my $action ( @{ $trap->{ action } } ) {
 				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				$ext_call++; scall( \&process, $action );
+				$ext_call++; scall( \&process, $action, 1 );
 			}
 
 			# Actions do not stop execution
@@ -1048,7 +1066,7 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my( $str ) =  @_;
+	my( $str, $quiet ) =  @_;
 
 	my @args =  ( $DB::dbg, $str );
 	my $code =  $DB::dbg->can( 'process' );
@@ -1074,9 +1092,10 @@ sub process {
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT "No command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
 	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
+	@result =  ()   if $@  &&  $result[0] eq $DB::options{ undef }; #WORKAOUND (see commit)
 
 	local $" =  $DB::options{ '"' }  //  $";
-	print $DB::OUT "@result\n";
+	print $DB::OUT "@result\n"   unless $quiet;
 	print $DB::OUT "ERROR: $@"   if $@;
 
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
@@ -1244,7 +1263,7 @@ sub push_frame {
 sub sub {
 	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
-		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#r } (caller 0)[1,2] ]}" }->()
+		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1# } (caller 0)[1,2] ]}" }->()
 		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
@@ -1314,31 +1333,34 @@ sub sub {
 # The perl may not "...fall back to &DB::sub (args)."
 # http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 sub lsub : lvalue {
+	my $x;
 	if( $ext_call ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } };
-		return &$DB::sub
+		$x =  &$DB::sub
+	}
+	else {
+		# manual localization
+		Hook::Scope::POST( \&sub_returns );
+		push @{ DB::state( 'stack' ) }, {
+			single      =>  DB::state( 'single' ),
+			sub         =>  $DB::sub,
+			goto_frames =>  DB::state( 'goto_frames' ),
+		};
+
+		DB::state( 'goto_frames', [] );
+
+
+		# HERE TOO client's code 'caller' return wrong info
+		trace_subs( 'L' );
+
+		DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
+		{
+			BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
+			$x =  &$DB::sub;
+		}
 	}
 
-
-	# manual localization
-	Hook::Scope::POST( \&sub_returns );
-	push @{ DB::state( 'stack' ) }, {
-		single      =>  DB::state( 'single' ),
-		sub         =>  $DB::sub,
-		goto_frames =>  DB::state( 'goto_frames' ),
-	};
-
-	DB::state( 'goto_frames', [] );
-
-
-	# HERE TOO client's code 'caller' return wrong info
-	trace_subs( 'L' );
-
-	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	{
-		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		return &$DB::sub;
-	}
+	$x;
 };
 
 
@@ -1357,6 +1379,34 @@ BEGIN {
 1;
 
 __END__
+
+=head1 SUPPORT
+
+Bugs may be reported via RT at
+
+ https://rt.cpan.org/Public/Dist/Display.html?Name=Devel-DebugHooks
+
+Support by IRC may also be found on F<irc.perl.org> in the F<#debughooks>
+channel.
+
+=head1 AUTHOR
+
+Eugen Konkov <kes-kes@yandex.ru>
+
+=head1 COPYRIGHT
+
+The following copyright notice applies to all the files provided in
+this distribution, including binary files, unless explicitly noted
+otherwise.
+
+Copyright 2016 Eugen Konkov
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
 
 Describe what is used by perl internals from DB:: at compile time
 ${ "::_<$filename" } - $filename

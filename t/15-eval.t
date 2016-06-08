@@ -44,7 +44,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t {
 		return ( 1, undef, undef, 2 );
 	}
@@ -56,46 +56,46 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='t();q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='t();q' -e '$script'` )
 	,$files->{ 'list' }
 	,"Do eval at list context by default";
 
 is
-	n( `perl $lib -d:DbInteract='scalar t();q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='scalar t();q' -e '$script'` )
 	,$files->{ 'scalar for list' }
 	,"Force scalar contex for list when eval";
 
 is
-	n( `perl $lib -d:DbInteract='scalar a();q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='scalar a();q' -e '$script'` )
 	,$files->{ 'scalar for array' }
 	,"Force scalar contex for array when eval";
 
 is
-	n( `perl $lib -d:DbInteract=' \$DB::options{ undef } =  "undef";t();q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract=' \$DB::options{ undef } =  "undef";t();q' -e '$script'` )
 	,$files->{ 'undef' }
 	,"Replace 'undef' values at results";
 
 is
-	n( `perl $lib -d:DbInteract=' \$DB::options{ "\\"" } =  "-";t();q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract=' \$DB::options{ "\\"" } =  "-";t();q' -e '$script'` )
 	,$files->{ 'separator' }
 	,"Set list separator";
 
 is
-	nl( `perl $lib -d:DbInteract='die "test";q' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='die "test";q' -e '$script'` )
 	,$files->{ 'die' }
 	,"Die when eval";
 
 
 
 is
-	nl( `perl $lib -d:DbInteract='2+3;DB::state("file");q' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='2+3;DB::state("file");q' -e '$script'` )
 	,$files->{ 'eval expr' }
 	,"EXPR evaluation should not chagne debugger state";
 
 TODO: {
 	local $TODO =  'Create its own frame for evaluation';
 	is
-		nl( `perl $lib -d:DbInteract='t();DB::state("file");q' -e '$script'` )
+		nl( `$^X $lib -d:DbInteract='t();DB::state("file");q' -e '$script'` )
 		,$files->{ 'eval sub' }
 		,"Subroutine evaluation should not chagne debugger state";
 }

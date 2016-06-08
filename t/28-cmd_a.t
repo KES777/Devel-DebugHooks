@@ -45,39 +45,20 @@ my $files =  get_data_section();
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-	my $x =  { a => 7 };
-	for( 1..3 ) {
-		$x->{ a }++;                     #DBG:iter e $_ #
-	}
-	#DBG: e $x; #
+	1;
+	2;
+	3;
 PERL
 
 is
-	n( `$^X $lib -d:DebugHooks::KillPrint -e '$script'` )
-	,$files->{ 'all' }
-	,"Run debugger commands for all profiles";
-
-is
-	n( `$^X $lib -d:DebugHooks::KillPrint=iter -e '$script'` )
-	,$files->{ 'iter' }
-	,"Run debugger commands only for 'iter' profile";
-
-is
-	n( `$^X $lib -d:DebugHooks::KillPrint=default -e '$script'` )
-	,$files->{ 'default' }
-	,"Run debugger commands only for 'default' profile";
+	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s;q' -e '$script'` )
+	,$files->{ 'action' }
+	,"Set action at line";
 
 
 
 __DATA__
-@@ all
-1
-2
-3
-{ a => 10 }
-@@ iter
-1
-2
-3
-@@ default
-{ a => 10 }
+@@ action
+-e:0001  1;
+YES
+-e:0002  2;

@@ -45,39 +45,33 @@ my $files =  get_data_section();
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-	my $x =  { a => 7 };
-	for( 1..3 ) {
-		$x->{ a }++;                     #DBG:iter e $_ #
+	sub t {
+		2;
 	}
-	#DBG: e $x; #
+
+	1;
+	t();
 PERL
 
+my $tmp =  n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` );
+$tmp =~ s/x0:/ 0:/; #WORKAROUND: old perl shows zero line as breakable
 is
-	n( `$^X $lib -d:DebugHooks::KillPrint -e '$script'` )
-	,$files->{ 'all' }
-	,"Run debugger commands for all profiles";
-
-is
-	n( `$^X $lib -d:DebugHooks::KillPrint=iter -e '$script'` )
-	,$files->{ 'iter' }
-	,"Run debugger commands only for 'iter' profile";
-
-is
-	n( `$^X $lib -d:DebugHooks::KillPrint=default -e '$script'` )
-	,$files->{ 'default' }
-	,"Run debugger commands only for 'default' profile";
+    $tmp
+	,$files->{ 'list' }
+	,"List the source code";
 
 
 
 __DATA__
-@@ all
-1
-2
-3
-{ a => 10 }
-@@ iter
-1
-2
-3
-@@ default
-{ a => 10 }
+@@ list
+-e:0005  1;
+-e:0002    2;
+-e
+     0: use Devel::DbInteract split(/,/,q{b 2;a 2 1;s 2;l .;q});;
+     1: sub t {
+ab>>x2:     2;
+     3: }
+     4:
+    x5: 1;
+    x6: t();
+     7:
