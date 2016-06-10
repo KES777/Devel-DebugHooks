@@ -9,6 +9,7 @@ my $build = Module::Build->new(
 	requires => {
 		'Guard'      =>  0,
 		'Data::Dump' =>  0,
+		'perl'       =>  '5.12.0',
 	},
 	recommends         => {
 		'Log::Log4perl'   =>  0,            # Devel::DebugHooks::TraceAccess.pm
