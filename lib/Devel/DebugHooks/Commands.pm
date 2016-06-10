@@ -12,7 +12,6 @@ package Devel::DebugHooks::Commands;
 # TODO: enable/disable group of traps
 # TODO: implement option to show full/short sub options
 # TODO: split all code by two: user code and core
-# TODO: implement 'r n' to rewind n stack frames
 # TODO: implement distance 'T XXX'; Automatically sets XXX to the current line
 # TODO: implement 'b &' to set breakpoint to current sub
 # TODO: implement 'd code' command to debug given subroutine
@@ -29,6 +28,7 @@ package Devel::DebugHooks::Commands;
 # if() { statement; }
 # TODO: implement command to list all available packages
 # TODO: implement command to list all available subs in package ( DB::subs )
+# TODO: IT: closed variables are created at compile time. We do not see them when just eval at sub
 
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
@@ -100,7 +100,9 @@ sub _list {
 		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
-		print $DB::OUT "$line: " . ($source->[ $line ] =~ s/\t/    /rg ); #/
+		(my $tmp =  $source->[ $line ]) =~ s/\t/    /g; #/
+		$tmp =  " $tmp"   if length $tmp > 1; # $tmp have at least "\n"
+		print $DB::OUT "$line:$tmp";
 	}
 }
 
@@ -343,7 +345,8 @@ $DB::commands =  {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
 
-		print $DB::OUT "$curr_file:$line_cursor    " .(DB::source()->[ $line_cursor ] =~ s/^(\s+)//r); #/
+		(my $tmp=DB::source()->[ $line_cursor ]) =~ s/^\s+//;
+		print $DB::OUT "$curr_file:$line_cursor    $tmp";
 
 		1;
 	},

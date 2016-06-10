@@ -33,25 +33,25 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	2;
 	3;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go' -e '$script'` )
 	,$files->{ go }
 	,"Run script until the end";
 
 is
-	n( `perl $lib -d:DbInteract='go 3' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 3' -e '$script'` )
 	,$files->{ 'go to line' }
 	,"Run script to the line";
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -64,12 +64,12 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='go 2;go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;go' -e '$script'` )
 	,$files->{ 'go from sub' }
 	,"Run script from sub until the end";
 
 is
-	n( `perl $lib -d:DbInteract='s;s;go' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;go' -e '$script'` )
 	,$files->{ 'go from sub #2' }
 	,"Run script from sub until the end. #2";
 

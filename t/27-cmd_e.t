@@ -30,7 +30,7 @@ sub n {
 sub nn {
 	$_ =  n( @_ );
 
-	s#( at ).*$#$1...#gm;
+	s#( at ).*$#$1...#gm;    # Remove file:line info
 
 	$_;
 }
@@ -41,7 +41,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	$x =  1;
 	$x =  [ a => 1 ];
 	$x =  { a => 1 };
@@ -52,13 +52,13 @@ PERL
 
 $cmd =  's;$x;e $x;$x++;e $x;s;e $x;s;e $x;s;@x;scalar @x;e \@x;s;%x;scalar %x;e \%x;';
 is
-	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ 'eval' }
 	,'Eval expressions at user context and dump them';
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t {
 		1;
 	}
@@ -67,21 +67,36 @@ PERL
 
 $cmd =  's;scalar @_;e \@_';
 is
-	n( `perl $lib -d:DbInteract='$cmd' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
 	,$files->{ '@_ not clash' }
 	,'Debugger\'s @_ should not clash with client\'s one';
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
+	$_ =  7;
+	@_ = ( 1..$_ );
+	1;
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='s 2;e \$_;e \\\@_;q' -e '$script'` )
+	,$files->{ '$_ not clash' }
+	,"EXPR evaluation should see user's \@_ and \$_";
+
+
+
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	use strict; use warnings;
 	2;
 PERL
 
 $cmd =  '$#$DB::options{ undef }="undef"#3;4#$x#s#3;4#$x#q';
+my $tmp =  nn( `$^X $lib -d:DbInteract='$cmd' -e '$script' 2>&1` );
+$tmp =~ s# \(.*\)##g;             # Old perl has no elaborations
 is
-	nn( `perl $lib -d:DbInteract='$cmd' -e '$script' 2>&1` )
+	$tmp
 	,$files->{ 'pragma and warnings' }
 	,'pragma and warnings from client\'s current scope should be applyed';
 
@@ -112,9 +127,14 @@ a 1
 -e:0002    1;
 3
 [1, [], {}]
+@@ $_ not clash
+-e:0001  $_ =  7;
+-e:0003  1;
+7
+[1 .. 7]
 @@ pragma and warnings
-Useless use of a constant (2) in void context at ...
-Useless use of a constant (3) in void context at ...
+Useless use of a constant in void context at ...
+Useless use of a constant in void context at ...
 Variable "$x" is not imported at ...
 -e:0001  1;
 undef
@@ -123,4 +143,4 @@ undef
 -e:0003  2;
 4
 
-ERROR: Global symbol "$x" requires explicit package name (did you forget to declare "my $x"?) at ...
+ERROR: Global symbol "$x" requires explicit package name at ...

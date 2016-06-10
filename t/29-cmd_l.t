@@ -45,19 +45,33 @@ my $files =  get_data_section();
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-	END{ 4; }
+	sub t {
+		2;
+	}
+
 	1;
-	2;
-	3;
+	t();
 PERL
 
+my $tmp =  n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` );
+$tmp =~ s/x0:/ 0:/; #WORKAROUND: old perl shows zero line as breakable
 is
-	n( `$^X $lib -d:DbInteract='q' -e '$script'` )
-	,$files->{ 'quit' }
-	,"Quit debugger. Do not trace END/DESTROY";
+    $tmp
+	,$files->{ 'list' }
+	,"List the source code";
 
 
 
 __DATA__
-@@ quit
--e:0002  1;
+@@ list
+-e:0005  1;
+-e:0002    2;
+-e
+     0: use Devel::DbInteract split(/,/,q{b 2;a 2 1;s 2;l .;q});;
+     1: sub t {
+ab>>x2:     2;
+     3: }
+     4:
+    x5: 1;
+    x6: t();
+     7:

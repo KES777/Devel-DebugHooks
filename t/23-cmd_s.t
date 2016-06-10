@@ -33,25 +33,25 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	2;
 	3;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;q' -e '$script'` )
 	,$files->{ 'sbs' }
 	,"Step-by-step debugging. Step into";
 
 is
-	n( `perl $lib -d:DbInteract='s 1;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s 1;q' -e '$script'` )
 	,$files->{ 'sbs' }
 	,"'s 1' and 's' should do same";
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -64,31 +64,32 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='s;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;q' -e '$script'` )
 	,$files->{ 'step into sub' }
 	,"Step into sub";
 
 is
-	n( `perl $lib -d:DbInteract='go 2;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;s;q' -e '$script'` )
 	,$files->{ 'step from sub' }
 	,"Step from sub";
 
 is
-	n( `perl $lib -d:DbInteract='s 4;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s 4;q' -e '$script'` )
 	,$files->{ 'do n steps' }
 	,"Do N steps at once";
 
+#IT: do not skip actions when `s N`
 
 
 $script =~  s/t1\(\)/goto &t1/;
 is
-	n( `perl $lib -d:DbInteract='s;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='s;s;q' -e '$script'` )
 	,$files->{ 'step into goto' }
 	,"Step into goto";
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -100,7 +101,7 @@ $script =  <<'PERL' =~ s#^\t##rgm;
 PERL
 
 is
-	n( `perl $lib -d:DbInteract='go 2;s;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='go 2;s;q' -e '$script'` )
 	,$files->{ 'double step from sub' }
 	,"Double step from sub";
 

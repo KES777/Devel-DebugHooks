@@ -44,7 +44,7 @@ my $script;
 my $files =  get_data_section();
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
 		1;
 	}
@@ -55,25 +55,25 @@ PERL
 # FIX: we should not require last 's' to see '-e:0002    1;'
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;s;s;s;s;r 2;s;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd sbs' }
 	,"Debug command step-by-step";
 
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;n;r 2;s;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd step over' }
 	,"Debug command with step over";
 
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;r;r 2;s;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd return' }
 	,"Debug command with return";
 
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
 
@@ -81,7 +81,7 @@ is
 
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;right();q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'call debugger sub' }
 	,"Subroutine call from debugger scope when debug debugger command";
 
@@ -89,13 +89,13 @@ is
 
 $cmds =  ' $DB::options{ dd } =  1;s;r;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step into' }
 	,"Step into at client's scipt after debugger debugging";
 
 $cmds =  ' $DB::options{ dd } =  1;n;r;q';
 is
-	nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step over' }
 	,"Step over at client's scipt after debugger debugging";
 
@@ -105,25 +105,25 @@ TODO: {
 
 	$cmds =  ' $DB::options{ dd } =  1;n;s;s 2;q';
 	is
-		nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'step into debugger' }
 		,"Step into debugger";
 
 	$cmds =  ' $DB::options{ dd } =  1;n;n;q';
 	is
-		nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'step over' }
 		,"Step over at debugger";
 
 	$cmds =  ' $DB::options{ dd } =  1;s;s;r;r;q';
 	is
-		nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'return s' }
 		,"Return from debugger. 's' command";
 
 	$cmds =  ' $DB::options{ dd } =  1;n;s;r;r;q';
 	is
-		nl( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'return n' }
 		,"Return from debugger. 'n' command";
 }

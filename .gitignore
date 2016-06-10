@@ -5,3 +5,9 @@ lib/Devel/PkgAtCompileTime.pm
 lib/Devel/t.pl
 fix/
 *.tar
+t/lib/overall.pl
+M*
+_build/
+Build
+Devel-DebugHooks-*
+blib/

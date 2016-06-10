@@ -35,7 +35,7 @@ my $files =  get_data_section();
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	1;
 	2;
 	3;
@@ -43,13 +43,13 @@ PERL
 
 $cmds =  'e [ $DB::package => $DB::file => $DB::line ];s;' x3;
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position' }
 	,'Position should be updated for each step';
 
 
 
-$script =  <<'PERL' =~ s#^\t##rgm;
+($script =  <<'PERL') =~ s#^\t##gm;
 	sub t0 {
 		2;
 	}
@@ -66,13 +66,13 @@ PERL
 
 $cmds =  'go,trace_returns,trace_subs';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
 
 $cmds =  'off;go 8;go,trace_returns,trace_subs';
 is
-	n( `perl $lib -d:DbInteract='$cmds' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
 

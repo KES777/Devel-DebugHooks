@@ -45,19 +45,20 @@ my $files =  get_data_section();
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-	END{ 4; }
 	1;
 	2;
 	3;
 PERL
 
 is
-	n( `$^X $lib -d:DbInteract='q' -e '$script'` )
-	,$files->{ 'quit' }
-	,"Quit debugger. Do not trace END/DESTROY";
+	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s;q' -e '$script'` )
+	,$files->{ 'action' }
+	,"Set action at line";
 
 
 
 __DATA__
-@@ quit
--e:0002  1;
+@@ action
+-e:0001  1;
+YES
+-e:0002  2;
