@@ -12,7 +12,6 @@ package Devel::DebugHooks::Commands;
 # TODO: enable/disable group of traps
 # TODO: implement option to show full/short sub options
 # TODO: split all code by two: user code and core
-# TODO: implement 'r n' to rewind n stack frames
 # TODO: implement distance 'T XXX'; Automatically sets XXX to the current line
 # TODO: implement 'b &' to set breakpoint to current sub
 # TODO: implement 'd code' command to debug given subroutine
