@@ -64,3 +64,12 @@ For example:
 	for( 1..3 ) {
 		print DB::eval( '$_' ); # Will show 1,2,3 instead of expected 7,7,7
 	}
+
+
+
+NOTICE:
+When you want to use this module with modules like Apache::DB you should be aware
+that $DB::single = 1 does not work. Because after returning from module s sub
+old value of $DB::single will be restored by &pop_frame. You should do instead:
+
+    DB::state( 'stack' )->[ -2 ]{ single } =  1;

@@ -1560,3 +1560,33 @@ Breakpoint does not work for this when hash key is initialized
 #TODO: $X=(condition)
 
 The debugger do not single step into sub called from string
+
+
+
+Notice strange file:line
+POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
+    /home/kes/perl_lib/lib/perl5/x86_64-linux-gnu-thread-multi/Apache/DB.pm:77 }
+
+	else {
+		if (ref $r) {
+		$SIG{INT} = \&DB::catch;
+		$r->register_cleanup(sub {
+			$SIG{INT} = \&DB::ApacheSIGINT();
+		});
+		}
+	}
+
+    print "HERE: " .$DB::single; #line 77
+    DB::state( 'trace', 1 );
+    $DB::single = 1;
+    print "HERE: A" .$DB::single;
+
+
+  print "DONE\n";
+
+  print "DONE\n";
+    return 0;
+
+}
+
+Maybe because DESTROY is called at first OP after closing block
