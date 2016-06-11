@@ -1092,7 +1092,8 @@ sub process {
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT "No command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
 	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
-	@result =  ()   if $@  &&  $result[0] eq $DB::options{ undef }; #WORKAOUND (see commit)
+	@result =  ()   if $@  &&  @result
+		&&  $result[0] eq $DB::options{ undef }; #WORKAROUND (see commit)
 
 	local $" =  $DB::options{ '"' }  //  $";
 	print $DB::OUT "@result\n"   unless $quiet;
