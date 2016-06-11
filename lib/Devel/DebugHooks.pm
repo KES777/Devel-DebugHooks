@@ -1251,8 +1251,7 @@ sub push_frame {
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
-		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub }
-			." -- @{ $_->{ caller } }\n"
+		printf $DB::OUT "    %s %s -- %s:%s\n", @$_{ qw/ single sub file line / }
 			for @{ DB::state( 'stack' ) };
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
