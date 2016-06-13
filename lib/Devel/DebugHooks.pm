@@ -413,8 +413,10 @@ BEGIN {
 	$DB::state =  [ [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
-		,single      =>  $DB::single
+		,single      =>  $DB::single # NOTICE: it seems we do same at &DB::init
 		,goto_frames =>  []
+		,sub         =>  ''   # perl script starts outside of subroutine from main:: namespace
+		,type        =>  'O'  # This type shows that we are outside of subroutine (main script)
 	} ] ];
 
 
