@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02';
+our $VERSION =  '0.02_01';
 
 =head1 NAME
 
@@ -507,6 +507,9 @@ BEGIN { # Initialization goes here
 	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
+
+	# Some configuration options may be applied when debugger is loading
+	# When debugger is loaded its &import subroutine will be called (see comment there)
 	applyOptions();
 }
 
@@ -902,7 +905,8 @@ sub import { # NOTE: The import is called at CT yet
 
 
 	# if we set trace_load we want to see which modules are used in main::
-	# So we apply this just before main:: is compiled but after debugger is loaded
+	# It has no any effect at RT because all modules are loaded
+	# So we apply this at CT just before main:: is compiled but after debugger is loaded
 	$DB::options{ trace_load } =  $RT_options{ trace_load }
 		if defined $RT_options{ trace_load };
 
@@ -910,8 +914,14 @@ sub import { # NOTE: The import is called at CT yet
 	# The RT options are applied after 'main::' is loaded
 	$RT_options{ trace_goto } //=  1;
 
-	# FIX? should I call applyOptions here and not at trace_load
-	# What is the benefit?
+
+	# NOTICE: it is useless to set breakpoints for not compiled files
+	# TODO: spy module loading and set breakpoints
+	$DB::dbg->init();
+
+	# Now debugger and all required modules are loaded. We should set
+	# corresponding perl debugger *internal* values based on given %DB::options
+	applyOptions();
 }
 
 
@@ -922,6 +932,7 @@ sub postponed {
 	}
 
 	# RT options applied after main program is loaded
+	# IT: debug BEGIN blocks of main::
 	if( $_[0] eq "*main::_<$0" ) {
 		my @keys =  keys %RT_options;
 		@DB::options{ @keys } =  @RT_options{ @keys };
@@ -1047,9 +1058,9 @@ sub init {
 	state( 'file',    $f );
 	state( 'line',    $l );
 
-	# Someone may stop client's code running through perl interface
-	# For example until the first line of client's code the $DB::singe == 0
-	# When $^P & 0x20 perl set $DB::single before execution of first line
+	# Someone may stop client's code running through perl debugger interface
+	# For example until the first line of client's code the $DB::single == 0
+	# When ($^P & 0x20) perl set $DB::single = 1 before execution of first line
 	# So we should update our state
 	DB::state( 'single', $DB::single );
 
@@ -1092,7 +1103,8 @@ sub process {
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT "No command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
 	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
-	@result =  ()   if $@  &&  $result[0] eq $DB::options{ undef }; #WORKAOUND (see commit)
+	@result =  ()   if $@  &&  @result
+		&&  $result[0] eq $DB::options{ undef }; #WORKAROUND (see commit)
 
 	local $" =  $DB::options{ '"' }  //  $";
 	print $DB::OUT "@result\n"   unless $quiet;
@@ -1250,8 +1262,7 @@ sub push_frame {
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
-		print $DB::OUT '    ' .$_->{ single } .' ' .$_->{ sub }
-			." -- @{ $_->{ caller } }\n"
+		printf $DB::OUT "    %s %s -- %s:%s\n", @$_{ qw/ single sub file line / }
 			for @{ DB::state( 'stack' ) };
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
@@ -1368,11 +1379,6 @@ sub lsub : lvalue {
 # It is better to load modules at the end of DB::
 # because of they will be visible to 'trace_load'
 use Devel::DebugHooks::Commands;
-BEGIN {
-	# NOTICE: it is useless to set breakpoints for not compiled files
-	# TODO: spy module loading and set breakpoints
-	$DB::dbg->init();
-}
 
 
 
@@ -1560,3 +1566,33 @@ Breakpoint does not work for this when hash key is initialized
 #TODO: $X=(condition)
 
 The debugger do not single step into sub called from string
+
+
+
+Notice strange file:line
+POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
+    /home/kes/perl_lib/lib/perl5/x86_64-linux-gnu-thread-multi/Apache/DB.pm:77 }
+
+	else {
+		if (ref $r) {
+		$SIG{INT} = \&DB::catch;
+		$r->register_cleanup(sub {
+			$SIG{INT} = \&DB::ApacheSIGINT();
+		});
+		}
+	}
+
+    print "HERE: " .$DB::single; #line 77
+    DB::state( 'trace', 1 );
+    $DB::single = 1;
+    print "HERE: A" .$DB::single;
+
+
+  print "DONE\n";
+
+  print "DONE\n";
+    return 0;
+
+}
+
+Maybe because DESTROY is called at first OP after closing block
