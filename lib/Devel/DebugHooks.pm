@@ -437,6 +437,7 @@ BEGIN {
 	$options{ trace_load }     //=  0;         # compile time option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
+	$options{ trace_flow }     //=  0;         # Save what is called and from
 
 	$options{ cmd_processor }  //=  'Devel::DebugHooks::CmdProcessor';
 
@@ -879,6 +880,15 @@ use Guard;
 
 	sub restore_context {
 	}
+
+
+	my $flow_fh;
+	sub msg {
+		my( $msg ) =  @_;
+
+		$flow_fh  or  open $flow_fh, '>dbg_flow.txt';
+		print $flow_fh $msg;
+	}
 } # end of provided DB::API
 
 
@@ -1305,6 +1315,11 @@ sub sub {
 	# start to guard frame before any external call
 
 	push_frame( 'C' );
+
+	if( $DB::options{ trace_flow } ) {
+		my( $from, $to ) =  @{ DB::state( 'stack' ) }[ -2, -1 ];
+		msg( "$from->{ sub } -> $to->{ sub }" );
+	}
 
 	# Do not stop inside sub for STEP_OVER debugger command
 	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
