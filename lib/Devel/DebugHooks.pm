@@ -507,6 +507,9 @@ BEGIN { # Initialization goes here
 	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
+
+	# Some configuration options may be applied when debugger is loading
+	# When debugger is loaded its &import subroutine will be called (see comment there)
 	applyOptions();
 }
 
@@ -902,7 +905,8 @@ sub import { # NOTE: The import is called at CT yet
 
 
 	# if we set trace_load we want to see which modules are used in main::
-	# So we apply this just before main:: is compiled but after debugger is loaded
+	# It has no any effect at RT because all modules are loaded
+	# So we apply this at CT just before main:: is compiled but after debugger is loaded
 	$DB::options{ trace_load } =  $RT_options{ trace_load }
 		if defined $RT_options{ trace_load };
 
@@ -910,8 +914,14 @@ sub import { # NOTE: The import is called at CT yet
 	# The RT options are applied after 'main::' is loaded
 	$RT_options{ trace_goto } //=  1;
 
-	# FIX? should I call applyOptions here and not at trace_load
-	# What is the benefit?
+
+	# NOTICE: it is useless to set breakpoints for not compiled files
+	# TODO: spy module loading and set breakpoints
+	$DB::dbg->init();
+
+	# Now debugger and all required modules are loaded. We should set
+	# corresponding perl debugger *internal* values based on given %DB::options
+	applyOptions();
 }
 
 
@@ -922,6 +932,7 @@ sub postponed {
 	}
 
 	# RT options applied after main program is loaded
+	# IT: debug BEGIN blocks of main::
 	if( $_[0] eq "*main::_<$0" ) {
 		my @keys =  keys %RT_options;
 		@DB::options{ @keys } =  @RT_options{ @keys };
@@ -1047,9 +1058,9 @@ sub init {
 	state( 'file',    $f );
 	state( 'line',    $l );
 
-	# Someone may stop client's code running through perl interface
-	# For example until the first line of client's code the $DB::singe == 0
-	# When $^P & 0x20 perl set $DB::single before execution of first line
+	# Someone may stop client's code running through perl debugger interface
+	# For example until the first line of client's code the $DB::single == 0
+	# When ($^P & 0x20) perl set $DB::single = 1 before execution of first line
 	# So we should update our state
 	DB::state( 'single', $DB::single );
 
@@ -1368,11 +1379,6 @@ sub lsub : lvalue {
 # It is better to load modules at the end of DB::
 # because of they will be visible to 'trace_load'
 use Devel::DebugHooks::Commands;
-BEGIN {
-	# NOTICE: it is useless to set breakpoints for not compiled files
-	# TODO: spy module loading and set breakpoints
-	$DB::dbg->init();
-}
 
 
 
