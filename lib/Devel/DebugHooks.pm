@@ -965,6 +965,9 @@ sub DB {
 	local $DB::inDB =  $DB::inDB +1;
 	my( $p, $f, $l ) =  init();
 
+	scope_guard {
+		@DB::context =  ();     # Do not keep references between debugger stops
+	};
 	&save_context;
 
 
@@ -1613,3 +1616,5 @@ POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
 }
 
 Maybe because DESTROY is called at first OP after closing block
+
+#TODO: advice to use Scope::Guard
