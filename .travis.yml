@@ -20,8 +20,7 @@ notifications:
     on_success: change
     on_failure: always
   irc:
-    - "irc://irc.perl.org:6667/#debughooks"
+    channels:
+      - "irc://irc.perl.org:6667/#debughooks"
     on_success: change
     on_failure: always
-
-
