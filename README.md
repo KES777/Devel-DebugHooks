@@ -1,6 +1,6 @@
-Perl debugger
+# Perl debugger [![Build Status](https://travis-ci.org/KES777/Devel-DebugHooks.svg?branch=master)](https://travis-ci.org/KES777/Devel-DebugHooks)
 
-How to run:
+## How to run:
 
 	perl -d:DebugHooks::Terminal script.pl
 
@@ -15,7 +15,7 @@ How to run:
 
 
 
-Quick guide for commands:
+## Quick guide for commands:
 
 	s - single step. Trace into
 	n - single step. Trace over
