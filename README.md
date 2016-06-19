@@ -1,4 +1,4 @@
-# Perl debugger [![Build Status](https://travis-ci.org/KES777/Devel-DebugHooks.svg?branch=master)](https://travis-ci.org/KES777/Devel-DebugHooks)
+# Perl debugger [![Build Status](https://travis-ci.org/KES777/Devel-DebugHooks.svg?branch=master)](https://travis-ci.org/KES777/Devel-DebugHooks) [![Flattr Button](https://button.flattr.com/flattr-badge-large.png "Flattr This!")](https://flattr.com/submit/auto?fid=6637xn&url=https%3A%2F%2Fgithub.com%2FKES777%2FDevel-DebugHooks)
 
 ## How to run:
 
