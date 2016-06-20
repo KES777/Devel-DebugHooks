@@ -1618,3 +1618,4 @@ POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
 Maybe because DESTROY is called at first OP after closing block
 
 #TODO: advice to use Scope::Guard
+#TODO: IT: subroutine arguments should be destroyed in time. Do not keep references to them
