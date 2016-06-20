@@ -250,7 +250,7 @@ sub watch {
 sub load {
 	my $self =  shift;
 	my( $file ) =  @_;
-	$file ||=  $ENV{ HOME } .'/.dbgini';
+	$file ||=  ($ENV{ HOME }?$ENV{ HOME }:'/tmp') .'/.dbgini';
 
 
 	my( $stops, $traps ) =  do $file;
@@ -272,7 +272,7 @@ sub load {
 sub save {
 	my $self =  shift;
 	my( $file ) =  @_;
-	$file ||=  $ENV{ HOME } .'/.dbgini';
+	$file ||=  ($ENV{ HOME }?$ENV{ HOME }:'/tmp') .'/.dbgini';
 
 	my $traps;
 	for my $source ( keys %$DB::_tfiles ) {
