@@ -39,7 +39,7 @@ my $last_input;
 sub interact {
 	my $self =  shift;
 
-	my $line =  <>; #$term->readline( 'DBG> ' );
+	my $line =  <STDIN>; #$term->readline( 'DBG> ' );
 	chomp $line;
 	if( $line ne '' ) {
 		$last_input =  $line;
