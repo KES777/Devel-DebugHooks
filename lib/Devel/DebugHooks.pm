@@ -1288,12 +1288,12 @@ sub push_frame {
 
 sub clr {
 	my( $p, $f, $l ) =  (caller 0);
-	return "$p $f:$l";
+	return " -- $p $f:$l";
 }
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
-	warn "SUB :  " .\$a . " $a $b -- " .clr() ."\n";
+	warn "SUB :   " .__PACKAGE__ . "  -- D:" .\$DB::a ."  M:" . \$main::a ."  ?" .\$a ." -- $DB::sub\n";
 	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1# } (caller 0)[1,2] ]}" }->()
