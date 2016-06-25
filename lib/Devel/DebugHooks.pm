@@ -576,7 +576,7 @@ BEGIN { # Initialization goes here
 			# Keep list of $filenames we perhaps manipulate traps
 			$DB::_tfiles->{ $filename } =  1;
 
-			*dbline =  $main::{ "_<$filename" }; #WORKRAOUND RT#119799 (see commit)
+			*dbline =  $main::{ "_<$filename" }; #WORKAROUND RT#119799 (see commit)
 
 			return \%{ "::_<$filename" };
 		}
@@ -631,8 +631,10 @@ BEGIN { # Initialization goes here
 		# In a word those circumstances your code can not control
 		# local $_ =  $DB::context[4];
 
+		# eval "warn \"\$a \$b\"";
+
 		local @_ =  @{ $DB::context[0] };
-		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
+		eval "\nwarn \"\$a \$b\";$usercontext; package " .state( 'package' ) .";\nwarn \"\$a \$b\";\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
 	}
@@ -1284,14 +1286,19 @@ sub push_frame {
 }
 
 
+sub clr {
+	my( $p, $f, $l ) =  (caller 0);
+	return "$p $f:$l";
+}
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	warn "SUB :  " .\$a . " $a $b -- " .clr() ."\n";
 	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1# } (caller 0)[1,2] ]}" }->()
 		."\n"
-		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
+		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break' || 0;
 
 	if( $ext_call
 		||  $DB::sub eq 'DB::state'
@@ -1319,6 +1326,7 @@ sub sub {
 
 	push_frame( 'C' );
 
+	#TODO: implement on_sub_enter
 	if( $DB::options{ trace_flow } ) {
 		my( $from, $to ) =  @{ DB::state( 'stack' ) }[ -2, -1 ];
 		msg( "$from->{ sub } -> $to->{ sub }" );
@@ -1334,7 +1342,7 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub   if !$options{ trace_returns };
 
-
+		die;
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
 			trace_returns( @ret );
