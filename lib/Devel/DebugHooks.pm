@@ -1299,6 +1299,8 @@ sub sub {
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
+	#FIX: calling context is lost. List::Util see DB:: instead of orig context
+	#https://rt.cpan.org/Ticket/Display.html?id=115608
 	scope_guard \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
