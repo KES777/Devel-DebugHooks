@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_04';
+our $VERSION =  '0.02_05';
 
 =head1 NAME
 
@@ -778,7 +778,6 @@ BEGIN { # Initialization goes here
 
 
 
-use Guard;
 use Scope::Cleanup qw/ establish_cleanup /;
 
 	sub scall {
