@@ -1290,6 +1290,8 @@ sub sub {
 	if( $DB::sub eq 'DB::pop_frame' ) {
 		# DB::state( 'single', 0 )   unless $DB::options{ dd };
 
+		#FIX: Manage $DB::inSUB here also
+
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
 	}
