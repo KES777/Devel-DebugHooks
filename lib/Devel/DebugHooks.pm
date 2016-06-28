@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_03';
+our $VERSION =  '0.02_04';
 
 =head1 NAME
 
@@ -406,6 +406,7 @@ our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
 
+our $_scall_cleanup; # scall cleanup trigger DB::sub call
 
 
 # Do DB:: configuration stuff here
@@ -778,6 +779,7 @@ BEGIN { # Initialization goes here
 
 
 use Guard;
+use Scope::Cleanup qw/ establish_cleanup /;
 
 	sub scall {
 
@@ -817,22 +819,24 @@ use Guard;
 		local $ext_call      =  $ext_call +1;
 
 		# Manual localization
-		scope_guard {
+		$DB::_scall_cleanup =  sub {
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
+
+			if( $DB::options{ dd } ) {
+				pop @{ DB::state( 'state' ) };
+
+				$options{ dd } =  0;
+
+				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
+					if $DB::options{ ddd };
+			}
 		};
-
-		scope_guard {
-			pop @{ DB::state( 'state' ) };
-
-			$options{ dd } =  0;
-
-			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
-				if $DB::options{ ddd };
-		}   if $DB::options{ dd };
+		establish_cleanup $DB::_scall_cleanup;
+		local $DB::_scall_cleanup =  $DB::_scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
@@ -944,7 +948,7 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
-	scope_guard {
+	establish_cleanup sub {
 		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n";
 		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
 	}   if $DB::options{ ddd };
@@ -1178,7 +1182,7 @@ sub pop_frame {
 	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
-		. "    $last->{ file }:$last->{ line } }\n\n"
+		. "    $last->{ file }:$last->{ line }\n\n"
 		if $DB::options{ ddd };
 
 	if( @{ DB::state( 'stack' ) } ) {
@@ -1262,7 +1266,8 @@ sub push_frame {
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
-		printf $DB::OUT "    %s %s -- %s:%s\n", @$_{ qw/ single sub file line / }
+		printf $DB::OUT "    %s %s -- %s:%s\n",
+			map{ $_ // '' } @$_{ qw/ single sub file line / }
 			for @{ DB::state( 'stack' ) };
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
@@ -1280,6 +1285,7 @@ sub sub {
 
 	if( $ext_call
 		||  $DB::sub eq 'DB::state'
+		||  ref $DB::sub  &&  $DB::sub == $DB::_scall_cleanup
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
@@ -1287,7 +1293,9 @@ sub sub {
 	}
 
 	if( $DB::sub eq 'DB::pop_frame' ) {
-		DB::state( 'single', 0 )   unless $DB::options{ dd };
+		# DB::state( 'single', 0 )   unless $DB::options{ dd };
+
+		#FIX: Manage $DB::inSUB here also
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
@@ -1299,7 +1307,7 @@ sub sub {
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
-	scope_guard \&DB::pop_frame; # This should be first because we should
+	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	push_frame( 'C' );
@@ -1351,7 +1359,7 @@ sub lsub : lvalue {
 	}
 	else {
 		# manual localization
-		Hook::Scope::POST( \&sub_returns );
+		establish_cleanup \&sub_returns;
 		push @{ DB::state( 'stack' ) }, {
 			single      =>  DB::state( 'single' ),
 			sub         =>  $DB::sub,
