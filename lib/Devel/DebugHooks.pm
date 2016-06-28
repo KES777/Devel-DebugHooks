@@ -406,6 +406,7 @@ our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
 
+our $_scall_cleanup; # scall cleanup trigger DB::sub call
 
 
 # Do DB:: configuration stuff here
@@ -835,6 +836,7 @@ use Scope::Cleanup qw/ establish_cleanup /;
 			}
 		};
 		establish_cleanup $DB::_scall_cleanup;
+		local $DB::_scall_cleanup =  $DB::_scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
@@ -1283,6 +1285,7 @@ sub sub {
 
 	if( $ext_call
 		||  $DB::sub eq 'DB::state'
+		||  ref $DB::sub  &&  $DB::sub == $DB::_scall_cleanup
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
