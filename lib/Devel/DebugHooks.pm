@@ -778,6 +778,7 @@ BEGIN { # Initialization goes here
 
 
 use Guard;
+use Scope::Cleanup qw/ establish_cleanup /;
 
 	sub scall {
 
@@ -817,22 +818,23 @@ use Guard;
 		local $ext_call      =  $ext_call +1;
 
 		# Manual localization
-		scope_guard {
+		$DB::_scall_cleanup =  sub {
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
 				if $DB::options{ ddd };
+
+			if( $DB::options{ dd } ) {
+				pop @{ DB::state( 'state' ) };
+
+				$options{ dd } =  0;
+
+				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
+					if $DB::options{ ddd };
+			}
 		};
-
-		scope_guard {
-			pop @{ DB::state( 'state' ) };
-
-			$options{ dd } =  0;
-
-			print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
-				if $DB::options{ ddd };
-		}   if $DB::options{ dd };
+		establish_cleanup $DB::_scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
@@ -944,7 +946,7 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB {
-	scope_guard {
+	establish_cleanup sub {
 		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace\n";
 		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
 	}   if $DB::options{ ddd };
@@ -1302,9 +1304,7 @@ sub sub {
 
 	# manual localization
 	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
-	#FIX: calling context is lost. List::Util see DB:: instead of orig context
-	#https://rt.cpan.org/Ticket/Display.html?id=115608
-	scope_guard \&DB::pop_frame; # This should be first because we should
+	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	push_frame( 'C' );
@@ -1356,7 +1356,7 @@ sub lsub : lvalue {
 	}
 	else {
 		# manual localization
-		Hook::Scope::POST( \&sub_returns );
+		establish_cleanup \&sub_returns;
 		push @{ DB::state( 'stack' ) }, {
 			single      =>  DB::state( 'single' ),
 			sub         =>  $DB::sub,
