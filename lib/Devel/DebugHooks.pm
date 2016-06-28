@@ -778,7 +778,6 @@ BEGIN { # Initialization goes here
 
 
 
-use Guard;
 use Scope::Cleanup qw/ establish_cleanup /;
 
 	sub scall {
