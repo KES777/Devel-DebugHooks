@@ -1178,7 +1178,7 @@ sub pop_frame {
 	local $ext_call =  $ext_call  +1;
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
-		. "    $last->{ file }:$last->{ line } }\n\n"
+		. "    $last->{ file }:$last->{ line }\n\n"
 		if $DB::options{ ddd };
 
 	if( @{ DB::state( 'stack' ) } ) {
