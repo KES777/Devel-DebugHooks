@@ -1287,7 +1287,7 @@ sub sub {
 	}
 
 	if( $DB::sub eq 'DB::pop_frame' ) {
-		DB::state( 'single', 0 )   unless $DB::options{ dd };
+		# DB::state( 'single', 0 )   unless $DB::options{ dd };
 
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		return &$DB::sub;
