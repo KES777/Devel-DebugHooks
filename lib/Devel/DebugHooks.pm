@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_07';
+our $VERSION =  '0.02_08';
 
 =head1 NAME
 
