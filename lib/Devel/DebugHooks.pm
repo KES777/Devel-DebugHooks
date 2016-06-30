@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_09';
+our $VERSION =  '0.02_10';
 
 =head1 NAME
 
@@ -416,7 +416,6 @@ our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
 
-our $_scall_cleanup; # scall cleanup trigger DB::sub call
 
 
 # Do DB:: configuration stuff here
@@ -612,10 +611,10 @@ BEGIN { # Initialization goes here
 
 
 
-	sub eval_clean {
+	sub eval_cleanup {
 		DB::state( 'eval', undef );
 	}
-	mutate_sub_is_debuggable( \&eval_clean, 0 );
+	mutate_sub_is_debuggable( \&eval_cleanup, 0 );
 
 
 
@@ -636,8 +635,8 @@ BEGIN { # Initialization goes here
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
-		# establish_cleanup \&eval_clean;
-		# DB::state( 'eval', 1 );
+		establish_cleanup \&eval_cleanup;
+		DB::state( 'eval', 1 );
 
 
 		local $^D;
@@ -837,7 +836,7 @@ BEGIN { # Initialization goes here
 		local $ext_call      =  $ext_call +1;
 
 		# Manual localization
-		$DB::_scall_cleanup =  sub {
+		my $scall_cleanup =  sub {
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
@@ -853,8 +852,8 @@ BEGIN { # Initialization goes here
 					if $DB::options{ ddd };
 			}
 		};
-		establish_cleanup $DB::_scall_cleanup;
-		local $DB::_scall_cleanup =  $DB::_scall_cleanup;
+		mutate_sub_is_debuggable( $scall_cleanup, 0 );
+		establish_cleanup $scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
@@ -1306,7 +1305,6 @@ sub sub {
 
 	if( $ext_call
 		||  $DB::sub eq 'DB::state'
-		||  ref $DB::sub  &&  $DB::sub == $DB::_scall_cleanup
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
