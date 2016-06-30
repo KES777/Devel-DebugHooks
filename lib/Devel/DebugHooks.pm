@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_05';
+our $VERSION =  '0.02_06';
 
 =head1 NAME
 
@@ -1278,7 +1278,7 @@ sub push_frame {
 sub sub {
 	$DB::_sub =  $DB::sub;
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  "
-		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1# } (caller 0)[1,2] ]}" }->()
+		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
