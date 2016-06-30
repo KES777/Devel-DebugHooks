@@ -362,8 +362,11 @@ sub state {
 		}
 
 		${ "DB::$name" } =  $value;
-		$frame->{ $name } =  $value
-			unless $set_only_global;
+		unless( $set_only_global ) {
+			defined $value
+				? $frame->{ $name } =  $value
+				: delete $frame->{ $name };
+		}
 	}
 
 
