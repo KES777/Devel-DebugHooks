@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_07';
+our $VERSION =  '0.02_09';
 
 =head1 NAME
 
@@ -267,6 +267,11 @@ sub bbreak {
 package    # hide the package from the PAUSE indexer
 	DB;
 
+# In theory this may break user's code because this usage cause dependencies are loaded
+# in different order under debugger
+use Scope::Cleanup qw/ establish_cleanup /;
+use Sub::Metadata qw/ mutate_sub_is_debuggable /;
+
 
 
 ## Utility subs
@@ -289,6 +294,8 @@ sub _all_frames {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
+	@DB::options{ keys %{ $_[0] } } =  values %{ $_[0] }   if @_;
+
 	# Q: is warn expected when $DB::trace == undef?
 	$DB::trace =  $DB::options{ trace_line } || 0
 		if defined $DB::options{ trace_line };
@@ -360,8 +367,11 @@ sub state {
 		}
 
 		${ "DB::$name" } =  $value;
-		$frame->{ $name } =  $value
-			unless $set_only_global;
+		unless( $set_only_global ) {
+			defined $value
+				? $frame->{ $name } =  $value
+				: delete $frame->{ $name };
+		}
 	}
 
 
@@ -602,6 +612,13 @@ BEGIN { # Initialization goes here
 
 
 
+	sub eval_clean {
+		DB::state( 'eval', undef );
+	}
+	mutate_sub_is_debuggable( \&eval_clean, 0 );
+
+
+
 	# We put code here to execute it only once
 	(my $usercontext =  <<'	CODE') =~ s#^\t\t##gm;
 		BEGIN{
@@ -618,6 +635,10 @@ BEGIN { # Initialization goes here
 		my( $expr ) =  @_;
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
+
+		# establish_cleanup \&eval_clean;
+		# DB::state( 'eval', 1 );
+
 
 		local $^D;
 		# FIX: when we eval user's sub the main script frame is changed
@@ -778,8 +799,6 @@ BEGIN { # Initialization goes here
 
 
 
-use Scope::Cleanup qw/ establish_cleanup /;
-
 	sub scall {
 
 		# TODO: implement debugger debugging
@@ -924,7 +943,7 @@ sub import { # NOTE: The import is called at CT yet
 
 	# Now debugger and all required modules are loaded. We should set
 	# corresponding perl debugger *internal* values based on given %DB::options
-	applyOptions();
+	applyOptions( \%RT_options );
 }
 
 
@@ -1203,7 +1222,7 @@ sub push_frame2 {
 		3;
 	}
 
-	print $DB::OUT "PUSH FRAME >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
+	print $DB::OUT "PUSH FRAME $_[0] >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
 	if( $_[0] ne 'G' ) {
@@ -1211,11 +1230,13 @@ sub push_frame2 {
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
-		my( $p, $f, $l ) =  caller 2;
-		DB::state( 'package', $p );
-		DB::state( 'file',    $f );
-		DB::state( 'line',    $l );
-		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+		if( !DB::state( 'eval' ) ) {
+			my( $p, $f, $l ) =  caller 2;
+			DB::state( 'package', $p );
+			DB::state( 'file',    $f );
+			DB::state( 'line',    $l );
+			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+		}
 
 		my $stack =  DB::state( 'stack' );
 		push @{ $stack }, {()
