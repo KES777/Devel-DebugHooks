@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_06';
+our $VERSION =  '0.02_07';
 
 =head1 NAME
 
@@ -1265,9 +1265,10 @@ sub push_frame {
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
-		printf $DB::OUT "    %s %s -- %s:%s\n",
-			map{ $_ // '' } @$_{ qw/ single sub file line / }
-			for @{ DB::state( 'stack' ) };
+		for my $frame ( @{ DB::state( 'stack' ) } ) {
+			printf $DB::OUT "    %s %s -- %s:%s\n",
+				map{ $frame->{ $_ } // '' } qw/ single sub file line /;
+		}
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
 }
