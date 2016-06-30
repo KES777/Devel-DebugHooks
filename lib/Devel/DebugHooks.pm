@@ -267,6 +267,11 @@ sub bbreak {
 package    # hide the package from the PAUSE indexer
 	DB;
 
+# In theory this may break user's code because this usage cause dependencies are loaded
+# in different order under debugger
+use Scope::Cleanup qw/ establish_cleanup /;
+use Sub::Metadata qw/ mutate_sub_is_debuggable /;
+
 
 
 ## Utility subs
@@ -607,6 +612,13 @@ BEGIN { # Initialization goes here
 
 
 
+	sub eval_clean {
+		DB::state( 'eval', undef );
+	}
+	mutate_sub_is_debuggable( \&eval_clean, 0 );
+
+
+
 	# We put code here to execute it only once
 	(my $usercontext =  <<'	CODE') =~ s#^\t\t##gm;
 		BEGIN{
@@ -623,6 +635,10 @@ BEGIN { # Initialization goes here
 		my( $expr ) =  @_;
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
+
+		# establish_cleanup \&eval_clean;
+		# DB::state( 'eval', 1 );
+
 
 		local $^D;
 		# FIX: when we eval user's sub the main script frame is changed
@@ -782,8 +798,6 @@ BEGIN { # Initialization goes here
 	}
 
 
-
-use Scope::Cleanup qw/ establish_cleanup /;
 
 	sub scall {
 
@@ -1216,11 +1230,13 @@ sub push_frame2 {
 		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
-		my( $p, $f, $l ) =  caller 2;
-		DB::state( 'package', $p );
-		DB::state( 'file',    $f );
-		DB::state( 'line',    $l );
-		printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+		if( !DB::state( 'eval' ) ) {
+			my( $p, $f, $l ) =  caller 2;
+			DB::state( 'package', $p );
+			DB::state( 'file',    $f );
+			DB::state( 'line',    $l );
+			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+		}
 
 		my $stack =  DB::state( 'stack' );
 		push @{ $stack }, {()

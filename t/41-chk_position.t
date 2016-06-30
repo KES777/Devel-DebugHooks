@@ -76,6 +76,18 @@ is
 	,$files->{ 'position in subs' }
 	,'Position should be updated when call and return to/from subs';
 
+$cmds =  'e 1+1;DB::state( "line" );q';
+is
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'prevent when eval' }
+	,'Position should not be updated when we eval constant EXPR';
+
+$cmds =  'e t0;DB::state( "line" );q';
+is
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'prevent when eval' }
+	,'Position should not be updated when we make sub call while eval EXPR';
+
 
 
 __DATA__
@@ -94,3 +106,7 @@ BACK TO  : main -e 8
 CALL FROM: main -e 9
 BACK TO  : main -e 9
 BACK TO  : main -e 11
+@@ prevent when eval
+-e:0011  t2();
+2
+11
