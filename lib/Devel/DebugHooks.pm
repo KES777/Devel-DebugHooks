@@ -611,10 +611,10 @@ BEGIN { # Initialization goes here
 
 
 
-	sub eval_clean {
+	sub eval_cleanup {
 		DB::state( 'eval', undef );
 	}
-	mutate_sub_is_debuggable( \&eval_clean, 0 );
+	mutate_sub_is_debuggable( \&eval_cleanup, 0 );
 
 
 
@@ -635,8 +635,8 @@ BEGIN { # Initialization goes here
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
-		# establish_cleanup \&eval_clean;
-		# DB::state( 'eval', 1 );
+		establish_cleanup \&eval_cleanup;
+		DB::state( 'eval', 1 );
 
 
 		local $^D;
