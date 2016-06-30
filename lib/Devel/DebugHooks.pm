@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_07';
+our $VERSION =  '0.02_08';
 
 =head1 NAME
 
@@ -289,6 +289,8 @@ sub _all_frames {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
+	@DB::options{ keys %{ $_[0] } } =  values %{ $_[0] }   if @_;
+
 	# Q: is warn expected when $DB::trace == undef?
 	$DB::trace =  $DB::options{ trace_line } || 0
 		if defined $DB::options{ trace_line };
@@ -924,7 +926,7 @@ sub import { # NOTE: The import is called at CT yet
 
 	# Now debugger and all required modules are loaded. We should set
 	# corresponding perl debugger *internal* values based on given %DB::options
-	applyOptions();
+	applyOptions( \%RT_options );
 }
 
 
