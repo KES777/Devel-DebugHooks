@@ -1205,7 +1205,7 @@ sub push_frame2 {
 		3;
 	}
 
-	print $DB::OUT "PUSH FRAME >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
+	print $DB::OUT "PUSH FRAME $_[0] >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
 		if $DB::options{ ddd };
 
 	if( $_[0] ne 'G' ) {
