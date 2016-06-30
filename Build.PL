@@ -8,6 +8,8 @@ my $build = Module::Build->new(
 	dist_author => 'Eugen Konkov <kes-kes@yandex.ru>',
 	requires => {
 		'Scope::Cleanup' =>  0,
+		'Sub::Metadata'  =>  0,
+		'B::Deparse'     =>  0,
 		'Data::Dump'     =>  0,
 		'perl'           =>  '5.12.0',
 	},
