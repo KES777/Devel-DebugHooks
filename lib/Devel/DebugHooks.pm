@@ -306,6 +306,7 @@ sub applyOptions {
 
 
 
+mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value, $set_only_global ) =  @_;
 
@@ -350,7 +351,9 @@ sub state {
 	}
 
 
+
 	my $frame =  $stack->[ -1 ];
+	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
 	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
 		if $debug;
 
@@ -1304,7 +1307,6 @@ sub sub {
 		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
 
 	if( $dbg_call
-		||  $DB::sub eq 'DB::state'
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
