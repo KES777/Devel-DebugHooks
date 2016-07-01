@@ -821,7 +821,6 @@ BEGIN { # Initialization goes here
 		}
 
 
-		$ext_call--; # $ext_call++ before scall prevents reenterance to DB::sub
 		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 		# (This doesn't happen if the subroutine -was compiled in the DB package.)
 		# ...was called and compiled in the DB package
@@ -949,7 +948,7 @@ sub import { # NOTE: The import is called at CT yet
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	if( $options{ trace_load } ) {
-		$ext_call++; mcall( 'trace_load', $DB::dbg, @_ );
+		mcall( 'trace_load', $DB::dbg, @_ );
 	}
 
 	# RT options applied after main program is loaded
@@ -957,7 +956,7 @@ sub postponed {
 	if( $_[0] eq "*main::_<$0" ) {
 		my @keys =  keys %RT_options;
 		@DB::options{ @keys } =  @RT_options{ @keys };
-		$ext_call++; scall( \&applyOptions );
+		scall( \&applyOptions );
 	}
 }
 
@@ -982,7 +981,7 @@ sub DB {
 		if $DB::options{ ddd };
 
 	#FIX: actions are skipped for `s 5` command
-	do{ $ext_call++; mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
+	mcall( 'trace_line', $DB::dbg )   if $DB::trace;
 	my $steps_left =  DB::state( 'steps_left' );
 	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
 
@@ -995,7 +994,7 @@ sub DB {
 			# Run all actions
 			for my $action ( @{ $trap->{ action } } ) {
 				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				$ext_call++; scall( \&process, $action, 1 );
+				scall( \&process, $action, 1 );
 			}
 
 			# Actions do not stop execution
@@ -1011,7 +1010,6 @@ sub DB {
 				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
 			}
 
-			$ext_call++;
 			# The 'watch' method should compare 'old' and 'new' values and return
 			# true value if they are differ. Additionaly it may print to $DB::OUT
 			# to show comparison results
@@ -1060,12 +1058,12 @@ sub DB {
 		if $DB::options{ ddd };
 	{
 		local $DB::options{ dd } =  0;
-		$ext_call++; mcall( 'bbreak', $DB::dbg );
+		mcall( 'bbreak', $DB::dbg );
 	}
 	1 while( defined interact() );
 	{
 		local $DB::options{ dd } =  0;
-		$ext_call++; mcall( 'abreak', $DB::dbg );
+		mcall( 'abreak', $DB::dbg );
 	}
 }
 
@@ -1107,7 +1105,6 @@ sub process {
 		# TRUE    : command found, keep interaction
 		# HASHREF : eval given { expr } and pass results to { code }
 		# negative: something wrong happened while running the command
-		$ext_call++;
 		my $result =  scall( $code, @args );
 		return   unless defined $result;
 		if( $result ) {
@@ -1149,7 +1146,7 @@ sub interact {
 	# local $DB::options{ dd } =  0; # Localization breaks debugger debugging
 	# because it prevents us to turn ON debugging by command: $DB::options{ dd } =  1;
 	my $old =  $DB::options{ dd };
-	$ext_call++; $DB::options{ dd } =  0;
+	$DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
 		print "\n" ."*"x80 ."\n"   if $DB::options{ ddd };
 		#NOTICE: we restore { dd } flag before call to &process and not after
@@ -1175,7 +1172,7 @@ sub goto {
 
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	# $ext_call++; scall( \&push_frame2, 'G' );
+	# scall( \&push_frame2, 'G' );
 	push_frame2( 'G' );
 };
 
@@ -1278,13 +1275,13 @@ sub push_frame2 {
 
 
 sub trace_returns {
-	$ext_call++; mcall( 'trace_returns', $DB::dbg, @_ );
+	mcall( 'trace_returns', $DB::dbg, @_ );
 }
 
 
 
 sub push_frame {
-	$ext_call++; scall( \&push_frame2, @_ );
+	scall( \&push_frame2, @_ );
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
