@@ -1192,6 +1192,9 @@ sub test {
 
 
 
+#Q: Why &DB::sub is called for &pop_frame despite on it is compiled at DB:: package
+# when Scope::Cleanup?
+mutate_sub_is_debuggable( \&pop_frame, 0 );
 sub pop_frame {
 	#NOTICE: We will fall into infinite loop if something dies inside this sub
 	#because this sub is called when flow run out of scope.
@@ -1311,15 +1314,6 @@ sub sub {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
 		return &$DB::sub
-	}
-
-	if( $DB::sub eq 'DB::pop_frame' ) {
-		# DB::state( 'single', 0 )   unless $DB::options{ dd };
-
-		#FIX: Manage $DB::inSUB here also
-
-		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		return &$DB::sub;
 	}
 
 	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
