@@ -332,7 +332,7 @@ sub state {
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
-	my $low   =  ( $DB::ddlvl  &&  (!$DB::ext_call && !$DB::inSUB) ? 1 : 0 );
+	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
 	$low =  0   if $low  &&  $DB::inDB == 2;
 	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
@@ -1196,7 +1196,8 @@ sub pop_frame {
 	#NOTICE: We will fall into infinite loop if something dies inside this sub
 	#because this sub is called when flow run out of scope.
 
-	local $ext_call =  $ext_call  +1;
+	local $DB::inSUB =  1;
+
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB e:$DB::ext_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
 		. "    $last->{ file }:$last->{ line }\n\n"
