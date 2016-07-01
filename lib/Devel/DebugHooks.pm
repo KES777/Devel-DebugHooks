@@ -1325,6 +1325,7 @@ sub sub {
 	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
+	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
 
 	# Do not stop inside sub for STEP_OVER debugger command
