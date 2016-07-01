@@ -1195,6 +1195,7 @@ sub test {
 sub pop_frame {
 	#NOTICE: We will fall into infinite loop if something dies inside this sub
 	#because this sub is called when flow run out of scope.
+	#TODO: Put this code into eval block
 
 	local $DB::inSUB =  1;
 
@@ -1209,6 +1210,7 @@ sub pop_frame {
 	} else {
 		# Something nasty happened at &push_frame, because of we are at
 		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
+		#TODO: Write error somewere
 		$DB::single =  0;
 	}
 }
