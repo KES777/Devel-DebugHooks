@@ -294,8 +294,6 @@ sub _all_frames {
 
 # This sub is called twice: at compile time and before run time of 'main' package
 sub applyOptions {
-	@DB::options{ keys %{ $_[0] } } =  values %{ $_[0] }   if @_;
-
 	# Q: is warn expected when $DB::trace == undef?
 	$DB::trace =  $DB::options{ trace_line } || 0
 		if defined $DB::options{ trace_line };
@@ -422,6 +420,7 @@ our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 
 
 # Do DB:: configuration stuff here
+# Default debugger behaviour while it is loading
 BEGIN {
 	$DB::state =  [ [ {()
 		#TODO: testcase to catch warnings
@@ -906,45 +905,45 @@ BEGIN { # Initialization goes here
 
 
 
-my %RT_options;
 sub import { # NOTE: The import is called at CT yet
 	# CT of callers module. For this one it is RT
 	my $class =  shift;
 
+
+	# There are two states: debugger is loaded or not (still loading)
+	# One options define debugger behaviour while it is loading
+	# Others define debugger behaviour while main program is running
+
+	# NOTICE: it is useless to set breakpoints for not compiled files
+	# TODO: spy module loading and set breakpoints
+	#TODO: Config priority: conf, ENV, cmd_line
+	$DB::dbg->init();
+
+
+	# Parse cmd_line options:
 	if( $_[0]  and  $_[0] eq 'options' ) {
 		my %params =  @_; # FIX? the $_[1] should be HASHREF; $options = @_[1]
-		@RT_options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
+		@DB::options{ keys %{ $params{ options } } } =  values %{ $params{ options } };
 	}
 	else {
 		for( @_ ) {
 			if( /^(\w+)=([\w\d]+)/ ) {
-				$RT_options{ $1 } =  $2;
+				$DB::options{ $1 } =  $2;
 			}
 			else {
-				$RT_options{ $_ } =  1;
+				$DB::options{ $_ } =  1;
 			}
 		}
 	}
 
 
-	# if we set trace_load we want to see which modules are used in main::
-	# It has no any effect at RT because all modules are loaded
-	# So we apply this at CT just before main:: is compiled but after debugger is loaded
-	$DB::options{ trace_load } =  $RT_options{ trace_load }
-		if defined $RT_options{ trace_load };
+	# Default debugger behaviour for main script
+	$DB::options{ trace_goto } //=  1;
 
-
-	# The RT options are applied after 'main::' is loaded
-	$RT_options{ trace_goto } //=  1;
-
-
-	# NOTICE: it is useless to set breakpoints for not compiled files
-	# TODO: spy module loading and set breakpoints
-	$DB::dbg->init();
 
 	# Now debugger and all required modules are loaded. We should set
 	# corresponding perl debugger *internal* values based on given %DB::options
-	applyOptions( \%RT_options );
+	applyOptions();
 }
 
 
@@ -952,14 +951,6 @@ sub import { # NOTE: The import is called at CT yet
 sub postponed {
 	if( $options{ trace_load } ) {
 		mcall( 'trace_load', $DB::dbg, @_ );
-	}
-
-	# RT options applied after main program is loaded
-	# IT: debug BEGIN blocks of main::
-	if( $_[0] eq "*main::_<$0" ) {
-		my @keys =  keys %RT_options;
-		@DB::options{ @keys } =  @RT_options{ @keys };
-		scall( \&applyOptions );
 	}
 }
 
