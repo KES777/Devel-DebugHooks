@@ -308,7 +308,8 @@ mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value, $set_only_global ) =  @_;
 
-	my $debug =  $DB::options{ ddd }  &&  $DB::single;
+	my $debug =  $DB::options{ ddd }
+		&&  ( $DB::single  ||  $DB::options{ ddd } == 2 );
 
 	if( $debug ) {
 		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
