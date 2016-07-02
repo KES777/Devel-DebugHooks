@@ -299,7 +299,7 @@ sub applyOptions {
 		if defined $DB::options{ trace_line };
 
 	$^P &= ~0x20   if $DB::options{ NonStop };
-
+	DB::state( 'stack' )->[0]{ single } =  1   if $DB::options{ Stop };
 }
 
 
