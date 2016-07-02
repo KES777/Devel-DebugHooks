@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.02_12';
+our $VERSION =  '0.02_13';
 
 =head1 NAME
 
@@ -653,7 +653,7 @@ BEGIN { # Initialization goes here
 		# local $_ =  $DB::context[4];
 
 		local @_ =  @{ $DB::context[0] };
-		eval "$usercontext; package " .state( 'package' ) .";\n$expr";
+		eval "$usercontext; package " .state( 'package' ) .";\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
 	}
