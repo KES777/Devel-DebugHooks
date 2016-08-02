@@ -30,6 +30,7 @@ t/28-cmd_a.t
 t/29-cmd_l.t
 t/40-chk_frames.t
 t/41-chk_position.t
+t/42-chk_globals.t
 t/70-dd.t
 t/KP-05-options.t
 t/lib/Devel/AutoInit.pm
