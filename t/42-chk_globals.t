@@ -60,6 +60,8 @@ is
 SKIP: {
     eval { require List::Util };
     skip "List::Util is not installed"   if $@;
+	skip "List::Util v1.29 required"
+		if $List::Util::VERSION < 1.29;
 
     List::Util->import( qw/ pairmap / );
 
