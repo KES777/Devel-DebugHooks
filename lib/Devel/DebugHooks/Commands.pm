@@ -1,5 +1,9 @@
 package Devel::DebugHooks::Commands;
 
+# FIX: segmentation fault when:
+# use strict;
+# use warnings;
+
 # BEGIN {
 # 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
