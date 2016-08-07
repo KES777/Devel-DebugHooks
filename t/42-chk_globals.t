@@ -85,6 +85,20 @@ SKIP: {
 
 
 
+($script =  <<'PERL') =~ s#^\t##gm;
+    $_ =  7;
+    @_ = ( 1..$_ );
+    1;
+PERL
+
+is
+    n( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` )
+    ,$files->{ '$_ not clash' }
+    ,"Debugger should show user's \@_ and \$_";
+print ( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` );
+
+
+
 __DATA__
 @@ anb
 -e:0002    $a <=> $b
@@ -96,3 +110,8 @@ __DATA__
 3
 4
 1 - 23 - 4
+@@ $_ not clash
+-e:0001      $_ =  7;
+-e:0003      1;
+7
+1 2 3 4 5 6 7
