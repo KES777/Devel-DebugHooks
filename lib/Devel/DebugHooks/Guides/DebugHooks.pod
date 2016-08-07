@@ -6,7 +6,7 @@ The DB::sub is not called when you call a subroutine from DB:: namespace
 	sdf {
 		package Test;
 		sub x1 {}
-		sub x2{ x1() }  # Only here DB::sub
+		sub x2{ x1() }  # Only here DB::sub is called
 	}
 
 
@@ -73,3 +73,8 @@ that $DB::single = 1 does not work. Because after returning from module s sub
 old value of $DB::single will be restored by &pop_frame. You should do instead:
 
     DB::state( 'stack' )->[ -2 ]{ single } =  1;
+
+
+
+NOTICE:
+It will be not possible to debug debugger if commands use package global variables. Because of second debugger instance use same ::Commands package and its variables. Think of this like second thread visit same sub while first thread is paused.
