@@ -130,7 +130,20 @@ sub list {
 
 	if( @_ == 1 ) {
 		my $arg =  shift;
+		# If these are not declared ...
+		my( $stack, $file );
 		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
+			# ... we get next error while trying to eveluate $stack
+			#     x131:     if( @_ == 1 ) {
+			#     x132:         my $arg =  shift;
+			#      133:         # my( $stack, $file );
+			#     x134:         if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
+			#   >>x135:             my( $run_file, $run_line );
+			#     x136:             if( $stack ) {
+			# $stack
+			# Use of uninitialized value $result[0] in join or string at Devel/DebugHooks.pm line 1123, <STDIN> line 13.
+			#TODO: Study this case
+
 			my( $run_file, $run_line );
 			if( $stack ) {
 				# TODO: allow to list current sub -0
