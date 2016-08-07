@@ -131,8 +131,8 @@ sub list {
 			if( $stack ) {
 				# TODO: allow to list current sub -0
 				# Here $line_cursor is stack frame number from the top
-				my @frames =  DB::frames();
-				( $run_file, $run_line ) =  @{ $frames[ $line_cursor -1 ] }[3,4];
+				my $frames =  DB::state( 'stack' );
+				( $run_file, $run_line ) =  @{ $frames->[ $line_cursor -1 ] }{ qw/ file line / };
 				# TODO: save window level to show vars automatically at that level
 				$file        =  $run_file;
 				$line_cursor =  $run_line;
