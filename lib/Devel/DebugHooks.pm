@@ -334,6 +334,7 @@ sub state {
 
 	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
 	$low =  0   if $low  &&  $DB::inDB == 2;
+	#TODO: implement global variables for each debugger instance
 	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
 	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
