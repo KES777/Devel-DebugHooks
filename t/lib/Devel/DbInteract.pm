@@ -49,6 +49,14 @@ $DB::commands->{ debug } =  sub {
 	4;
 };
 
+my $dbg_global;
+$DB::commands->{ global } =  sub {
+	print ++$dbg_global, "\n";
+};
+$DB::commands->{ right_global } =  sub {
+	print DB::state( 'dbg_global', DB::state( 'dbg_global' )+1 ), "\n";
+};
+
 
 
 sub bbreak {
