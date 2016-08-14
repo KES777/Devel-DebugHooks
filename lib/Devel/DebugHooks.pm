@@ -323,6 +323,18 @@ sub int_vrbl {
 
 
 sub dbg_vrbl {
+	my( $self, $name, $value ) =  @_;
+
+	return $DB::state   if $name eq 'state';
+
+
+	my $dbg =  $self->{ instance };
+	if( @_ >= 3 ) {
+		$dbg->{ $name } =  $value;
+	}
+
+
+	return $dbg->{ $name };
 }
 
 
