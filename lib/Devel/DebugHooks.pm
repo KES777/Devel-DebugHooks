@@ -334,12 +334,13 @@ sub state {
 
 	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
 	$low =  0   if $low  &&  $DB::inDB == 2;
+	my $level =  $DB::ddlvl -$low;
 	#TODO: implement global variables for each debugger instance
-	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
+	my $stack =  $DB::state->[ $level ];
 	unless( @$stack ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
+		print $DB::OUT "!!!!!!    No stack at level: $level at $file:$line<<<<<<<<<\n";
 		return;
 	}
 
