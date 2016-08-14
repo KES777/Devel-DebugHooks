@@ -416,6 +416,11 @@ our %options;
 our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
+our $variables;      # Hash which defines behaviour for values available through 'state'
+	# There three types of variables:
+	# Debugger internal variables -- global values from DB:: package
+	# Debugger instance variables -- values which exists in current debugger instance
+	# Frame variables -- values for each sub call
 
 
 
@@ -428,6 +433,18 @@ BEGIN {
 		,single      =>  $DB::single
 		,goto_frames =>  []
 	} ] ];
+
+	$DB::variables =  {()
+		,'*'         =>  \&dbg_vrbl
+		,single      =>  \&int_vrbl
+		,file        =>  \&frm_vrbl
+		,goto_frames =>  \&frm_vrbl
+		,line        =>  \&frm_vrbl
+		,package     =>  \&frm_vrbl
+		,sub         =>  \&frm_vrbl
+		,type        =>  \&frm_vrbl
+		,eval        =>  \&frm_vrbl
+	};
 
 
 	$IN                        //= \*STDIN;
