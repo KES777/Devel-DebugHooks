@@ -304,6 +304,55 @@ sub applyOptions {
 
 
 
+sub int_vrbl {
+	my( $self, $name, $value, $preserve_frame ) =  @_;
+
+	no strict "refs";
+	if( @_ >= 3 ) {
+		if( $self->{ debug } ) {
+			print $DB::OUT " ( DB::$name: ${ \"DB::$name\" } -> $value )";
+		}
+
+		${ "DB::$name" } =  $value;
+	}
+
+
+	return frm_vrbl( $self, $name, (@_>=3 && !$preserve_frame ? $value : ()) );
+}
+
+
+
+sub dbg_vrbl {
+}
+
+
+
+sub frm_vrbl {
+	my( $self, $name, $value ) =  @_;
+
+
+	my $frame =  $self->{ stack }[ -1 ];
+	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
+
+	my $old_value =  $frame->{ $name } // 'undef';
+	my $new_value =  '';
+	if( @_ >= 3 ) {
+		$new_value =  ' -> '. $value//'undef';
+		defined $value
+			? $frame->{ $name } =  $value
+			: delete $frame->{ $name };
+	}
+
+	if( $self->{ debug } ) {
+		print $DB::OUT " FRM::$name: $old_value$new_value\n";
+	}
+
+
+	return $frame->{ $name };
+}
+
+
+
 mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value, $set_only_global ) =  @_;
