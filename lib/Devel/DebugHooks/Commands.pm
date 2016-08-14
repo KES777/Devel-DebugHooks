@@ -432,7 +432,7 @@ $DB::commands =  {
 	# Quit from the debugger
 	,q => sub {
 		for( @$DB::state ) {
-			for( @$_ ) {
+			for( @{ $_->{ stack } } ) { # TODO: implement interface to debugger instance
 				$_->{ single } =  0;
 			}
 		}

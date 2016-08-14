@@ -343,7 +343,7 @@ sub frm_vrbl {
 	my( $self, $name, $value ) =  @_;
 
 
-	my $frame =  $self->{ stack }[ -1 ];
+	my $frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
 	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
 
 	my $old_value =  $frame->{ $name } // 'undef';
@@ -405,17 +405,10 @@ sub state {
 		return;
 	}
 
-	return $DB::state   if $name eq 'state';
-	return $instance       if $name eq 'stack';
-	if( $name eq 'steps_left' ) {
-		return $DB::steps_left    unless @_ >= 2;
-		return $DB::steps_left =  $value;
-	}
-
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug =>  $debug
-			,stack =>  $instance
+			,instance =>  $instance
 		}
 		,@_
 	);
@@ -466,12 +459,13 @@ our $variables;      # Hash which defines behaviour for values available through
 # Do DB:: configuration stuff here
 # Default debugger behaviour while it is loading
 BEGIN {
-	$DB::state =  [ [ {()
+	#TODO: implement sub to init new debugger instance
+	$DB::state =  [ { stack =>  [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
 		,goto_frames =>  []
-	} ] ];
+	} ] } ];
 
 	$DB::variables =  {()
 		,'*'         =>  \&dbg_vrbl
@@ -922,10 +916,10 @@ BEGIN { # Initialization goes here
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
 
-			push @{ DB::state( 'state' ) }, [ {()
+			push @{ DB::state( 'state' ) }, { stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
-			} ];
+			} ] };
 			$DB::ddlvl++;
 			DB::state( 'single', 1 );
 			$^D |=  1<<30;
