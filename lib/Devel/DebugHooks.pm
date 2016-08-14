@@ -363,10 +363,10 @@ sub state {
 		no strict "refs";
 		if( $debug ) {
 			if( $set_only_global ) {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) ";
+				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) \n\n";
 			}
 			else {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
+				print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value \n\n";
 			}
 		}
 
@@ -377,9 +377,6 @@ sub state {
 				: delete $frame->{ $name };
 		}
 	}
-
-
-	print $DB::OUT "\n\n"   if $debug;
 
 
 	return $frame->{ $name };
