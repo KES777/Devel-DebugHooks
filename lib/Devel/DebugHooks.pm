@@ -355,7 +355,7 @@ sub frm_vrbl {
 
 mutate_sub_is_debuggable( \&state, 0 );
 sub state {
-	my( $name, $value, $set_only_global ) =  @_;
+	my( $name, $value ) =  @_;
 
 	my $debug =  $DB::options{ ddd }
 		&&  ( $DB::single  ||  $DB::options{ ddd } == 2 );
@@ -376,7 +376,7 @@ sub state {
 
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n"."$file:$line: >> \$DB::$name <<";
+		print $DB::OUT '-'x20 ."\n$file:$line:";
 
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
@@ -401,34 +401,13 @@ sub state {
 	}
 
 
-
-	my $frame =  $stack->[ -1 ];
-	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
-	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
-		if $debug;
-
-
-	if( @_ >= 2 ) {
-		no strict "refs";
-		if( $debug ) {
-			if( $set_only_global ) {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) \n\n";
-			}
-			else {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value \n\n";
-			}
+	$name =  '*'   unless exists $DB::variables->{ $name };
+	return $DB::variables->{ $name }({()
+			,debug =>  $debug
+			,stack => $stack
 		}
-
-		${ "DB::$name" } =  $value;
-		unless( $set_only_global ) {
-			defined $value
-				? $frame->{ $name } =  $value
-				: delete $frame->{ $name };
-		}
-	}
-
-
-	return $frame->{ $name };
+		,@_
+	);
 }
 
 # Used perl internal variables:
