@@ -304,9 +304,70 @@ sub applyOptions {
 
 
 
+sub int_vrbl {
+	my( $self, $name, $value, $preserve_frame ) =  @_;
+
+	no strict "refs";
+	if( @_ >= 3 ) {
+		if( $self->{ debug } ) {
+			print $DB::OUT " ( DB::$name: ${ \"DB::$name\" } -> $value )";
+		}
+
+		${ "DB::$name" } =  $value;
+	}
+
+
+	return frm_vrbl( $self, $name, (@_>=3 && !$preserve_frame ? $value : ()) );
+}
+
+
+
+sub dbg_vrbl {
+	my( $self, $name, $value ) =  @_;
+
+	return $DB::state   if $name eq 'state';
+
+
+	my $dbg =  $self->{ instance };
+	if( @_ >= 3 ) {
+		$dbg->{ $name } =  $value;
+	}
+
+
+	return $dbg->{ $name };
+}
+
+
+
+sub frm_vrbl {
+	my( $self, $name, $value ) =  @_;
+
+
+	my $frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
+	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
+
+	my $old_value =  $frame->{ $name } // 'undef';
+	my $new_value =  '';
+	if( @_ >= 3 ) {
+		$new_value =  ' -> '. $value//'undef';
+		defined $value
+			? $frame->{ $name } =  $value
+			: delete $frame->{ $name };
+	}
+
+	if( $self->{ debug } ) {
+		print $DB::OUT " FRM::$name: $old_value$new_value\n";
+	}
+
+
+	return $frame->{ $name };
+}
+
+
+
 mutate_sub_is_debuggable( \&state, 0 );
 sub state {
-	my( $name, $value, $set_only_global ) =  @_;
+	my( $name, $value ) =  @_;
 
 	my $debug =  $DB::options{ ddd }
 		&&  ( $DB::single  ||  $DB::options{ ddd } == 2 );
@@ -327,60 +388,30 @@ sub state {
 
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n"."$file:$line: >> \$DB::$name <<";
+		print $DB::OUT '-'x20 ."\n$file:$line:";
 
 		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
 	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
 	$low =  0   if $low  &&  $DB::inDB == 2;
-	my $stack =  $DB::state->[ $DB::ddlvl -$low ];
-	unless( @$stack ) {
+	my $level =  $DB::ddlvl -$low;
+	#TODO: implement global variables for each debugger instance
+	my $instance =  $DB::state->[ $level ];
+	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT "!!!!!!    No stack at level: $DB::ddlvl at $file:$line<<<<<<<<<\n";
+		print $DB::OUT "!!!!!!    No debugger at level: $level at $file:$line<<<<<<<<<\n";
 		return;
 	}
 
-	return $DB::state   if $name eq 'state';
-	return $stack       if $name eq 'stack';
-	if( $name eq 'steps_left' ) {
-		return $DB::steps_left    unless @_ >= 2;
-		return $DB::steps_left =  $value;
-	}
-
-
-
-	my $frame =  $stack->[ -1 ];
-	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
-	print $DB::OUT ' -- ' .( $frame->{ $name } // '&undef' )
-		if $debug;
-
-
-	if( @_ >= 2 ) {
-		no strict "refs";
-		if( $debug ) {
-			if( $set_only_global ) {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" } -> $value) ";
-			}
-			else {
-				print $DB::OUT "(GLOBAL:${ \"DB::$name\" }) -> $value ";
-			}
+	$name =  '*'   unless exists $DB::variables->{ $name };
+	return $DB::variables->{ $name }({()
+			,debug =>  $debug
+			,instance =>  $instance
 		}
-
-		${ "DB::$name" } =  $value;
-		unless( $set_only_global ) {
-			defined $value
-				? $frame->{ $name } =  $value
-				: delete $frame->{ $name };
-		}
-	}
-
-
-	print $DB::OUT "\n\n"   if $debug;
-
-
-	return $frame->{ $name };
+		,@_
+	);
 }
 
 # Used perl internal variables:
@@ -417,18 +448,36 @@ our %options;
 our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
+our $variables;      # Hash which defines behaviour for values available through 'state'
+	# There three types of variables:
+	# Debugger internal variables -- global values from DB:: package
+	# Debugger instance variables -- values which exists in current debugger instance
+	# Frame variables -- values for each sub call
 
 
 
 # Do DB:: configuration stuff here
 # Default debugger behaviour while it is loading
 BEGIN {
-	$DB::state =  [ [ {()
+	#TODO: implement sub to init new debugger instance
+	$DB::state =  [ { stack =>  [ {()
 		#TODO: testcase to catch warnings
 		# Use of uninitialized value in scalar assignment at state:+5
 		,single      =>  $DB::single
 		,goto_frames =>  []
-	} ] ];
+	} ] } ];
+
+	$DB::variables =  {()
+		,'*'         =>  \&dbg_vrbl
+		,single      =>  \&int_vrbl
+		,file        =>  \&frm_vrbl
+		,goto_frames =>  \&frm_vrbl
+		,line        =>  \&frm_vrbl
+		,package     =>  \&frm_vrbl
+		,sub         =>  \&frm_vrbl
+		,type        =>  \&frm_vrbl
+		,eval        =>  \&frm_vrbl
+	};
 
 
 	$IN                        //= \*STDIN;
@@ -867,10 +916,10 @@ BEGIN { # Initialization goes here
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if $DB::options{ ddd };
 
-			push @{ DB::state( 'state' ) }, [ {()
+			push @{ DB::state( 'state' ) }, { stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
-			} ];
+			} ] };
 			$DB::ddlvl++;
 			DB::state( 'single', 1 );
 			$^D |=  1<<30;

@@ -99,6 +99,18 @@ is
 	,$files->{ 'outer step over' }
 	,"Step over at client's scipt after debugger debugging";
 
+$cmds =  ' $DB::options{ dd } =  1;global;global;r;q;';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'wrong global vars usage' }
+	,"Debugger commands should not use any global variables";
+
+$cmds =  ' $DB::options{ dd } =  1;right_global;right_global;r;q;';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'global vars usage' }
+	,"Debugger globals per instance";
+
 
 TODO: {
 	local $TODO =  'Implemented debugging for push/pop frame';
@@ -182,6 +194,18 @@ xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 1
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 -e:0005  2;
+@@ wrong global vars usage
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1
+2
+@@ global vars usage
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1
+1
 @@ step into debugger
 -e:0004  t1();
 1

@@ -41,7 +41,7 @@ my $files =  get_data_section();
 	3;
 PERL
 
-$cmds =  'e [ $DB::package => $DB::file => $DB::line ];s;' x3;
+$cmds =  'e [ DB::state("package") => DB::state("file") => DB::state("line") ];s;' x3;
 is
 	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position' }
