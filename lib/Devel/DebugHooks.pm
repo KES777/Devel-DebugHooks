@@ -385,26 +385,25 @@ sub state {
 	$low =  0   if $low  &&  $DB::inDB == 2;
 	my $level =  $DB::ddlvl -$low;
 	#TODO: implement global variables for each debugger instance
-	my $stack =  $DB::state->[ $level ];
-	unless( @$stack ) {
+	my $instance =  $DB::state->[ $level ];
+	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT "!!!!!!    No stack at level: $level at $file:$line<<<<<<<<<\n";
+		print $DB::OUT "!!!!!!    No debugger at level: $level at $file:$line<<<<<<<<<\n";
 		return;
 	}
 
 	return $DB::state   if $name eq 'state';
-	return $stack       if $name eq 'stack';
+	return $instance       if $name eq 'stack';
 	if( $name eq 'steps_left' ) {
 		return $DB::steps_left    unless @_ >= 2;
 		return $DB::steps_left =  $value;
 	}
 
-
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug =>  $debug
-			,stack => $stack
+			,stack =>  $instance
 		}
 		,@_
 	);
