@@ -648,7 +648,7 @@ BEGIN { # Initialization goes here
 			($file, $line) =  split ':', $file
 				unless defined $line;
 
-			return   unless file( $file );
+			return   unless defined( $file =  file( $file ) );
 
 			# TODO: testcase for negative lines
 			return ($line<0?-$line-1:$line) <= $#{ "::_<$file" }
