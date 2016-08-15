@@ -377,7 +377,7 @@ sub state {
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
-			for( @$_ ) {
+			for( @{ $_->{ stack } } ) {
 				for my $key ( sort keys %$_ ) {
 					next   if ref $_->{ $key };
 					print $DB::OUT "  $key => " .$_->{ $key } .";";
