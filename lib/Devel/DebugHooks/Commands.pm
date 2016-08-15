@@ -37,28 +37,17 @@ package Devel::DebugHooks::Commands;
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
 
-# reset $line_cursor if DB::DB were called. BUG: if DB::DB called twice for same line
-my $line_cursor;
-my $old_DB_line  =  -1;
-my $curr_file;
-sub update_fl {
-	my $line =  DB::state( 'line' );
-	if( $old_DB_line != $line ) {
-		$line_cursor =  $old_DB_line =  $line;
-		$curr_file   =  DB::state( 'file' );
-	}
-}
-
-my $cmd_f;
 sub file {
-	update_fl()         unless defined $curr_file;
-	return $curr_file   unless defined $_[0];
-
 	my( $file, $do_not_set ) =  @_;
-	$file =  $cmd_f->[ $file ]
-		if $file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $file ];
 
-	$curr_file =  $file   unless $do_not_set;
+	return DB::state( 'list.file' ) // DB::state( 'file' )
+		unless defined $file;
+
+	my $files =  DB::state( 'cmd.f' );
+	$file =  $files->[ $file ]
+		if $file =~ m/^(\d+)$/  &&  exists $files->[ $file ];
+
+	DB::state( 'list.file', $file )   unless $do_not_set;
 
 	return $file;
 }
@@ -75,19 +64,20 @@ my %cmd_T = (
 
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
-	my( $from, $to, $file, $run_file, $run_line ) =  @_;
+	my( $file, $from, $to, $run_file, $run_line ) =  @_;
+
+	# Fix window boundaries
+	my $source =  DB::source( $file );
+	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
+	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
+
+	# The place where to display *run marker*: '>>'
 	$run_file //=  DB::state( 'file' );
 	$run_line //=  DB::state( 'line' );
 
 
-	$file =  file( $file );
-	my $source =  DB::source( $file );
-	my $traps  =  DB::traps( $file );
-
-	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
-	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
-
 	print $DB::OUT "$file\n";
+	my $traps  =  DB::traps( $file );
 	for my $line ( $from..$to ) {
 		next   unless exists $source->[ $line ];
 
@@ -104,9 +94,10 @@ sub _list {
 		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
 		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
-		(my $tmp =  $source->[ $line ]) =~ s/\t/    /g; #/
-		$tmp =  " $tmp"   if length $tmp > 1; # $tmp have at least "\n"
-		print $DB::OUT "$line:$tmp";
+
+		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
+		$sl =  " $sl"   if length $sl > 1; # $sl(source line) have at least "\n"
+		print $DB::OUT "$line:$sl";
 	}
 }
 
@@ -117,106 +108,109 @@ my $lines_before =  15;
 my $lines_after  =  15;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
 sub list {
-	update_fl();
-	shift   if @_ == 1  &&   (!defined $_[0] || $_[0] eq '');
+	my( $args ) =  @_;
 
-	unless( @_ ) {
 
-		_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
+	# Just list source at current position
+	if( $args eq '' ) {
+		my $file =  DB::state( 'list.file' );
+		my $line =  DB::state( 'list.line' );
+		_list( $file, $line -$lines_before, $line +$lines_after );
 
-		$line_cursor +=  $lines_after +1 +$lines_before;
+		# Move cursor to the next window.
+		# Window is: lines before, current line and lines after
+		DB::state( 'list.line',  $line +$lines_after +$lines_before +1 );
+
+		return 1;
 	}
 
 
-	if( @_ == 1 ) {
-		my $arg =  shift;
-		# If these are not declared ...
-		my( $stack, $file );
-		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
-			# ... we get next error while trying to eveluate $stack
-			#     x131:     if( @_ == 1 ) {
-			#     x132:         my $arg =  shift;
-			#      133:         # my( $stack, $file );
-			#     x134:         if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
-			#   >>x135:             my( $run_file, $run_line );
-			#     x136:             if( $stack ) {
-			# $stack
-			# Use of uninitialized value $result[0] in join or string at Devel/DebugHooks.pm line 1123, <STDIN> line 13.
-			#TODO: Study this case
-
-			my( $run_file, $run_line );
-			if( $stack ) {
-				# TODO: allow to list current sub -0
-				# Here $line_cursor is stack frame number from the top
-				my $frames =  DB::state( 'stack' );
-				( $run_file, $run_line ) =  @{ $frames->[ $line_cursor -1 ] }{ qw/ file line / };
-				# TODO: save window level to show vars automatically at that level
-				$file        =  $run_file;
-				$line_cursor =  $run_line;
-			}
-			elsif( $line_cursor eq '.' ) {
-				# TODO: 'current' means file and line! FIX this in other places too
-				$file        =  DB::state( 'file' );
-				$line_cursor =  DB::state( 'line' );
-			}
-
-			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
-
-			$line_cursor +=  $lines_after +1 +$lines_before;
+	if( my( $stack, $file, $line ) =  $args =~ m/^(-)?${file_line}$/ ) {
+		my( $run_file, $run_line );
+		if( $stack && !$file ) {
+			# Here $line is stack frame number from the last frame
+			# The last frame is accessable as -1
+			my $frames =  DB::state( 'stack' );
+			return -2   if $line +1 > @$frames;
+			( $run_file, $run_line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
+			# TODO: save window level to show vars automatically at that level
+			# TODO: check stack frames and put run cursor automatically
+			$file =  $run_file;
+			$line =  $run_line;
 		}
-		# NOTICE: $level take effect only if '&' sign present. In other cases (\d*) should not match
-		elsif( my( $coderef, $subname, $level ) =   $arg =~ m/^(\$?)([\S]+|\&)(\d*)$/ ) {
-			my $deparse =  sub {
-				require B::Deparse;
-				my( $coderef ) =  @_;
-				return -1   unless ref $coderef eq 'CODE';
-
-				print $DB::OUT B::Deparse->new("-p", "-sC")
-					->coderef2text( $coderef );
-
-				return 1;
-			};
-
-
-			# 1.List the current sub or n frames before
-			# TODO: Check is it possible to spy subs from goto_frames?
-			# If yes think about interface to access to them ( DB::frames??? )
-			if( $subname eq '&' ) {
-				$level //=  0;
-				# FIX: 'eval' does not update @DB::stack.
-				# Eval exists at real stack but ot does not at our
-				my $coderef =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
-				print $DB::OUT "sub $coderef ";
-				$coderef =  \&$coderef   unless ref $coderef;
-				return $deparse->( $coderef );
-			}
-
-			# 2. List sub by code ref in the variable
-			# TODO: locate this sub at '_<$file' hash and do usual _list
-			# to show breakpoints, lines etc
-			$coderef  &&  return {()
-				,expr =>  "\$$subname"
-				,code =>  $deparse
-			};
-
-
-			# 3. List sub from source
-			$subname =  DB::state( 'package' ) ."::${ subname }"
-				if $subname !~ m/::/;
-
-			# The location format is 'file:from-to'
-			my $location =  DB::location( $subname );
-			if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
-				_list( $2, $3, $1 );
-			}
-
-			return 1;
+		elsif( $line eq '.' ) {
+			# TODO: 'current' means file and line! FIX this in other places too
+			$file =  DB::state( 'file' );
+			$line =  DB::state( 'line' );
 		}
 		else {
-			print $DB::OUT "Unknown paramenter: $arg\n";
-
-			return -1;
+			$file =  file( $file );
 		}
+
+		_list( $file, $line -$lines_before, $line +$lines_after, $run_file, $run_line );
+
+		# Move cursor to the next window.
+		# Window is: lines before, current line and lines after
+		DB::state( 'list.file', $file );
+		DB::state( 'list.line', $line +$lines_after +$lines_before +1 );
+	}
+	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(\w+|&\d*)?$/ ) {
+		my $deparse =  sub {
+			require B::Deparse;
+			my( $coderef ) =  @_;
+			return -3   unless ref $coderef eq 'CODE';
+
+			print $DB::OUT B::Deparse->new("-p", "-sC")
+				->coderef2text( $coderef )
+				,"\n"
+			;
+
+			return 1;
+		};
+
+
+		# 1.Deparse the current sub or n frames before
+		# TODO: Check is it possible to spy subs from goto_frames?
+		# If yes think about interface to access to them ( DB::frames??? )
+		if( $subname =~ /^&(\d*)$/ ) {
+			my $level =  $1 // 0;
+			# FIX: 'eval' does not update @DB::stack.
+			# Eval exists at real stack but does not at our
+			my $frames =  DB::state( 'stack' );
+			return -2   if $level +1 > @$frames;
+			my $coderef =  $frames->[ -$level -1 ]{ sub };
+			return -4   if $coderef eq ''; # The main:: namespace
+			print $DB::OUT "sub $coderef ";
+			$coderef =  \&$coderef   unless ref $coderef;
+			return $deparse->( $coderef );
+		}
+
+		# 2. List sub by code ref in the variable
+		# TODO: findout sub name from the reference
+		# TODO: locate this sub at '_<$file' hash and do usual _list
+		# to show breakpoints, lines etc
+		$ref  &&  return {()
+			,expr =>  "\$$subname"
+			,code =>  $deparse
+		};
+
+
+		# 3. List sub from source
+		$subname =  DB::state( 'package' ) ."::${ subname }"
+			if $subname !~ m/::/;
+
+		# The location format is 'file:from-to'
+		my $location =  DB::location( $subname );
+		if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
+			_list( $1, $2, $3 );
+		}
+
+		return 1;
+	}
+	else {
+		print $DB::OUT "Can not list: $args\n";
+
+		return -1;
 	}
 
 
@@ -613,7 +607,7 @@ $DB::commands =  {
 
 		# list all breakpoints
 		unless( $line ) {
-			$cmd_f =  [];
+			my $cmd_f =  [];
 			my $file_no =  0;
 			# First display traps in the current file
 			print $DB::OUT "Breakpoints:\n";
@@ -643,6 +637,8 @@ $DB::commands =  {
 						if $traps->{ $_ } == 0;
 				}
 			}
+
+			DB::state( 'cmd.f', $cmd_f );
 
 			print $DB::OUT "Stop on subs:\n";
 			print $DB::OUT ' ' .($DB::stop_in_sub{ $_ } ? ' ' : '-') ."$_\n"
@@ -709,7 +705,7 @@ $DB::commands =  {
 		}
 
 		# List available files
-		$cmd_f   =  [];
+		my $cmd_f   =  [];
 		my $file_no =  0;
 		for( sort $0, values %INC, DB::sources() ) {
 		# for( sort $0, keys %$expr ) {
@@ -718,6 +714,7 @@ $DB::commands =  {
 				print $DB::OUT $file_no++ ." $_\n";
 			}
 		}
+		DB::state( 'cmd.f', $cmd_f );
 
 		1;
 	}
