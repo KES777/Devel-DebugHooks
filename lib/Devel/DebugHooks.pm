@@ -349,7 +349,7 @@ sub frm_vrbl {
 	my $old_value =  $frame->{ $name } // 'undef';
 	my $new_value =  '';
 	if( @_ >= 3 ) {
-		$new_value =  ' -> '. $value//'undef';
+		$new_value =  ' -> '. ($value//'undef');
 		defined $value
 			? $frame->{ $name } =  $value
 			: delete $frame->{ $name };
