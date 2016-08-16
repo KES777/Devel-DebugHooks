@@ -675,6 +675,8 @@ BEGIN { # Initialization goes here
 			( $^H, ${^WARNING_BITS}, my $hr ) =  @DB::context[1..3];
 			%^H =  %$hr   if $hr;
 		}
+		# $@ is cleared when compiller enters *eval* or *BEGIN* block
+		$@ =  $DB::context[4];
 	CODE
 	# http://perldoc.perl.org/functions/eval.html
 	# We may define eval in other package if we want to place eval into other
@@ -941,12 +943,16 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
-		@DB::context =  ( \@_, (caller 1)[8..10], $_ );
+		@DB::context =  ( \@_, (caller 1)[8..10], $@, $_ );
 	}
 
 
 
+	# WORKAROUND: &restore_context is called outside of DB::DB, so we should stop debugging it
+	# to prevent $file:$line updated in unexpected way
+	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
+		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
 
@@ -1017,6 +1023,7 @@ sub DB {
 	my( $p, $f, $l ) =  init();
 
 	&save_context;
+	establish_cleanup \&restore_context;
 
 
 	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"

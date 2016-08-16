@@ -105,7 +105,18 @@ is
     n( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` )
     ,$files->{ '$_ not clash' }
     ,"Debugger should show user's \@_ and \$_";
-print ( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` );
+
+
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	eval { 1/0; };
+	print $@;
+PERL
+
+is
+    nn( `$^X $lib -d:DbInteract='go 2;\$\@;e \$\@;s' -e '$script'` )
+    ,$files->{ 'keep $@' }
+    ,"Do not change exception message (\$@) at user's script";
 
 
 
@@ -125,3 +136,10 @@ __DATA__
 -e:0003      1;
 7
 1 2 3 4 5 6 7
+@@ keep $@
+-e:0001  eval { 1/0; };
+-e:0002  print $@;
+Illegal division by zero at ...
+
+"Illegal division by zero at ...
+Illegal division by zero at ...
