@@ -24,6 +24,8 @@ sub n {
 	s#\t#  #gm;
 	s#(?:[^\s]*?)?([^/]+\.p(?:m|l))#xxx/$1#gm;
 
+	s/x0:/ 0:/; #WORKAROUND: old perl shows zero line as breakable
+
 	$_;
 }
 
@@ -53,10 +55,8 @@ my $files =  get_data_section();
 	t();
 PERL
 
-my $tmp =  n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` );
-$tmp =~ s/x0:/ 0:/; #WORKAROUND: old perl shows zero line as breakable
 is
-    $tmp
+	n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` )
 	,$files->{ 'list' }
 	,"List the source code";
 
