@@ -59,6 +59,13 @@ $DB::commands->{ right_global } =  sub {
 
 
 
+$DB::commands->{ 'list.conf' } =  sub {
+	$Devel::DebugHooks::Commands::lines_before =  3;
+	$Devel::DebugHooks::Commands::lines_after  =  3;
+};
+
+
+
 sub bbreak {
 	return   if $off;
 

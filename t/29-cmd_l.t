@@ -56,7 +56,7 @@ my $files =  get_data_section();
 PERL
 
 is
-	n( `$^X $lib -d:DbInteract='b 2;a 2 1;s 2;l .;q' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='list.conf;b 2;a 2 1;s 2;l .;q' -e '$script'` )
 	,$files->{ 'list' }
 	,"List the source code";
 
@@ -67,11 +67,9 @@ __DATA__
 -e:0005  1;
 -e:0002    2;
 -e
-     0: use Devel::DbInteract split(/,/,q{b 2;a 2 1;s 2;l .;q});;
+     0: use Devel::DbInteract split(/,/,q{list.conf;b 2;a 2 1;s 2;l .;q});;
      1: sub t {
 ab>>x2:     2;
      3: }
      4:
     x5: 1;
-    x6: t();
-     7:

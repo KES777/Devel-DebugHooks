@@ -1,5 +1,8 @@
 package Devel::DebugHooks::Commands;
 
+our $lines_before =  15;
+our $lines_after  =  15;
+
 # FIX: segmentation fault when:
 # use strict;
 # use warnings;
@@ -103,9 +106,6 @@ sub _list {
 
 
 
-# TODO: make variables global/configurable
-my $lines_before =  15;
-my $lines_after  =  15;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
 sub list {
 	my( $args ) =  @_;
