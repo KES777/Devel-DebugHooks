@@ -39,6 +39,16 @@ sub nl {
 
 
 
+sub nn {
+    $_ =  n( @_ );
+
+    s#( at ).*$#$1...#gm;    # Remove file:line info
+
+    $_;
+}
+
+
+
 my $cmds;
 my $script;
 my $files =  get_data_section();
