@@ -9,6 +9,8 @@ use Test::Output;
 use FindBin qw/ $Bin /;  my $lib =  "-I$Bin/lib -I$Bin/../lib";
 use Data::Section::Simple qw/ get_data_section /;
 
+print 'ok - ', `$^X $lib -e 'print \@INC'`;
+
 use Test::Differences;
 unified_diff();
 {
