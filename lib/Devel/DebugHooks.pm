@@ -950,7 +950,7 @@ BEGIN { # Initialization goes here
 
 	# WORKAROUND: &restore_context is called outside of DB::DB, so we should stop debugging it
 	# to prevent $file:$line updated in unexpected way
-	mutate_sub_is_debuggable( \&restore_context, 0 );
+	# mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
 		$@ =  $DB::context[ 4 ];
 	}
