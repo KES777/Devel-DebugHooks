@@ -953,6 +953,7 @@ BEGIN { # Initialization goes here
 	# mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
 		$@ =  $DB::context[ 4 ];
+		print $DB::OUT "RETURN<<<<<<<<<<<<<<<<$DB::sub\n";
 	}
 } # end of provided DB::API
 

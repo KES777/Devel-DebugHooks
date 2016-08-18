@@ -25,6 +25,23 @@ sub bbreak {
 	$self->process( 'l .' );
 }
 
+sub trace_subs {
+	printf $DB::OUT "CALL FROM: %s %s %s\n"
+		,DB::state( 'package' )
+		,DB::state( 'file' )
+		,DB::state( 'line' )
+	;
+}
+
+
+
+sub trace_returns {
+	printf $DB::OUT "BACK TO  : %s %s %s\n"
+		,@{ DB::state( "stack" )->[-2] }{ qw/ package file line / }
+	;
+}
+
+
 
 
 use Devel::DebugHooks();
