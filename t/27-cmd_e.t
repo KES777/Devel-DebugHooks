@@ -50,6 +50,12 @@ my $files =  get_data_section();
 	2;
 PERL
 
+$cmd =  '2+2;e;q';
+is
+	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
+	,$files->{ 'last eval' }
+	,'Eval last expression if none supplied';
+
 $cmd =  's;$x;e $x;$x++;e $x;s;e $x;s;e $x;s;@x;scalar @x;e \@x;s;%x;scalar %x;e \%x;';
 is
 	n( `$^X $lib -d:DbInteract='$cmd' -e '$script'` )
@@ -103,6 +109,10 @@ is
 
 
 __DATA__
+@@ last eval
+-e:0001  $x =  1;
+4
+4
 @@ eval
 -e:0001  $x =  1;
 -e:0002  $x =  [ a => 1 ];
@@ -142,5 +152,4 @@ undef
 undef
 -e:0003  2;
 4
-
 ERROR: Global symbol "$x" requires explicit package name at ...

@@ -85,6 +85,11 @@ is
 	,$files->{ 'die' }
 	,"Die when eval";
 
+is
+	nl( `$^X $lib -d:DbInteract='2+2;DB::state( "db.last_eval" );q' -e '$script'` )
+	,$files->{ 'last eval' }
+	,"Remember last evaluated expression";
+
 
 
 is
@@ -122,8 +127,11 @@ undef
 1---2
 @@ die
 -e:0008  1;
-
 ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 1.
+@@ last eval
+-e:0008  1;
+4
+2+2
 @@ eval expr
 -e:0008  1;
 5
