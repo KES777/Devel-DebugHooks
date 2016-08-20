@@ -727,7 +727,7 @@ $DB::commands =  {
 		require Data::Dump;
 
 		return {
-			expr => shift,
+			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
 			code => sub {
 				print $DB::OUT Data::Dump::pp( @_ ) ."\n";
 			}
@@ -835,7 +835,8 @@ $DB::commands =  {
 	}
 	,d => sub {
 		return {
-			expr => "\$DB::single =  0; \$^D |= (1<<30);" .shift,
+			expr => "\$DB::single =  0; \$^D |= (1<<30);"
+				.DB::state( 'db.last_eval', shift ),
 			code => sub {
 				print $DB::OUT "\n@_\n";
 				return 1;
