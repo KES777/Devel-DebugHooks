@@ -1179,6 +1179,11 @@ sub process {
 	local $" =  $DB::options{ '"' }  //  $";
 	print $DB::OUT "@result\n"   unless $quiet;
 
+	DB::state( 'db.last_eval', $str );
+	#WARNING: NEVER STORE REFERENCE TO EVALUATION RESULT
+	# This will influence to user's script execution under debugger. Data
+	# will not be DESTROY'ed when it leaves its scope because of we refer it
+
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
 
