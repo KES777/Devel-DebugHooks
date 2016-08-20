@@ -833,6 +833,15 @@ $DB::commands =  {
 	,R => sub {
 		`killall uwsgi`;
 	}
+	,d => sub {
+		return {
+			expr => "\$DB::single =  0; \$^D |= (1<<30);" .shift,
+			code => sub {
+				print $DB::OUT "\n@_\n";
+				return 1;
+			}
+		}
+	}
 };
 
 1;
