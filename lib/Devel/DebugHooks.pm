@@ -1171,13 +1171,13 @@ sub process {
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
 	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
+	print $DB::OUT "ERROR: $@"   if $@;
 	@result =  ()   if $@  &&  @result
 		&&  $result[0] eq $DB::options{ undef }; #WORKAROUND (see commit)
 
 	print $DB::OUT "\nEvaluation result:\n"   if $DB::options{ ddd };
 	local $" =  $DB::options{ '"' }  //  $";
 	print $DB::OUT "@result\n"   unless $quiet;
-	print $DB::OUT "ERROR: $@"   if $@;
 
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
