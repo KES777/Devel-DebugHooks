@@ -153,4 +153,3 @@ undef
 -e:0003  2;
 4
 ERROR: Global symbol "$x" requires explicit package name at ...
-

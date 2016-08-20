@@ -1170,14 +1170,17 @@ sub process {
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
 	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
-	my @result =  map{ $_ // $DB::options{ undef } } DB::eval( $str );
-	print $DB::OUT "ERROR: $@"   if $@;
-	@result =  ()   if $@  &&  @result
-		&&  $result[0] eq $DB::options{ undef }; #WORKAROUND (see commit)
+	my @result =  DB::eval( $str );
+	if( $@ ) {
+		print $DB::OUT "ERROR: $@";
+	}
+	elsif( !$quiet ) {
+		print $DB::OUT "\nEvaluation result:\n"   if $DB::options{ ddd };
+		@result =  map{ $_ // $DB::options{ undef } } @result;
+		local $" =  $DB::options{ '"' }  //  $";
+		print $DB::OUT "@result\n";
+	}
 
-	print $DB::OUT "\nEvaluation result:\n"   if $DB::options{ ddd };
-	local $" =  $DB::options{ '"' }  //  $";
-	print $DB::OUT "@result\n"   unless $quiet;
 
 	DB::state( 'db.last_eval', $str );
 	#WARNING: NEVER STORE REFERENCE TO EVALUATION RESULT

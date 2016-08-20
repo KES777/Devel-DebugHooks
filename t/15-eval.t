@@ -128,7 +128,6 @@ undef
 @@ die
 -e:0008  1;
 ERROR: test at (eval xxx/DebugHooks.pm:XXXX] line 1.
-
 @@ last eval
 -e:0008  1;
 4
