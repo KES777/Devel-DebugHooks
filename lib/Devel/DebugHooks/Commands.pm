@@ -758,6 +758,7 @@ $DB::commands =  {
 		my @frames =  DB::frames();
 		my $deep   =  -1;
 		if( $one ) {
+			return 1   unless @frames >= $level;
 			@frames =  $frames[ $level -1 ];
 			$deep =  -$level;
 		}
