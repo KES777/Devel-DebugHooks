@@ -744,7 +744,7 @@ $DB::commands =  {
 
 	# TODO: give names to ANON
 	,T => sub {
-		my( $level ) =  shift =~ m/^(\d+)$/;
+		my( $one, $level ) =  shift =~ m/^(-?)(\d+)$/;
 		$level =  -1   unless $level;
 
 		my $T =  {()
@@ -757,6 +757,10 @@ $DB::commands =  {
 
 		my @frames =  DB::frames();
 		my $deep   =  @frames;
+		if( $one ) {
+			@frames =  $frames[ $level -1 ];
+			$deep =  -$level;
+		}
 		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
 			my $type    =  $cmd_T{ $frame->[0] };
