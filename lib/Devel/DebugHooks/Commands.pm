@@ -453,19 +453,25 @@ $DB::commands =  {
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;       #u+c
 
-			$level =  $1  if /^(\d+)$/;
+			$level =  $1  if /^-(\d+)$/;
 			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
-
-		my $dbg_frames =  6;     # Count of debugger frames
 		$type ||=  3;  # TODO: make defaults configurable
-		$level +=  $dbg_frames;  # The first client frame
+
+
+		my $dbg_frames =  0;
+		{ # Count debugger frames
+			my @frame;
+			1 while( @frame =  caller( $dbg_frames++ )  and  $frame[3] ne 'DB::DB' );
+			$dbg_frames--;
+		}
+
 
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
-		my $my =   PadWalker::peek_my(  $level );
-		my $our =  PadWalker::peek_our( $level );
+		my $my =   PadWalker::peek_my(  $level +$dbg_frames );
+		my $our =  PadWalker::peek_our( $level +$dbg_frames );
 
 		if( $type & 1 ) {
 			# TODO: for terminals which support color show
@@ -517,7 +523,8 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
+			# First element starts at -1 subscript
+			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
 				# convert this to subroutine refs
@@ -532,7 +539,8 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
+			# First elements starts at -1 subscript
+			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
@@ -736,7 +744,7 @@ $DB::commands =  {
 
 	# TODO: give names to ANON
 	,T => sub {
-		my( $level ) =  shift =~ m/^(\d+)$/;
+		my( $one, $level ) =  shift =~ m/^(-?)(\d+)$/;
 		$level =  -1   unless $level;
 
 		my $T =  {()
@@ -748,7 +756,12 @@ $DB::commands =  {
 		my $format =  'multiline';
 
 		my @frames =  DB::frames();
-		my $deep   =  @frames;
+		my $deep   =  -1;
+		if( $one ) {
+			return 1   unless @frames >= $level;
+			@frames =  $frames[ $level -1 ];
+			$deep =  -$level;
+		}
 		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
 			my $type    =  $cmd_T{ $frame->[0] };
