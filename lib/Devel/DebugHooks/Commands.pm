@@ -756,7 +756,7 @@ $DB::commands =  {
 		my $format =  'multiline';
 
 		my @frames =  DB::frames();
-		my $deep   =  @frames;
+		my $deep   =  -1;
 		if( $one ) {
 			@frames =  $frames[ $level -1 ];
 			$deep =  -$level;
