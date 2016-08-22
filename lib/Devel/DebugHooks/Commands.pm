@@ -756,11 +756,11 @@ $DB::commands =  {
 		my $format =  'multiline';
 
 		my @frames =  DB::frames();
-		my $deep   =  -1;
+		my $number =  -1;
 		if( $one ) {
 			return 1   unless @frames >= $count; # Check we have enough frames
 			@frames =  $frames[ $count -1 ];     # Get only given frame
-			$deep   =  -$count;                  # ...and display it number
+			$number =  -$count;                  # ...and display it number
 		}
 		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
@@ -775,9 +775,9 @@ $DB::commands =  {
 				$args = "($args)";
 			}
 
-			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
+			my $d =  $frame->[0] eq 'D' ? 'D' : $number;
 			print $DB::OUT eval $T->{ $format };
-			$deep--  if $frame->[0] ne 'G';
+			$number--  if $frame->[0] ne 'G';
 			last   unless --$count; # Stop to show frames when $count == 0
 		}
 
