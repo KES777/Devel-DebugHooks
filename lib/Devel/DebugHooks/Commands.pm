@@ -744,8 +744,8 @@ $DB::commands =  {
 
 	# TODO: give names to ANON
 	,T => sub {
-		my( $one, $level ) =  shift =~ m/^(-?)(\d+)$/;
-		$level =  -1   unless $level;
+		my( $one, $count ) =  shift =~ m/^(-?)(\d+)$/;
+		$count =  -1   unless $count; # Show all frames. $count == 0 never
 
 		my $T =  {()
 			,oneline   =>
@@ -758,9 +758,9 @@ $DB::commands =  {
 		my @frames =  DB::frames();
 		my $deep   =  -1;
 		if( $one ) {
-			return 1   unless @frames >= $level;
-			@frames =  $frames[ $level -1 ];
-			$deep =  -$level;
+			return 1   unless @frames >= $count; # Check we have enough frames
+			@frames =  $frames[ $count -1 ];     # Get only given frame
+			$deep   =  -$count;                  # ...and display it number
 		}
 		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
@@ -778,7 +778,7 @@ $DB::commands =  {
 			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
 			print $DB::OUT eval $T->{ $format };
 			$deep--  if $frame->[0] ne 'G';
-			last   unless --$level;
+			last   unless --$count; # Stop to show frames when $count == 0
 		}
 
 		return 1;
