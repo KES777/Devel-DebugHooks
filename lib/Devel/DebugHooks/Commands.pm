@@ -453,7 +453,7 @@ $DB::commands =  {
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;       #u+c
 
-			$level =  $1  if /^(\d+)$/;
+			$level =  $1  if /^-(\d+)$/;
 			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
 
