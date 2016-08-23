@@ -128,6 +128,7 @@ sub list {
 	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
 		my( $run_file, $run_line );
 		if( $stack && !$file ) {
+			DB::state( 'cmd.list.level', -$line -1 );
 			# Here $line is stack frame number from the last frame
 			# The last frame is accessable as -1
 			my $frames =  DB::state( 'stack' );
