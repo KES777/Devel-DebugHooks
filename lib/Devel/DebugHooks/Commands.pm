@@ -65,6 +65,22 @@ my %cmd_T = (
 );
 
 
+
+sub _cursor_position {
+	my( $frames, $file ) =  @_;
+
+	my $run_level =  0;
+	my $lines;
+	for( @$frames ) {
+		$lines->{ $_->{ line } } =  $run_level   if $_->{ file } eq $file;
+		$run_level++;
+	}
+
+	return $lines;
+}
+
+
+
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
 	my( $file, $from, $to, $run_file, $run_line ) =  @_;
