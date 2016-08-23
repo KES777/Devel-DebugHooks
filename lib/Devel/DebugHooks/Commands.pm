@@ -91,8 +91,11 @@ sub _list {
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
 	# The place where to display *run marker*: '>>'
-	$run_file //=  DB::state( 'file' );
-	$run_line //=  DB::state( 'line' );
+
+	my $cursor_at =  _cursor_position(()
+		,[ reverse @{ DB::state( 'stack' ) } ]
+		,$file
+	);
 
 
 	print $DB::OUT "$file\n";
@@ -100,6 +103,7 @@ sub _list {
 	for my $line ( $from..$to ) {
 		next   unless exists $source->[ $line ];
 
+		# Print flags
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
 			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
@@ -110,13 +114,34 @@ sub _list {
 			print $DB::OUT '  ';
 		}
 
-		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
-		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
+		# Print *breakable* and *cursor* marks
+		if( defined( my $level =  $cursor_at->{ $line } ) ) {
+			if( $level ) {
+				if( $level < 10 ) {
+					printf $DB::OUT '%d>', $level;
+				}
+				else {
+					printf $DB::OUT '*>';
+				}
+			}
+			else {
+				printf $DB::OUT '>>';
+			}
+		}
+		else {
+			printf $DB::OUT  DB::can_break( $file, $line ) ? ' x' : '  ';
+		}
 
+
+		# Print source line number
+		print $DB::OUT "$line:";
+
+
+		# Print source line
 		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
 		$sl =  " $sl"   if length $sl > 1; # $sl(source line) have at least "\n"
-		print $DB::OUT "$line:$sl";
+		print $DB::OUT $sl;
 	}
 }
 
@@ -146,12 +171,11 @@ sub list {
 		if( $stack && !$file ) {
 			DB::state( 'cmd.list.level', -$line -1 );
 			# Here $line is stack frame number from the last frame
-			# The last frame is accessable as -1
+			# Frames are counted from the end. -1 subscript is for current frame
 			my $frames =  DB::state( 'stack' );
 			return -2   if $line +1 > @$frames;
 			( $run_file, $run_line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
 			# TODO: save window level to show vars automatically at that level
-			# TODO: check stack frames and put run cursor automatically
 			$file =  $run_file;
 			$line =  $run_line;
 		}
