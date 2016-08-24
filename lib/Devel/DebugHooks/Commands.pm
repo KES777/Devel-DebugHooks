@@ -508,6 +508,8 @@ $DB::commands =  {
 		}
 
 
+		#FIX: When we debug debugger we can not 'go <line>' we always stops at
+		#require at third line at PadWalker.pm. Debug who set $DB::state = 1
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
@@ -565,6 +567,9 @@ $DB::commands =  {
 			print $DB::OUT "\nUSED:\n";
 
 			# First element starts at -1 subscript
+			# FIX: When debug debugger and we step over this statement
+			# the $sub contain reference ot &vars instead of name of last
+			# client's sub
 			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
@@ -573,6 +578,7 @@ $DB::commands =  {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ PadWalker::peek_sub( $sub ) } ), "\n";
 			}
 		}
@@ -587,6 +593,7 @@ $DB::commands =  {
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
 			}
 		}
