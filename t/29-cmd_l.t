@@ -174,8 +174,21 @@ is
 	,$files->{ 'deparse unexisting level' }
 	,"Deparse subroutine from unexisting level";
 
+
 #TODO: IT for frame -10. We expect to see '*>'
-#TODO: IT for recursive sub. How are cursors displayed???
+($script =  <<'PERL') =~ s#^\t##gm;
+	my $level = 0;
+	sub recursive {
+		recursive()   if $level++ < 3;
+		1;
+	}
+	recursive();
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='go 4;l .;q' -e '$script'` )
+	,$files->{ 'recursive level' }
+	,"Display recent frame level for line if sub called recursively";
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
@@ -338,6 +351,18 @@ sub main::t2 {
 @@ deparse unexisting level
 -e:0010  t2();
 -e:0002    1;
+@@ recursive level
+-e:0001  my $level = 0;
+-e:0004    1;
+-e
+    0: use Devel::DbInteract split(/,/,q{go 4;l .;q});;
+   x1: my $level = 0;
+    2: sub recursive {
+  1>3:     recursive()   if $level++ < 3;
+  >>4:     1;
+    5: }
+  4>6: recursive();
+    7:
 @@ deparse by reference
 -e:0001  my $x = sub { 1+$y };
 -e:0002  my $z;

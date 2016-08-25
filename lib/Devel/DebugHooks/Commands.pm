@@ -72,7 +72,9 @@ sub _cursor_position {
 	my $run_level =  0;
 	my $lines;
 	for( @$frames ) {
-		$lines->{ $_->{ line } } =  $run_level   if $_->{ file } eq $file;
+		# Frames are counted from the end
+		$lines->{ $_->{ line } } =  $#$frames -$run_level
+			if $_->{ file } eq $file;
 		$run_level++;
 	}
 
@@ -91,11 +93,7 @@ sub _list {
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
 	# The place where to display *run marker*: '>>'
-
-	my $cursor_at =  _cursor_position(()
-		,[ reverse @{ DB::state( 'stack' ) } ]
-		,$file
-	);
+	my $cursor_at =  _cursor_position( DB::state( 'stack' ) ,$file );
 
 
 	print $DB::OUT "$file\n";
