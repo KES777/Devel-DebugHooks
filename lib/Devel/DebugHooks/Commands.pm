@@ -65,9 +65,27 @@ my %cmd_T = (
 );
 
 
+
+sub _cursor_position {
+	my( $frames, $file ) =  @_;
+
+	my $run_level =  0;
+	my $lines;
+	for( @$frames ) {
+		# Frames are counted from the end
+		$lines->{ $_->{ line } } =  $#$frames -$run_level
+			if $_->{ file } eq $file;
+		$run_level++;
+	}
+
+	return $lines;
+}
+
+
+
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
-	my( $file, $from, $to, $run_file, $run_line ) =  @_;
+	my( $file, $from, $to ) =  @_;
 
 	# Fix window boundaries
 	my $source =  DB::source( $file );
@@ -75,8 +93,7 @@ sub _list {
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
 	# The place where to display *run marker*: '>>'
-	$run_file //=  DB::state( 'file' );
-	$run_line //=  DB::state( 'line' );
+	my $cursor_at =  _cursor_position( DB::state( 'stack' ) ,$file );
 
 
 	print $DB::OUT "$file\n";
@@ -84,6 +101,7 @@ sub _list {
 	for my $line ( $from..$to ) {
 		next   unless exists $source->[ $line ];
 
+		# Print flags
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
 			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
@@ -94,13 +112,34 @@ sub _list {
 			print $DB::OUT '  ';
 		}
 
-		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
-		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
+		# Print *breakable* and *cursor* marks
+		if( defined( my $level =  $cursor_at->{ $line } ) ) {
+			if( $level ) {
+				if( $level < 10 ) {
+					printf $DB::OUT '%d>', $level;
+				}
+				else {
+					printf $DB::OUT '*>';
+				}
+			}
+			else {
+				printf $DB::OUT '>>';
+			}
+		}
+		else {
+			printf $DB::OUT  DB::can_break( $file, $line ) ? ' x' : '  ';
+		}
 
+
+		# Print source line number
+		print $DB::OUT "$line:";
+
+
+		# Print source line
 		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
 		$sl =  " $sl"   if length $sl > 1; # $sl(source line) have at least "\n"
-		print $DB::OUT "$line:$sl";
+		print $DB::OUT $sl;
 	}
 }
 
@@ -126,19 +165,17 @@ sub list {
 
 
 	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
-		my( $run_file, $run_line );
 		if( $stack && !$file ) {
+			DB::state( 'cmd.list.level', -$line -1 );
 			# Here $line is stack frame number from the last frame
-			# The last frame is accessable as -1
+			# Frames are counted from the end. -1 subscript is for current frame
 			my $frames =  DB::state( 'stack' );
 			return -2   if $line +1 > @$frames;
-			( $run_file, $run_line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
-			# TODO: save window level to show vars automatically at that level
-			# TODO: check stack frames and put run cursor automatically
-			$file =  $run_file;
-			$line =  $run_line;
+			DB::state( 'list.level', $line );
+			( $file, $line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
 		}
 		elsif( $line eq '.' ) {
+			DB::state( 'list.level', 0 );
 			# TODO: 'current' means file and line! FIX this in other places too
 			$file =  DB::state( 'file' );
 			$line =  DB::state( 'line' );
@@ -151,7 +188,7 @@ sub list {
 			$to   =  $line +$lines_after;
 			$line =  $line -$lines_before;
 		}
-		_list( $file, $line, $to, $run_file, $run_line );
+		_list( $file, $line, $to );
 
 
 		# Move cursor to the next window.
@@ -224,6 +261,13 @@ sub list {
 
 
 
+sub dd {
+	require Data::Dump;
+	Data::Dump::pp( @_ );
+}
+
+
+
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
@@ -234,13 +278,11 @@ sub watch {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ watches };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+			print $DB::OUT "  " .dd( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ watches } };
 		}
 
@@ -298,7 +340,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh Data::Dump::pp( \%DB::stop_in_sub, $traps );
+	print $fh dd( \%DB::stop_in_sub, $traps );
 
 	return 1;
 }
@@ -330,13 +372,11 @@ sub action {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ action };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+			print $DB::OUT "  " .dd( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ action } };
 		}
 
@@ -368,8 +408,7 @@ $DB::commands =  {
 	},
 
 	,st => sub {
-		require Data::Dump;
-		print $DB::OUT Data::Dump::pp( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
+		print $DB::OUT dd( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
 		1;
@@ -451,10 +490,10 @@ $DB::commands =  {
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
-		my $type  =  0;
-		my $level =  0;
-		my @vars  =  ();
-		for( split " ", shift ) {
+		my( $level, $type, $var ) =
+			(' '.shift) =~ m/^(?:\s+-(\d+))?(?:\s+([amogucs]+))?(?:\s+([\$\%\*\&].*))?$/;
+
+		for( split '', $type ) {
 			$type |= ~0   if /^a|all$/;
 			$type |= 1    if /^m|my$/;
 			$type |= 2    if /^o|our$/;
@@ -462,11 +501,9 @@ $DB::commands =  {
 			$type |= 8    if /^u|used$/;
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;       #u+c
-
-			$level =  $1  if /^-(\d+)$/;
-			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
-		$type ||=  3;  # TODO: make defaults configurable
+		$level //=  DB::state( 'list.level' );
+		$type  //=  DB::state( 'vars.type' ) // 3   unless $var;
 
 
 		my $dbg_frames =  0;
@@ -477,6 +514,8 @@ $DB::commands =  {
 		}
 
 
+		#FIX: When we debug debugger we can not 'go <line>' we always stops at
+		#require at third line at PadWalker.pm. Debug who set $DB::state = 1
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
@@ -534,6 +573,9 @@ $DB::commands =  {
 			print $DB::OUT "\nUSED:\n";
 
 			# First element starts at -1 subscript
+			# FIX: When debug debugger and we step over this statement
+			# the $sub contain reference ot &vars instead of name of last
+			# client's sub
 			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
@@ -542,6 +584,7 @@ $DB::commands =  {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ PadWalker::peek_sub( $sub ) } ), "\n";
 			}
 		}
@@ -556,13 +599,24 @@ $DB::commands =  {
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
 			}
 		}
 
-		if( @vars ) {
-			# print $DB::OUT @{ $my }{ @vars }, @{ $our }{ @vars };
-			print $DB::OUT @vars; # FIX: use dumper
+		if( $var ) {
+			my( $sigil, $name, $extra ) =  $var =~ m/^(.)(\w+)(.*)$/;
+
+			$var =  $sigil .$name;
+			unless( exists $my->{ $var } || exists $our->{ $var } ) {
+				print $DB::OUT "Variable '$var' does not exists at this scope\n";
+				return -1;
+			}
+
+			my $value =  $my->{ $var }  ||  $our->{ $var };
+			$value =  $$value   if $sigil eq '$';
+			eval "\$value =  \$value$extra; 1"   or die $@;
+			print $DB::OUT dd( $value ), "\n";
 		}
 
 		1;
@@ -742,12 +796,10 @@ $DB::commands =  {
 		1;
 	}
 	,e => sub {
-		require Data::Dump;
-
 		return {
 			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
 			code => sub {
-				print $DB::OUT Data::Dump::pp( @_ ) ."\n";
+				print $DB::OUT dd( @_ ) ."\n";
 			}
 		}
 	}

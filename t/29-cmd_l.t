@@ -175,6 +175,22 @@ is
 	,"Deparse subroutine from unexisting level";
 
 
+#TODO: IT for frame -10. We expect to see '*>'
+($script =  <<'PERL') =~ s#^\t##gm;
+	my $level = 0;
+	sub recursive {
+		recursive()   if $level++ < 3;
+		1;
+	}
+	recursive();
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='go 4;l .;q' -e '$script'` )
+	,$files->{ 'recursive level' }
+	,"Display recent frame level for line if sub called recursively";
+
+
 ($script =  <<'PERL') =~ s#^\t##gm;
 	my $x = sub { 1+$y };
 	my $z;
@@ -198,45 +214,45 @@ __DATA__
 -e:0005  1;
 -e:0002    2;
 -e
-     0: use Devel::DbInteract split(/,/,q{list.conf;b 2;a 2 1;s 2;l .;q});;
-     1: sub t {
-ab>>x2:     2;
-     3: }
-     4:
-    x5: 1;
+    0: use Devel::DbInteract split(/,/,q{list.conf;b 2;a 2 1;s 2;l .;q});;
+    1: sub t {
+ab>>2:     2;
+    3: }
+    4:
+   x5: 1;
 @@ list from first
 -e:0010  t2();
 -e
-     0: use Devel::DbInteract split(/,/,q{list.conf;l 0;q});;
-     1: sub t0 {
-    x2:     1;
-     3: }
+    0: use Devel::DbInteract split(/,/,q{list.conf;l 0;q});;
+    1: sub t0 {
+   x2:     1;
+    3: }
 @@ list from last
 -e:0010  t2();
 -e
-     14:
-     15:
-     16:
-     17: # Perl implicitly adds one new line after this one
-     18:
+    14:
+    15:
+    16:
+    17: # Perl implicitly adds one new line after this one
+    18:
 @@ list middle
 -e:0010  t2();
 -e
-    x5:     t0();
-     6: }
-     7: sub t2 {
-    x8:     t1();
-     9: }
-  >>x10: t2();
-     11:
+   x5:     t0();
+    6: }
+    7: sub t2 {
+   x8:     t1();
+    9: }
+  >>10: t2();
+    11:
 @@ list range
 -e:0010  t2();
 -e
-    x5:     t0();
-     6: }
-     7: sub t2 {
-    x8:     t1();
-     9: }
+   x5:     t0();
+    6: }
+    7: sub t2 {
+   x8:     t1();
+    9: }
 @@ list wrong range
 -e:0010  t2();
 -e
@@ -246,72 +262,72 @@ ab>>x2:     2;
 @@ list next
 -e:0010  t2();
 -e
-     7: sub t2 {
-    x8:     t1();
-     9: }
-  >>x10: t2();
-     11:
-     12:
-     13:
+    7: sub t2 {
+   x8:     t1();
+    9: }
+  >>10: t2();
+    11:
+    12:
+    13:
 -e
-     14:
-     15:
-     16:
-     17: # Perl implicitly adds one new line after this one
-     18:
+    14:
+    15:
+    16:
+    17: # Perl implicitly adds one new line after this one
+    18:
 -e
 @@ list at level 0
 -e:0010  t2();
 -e:0002    1;
 -e
-     0: use Devel::DbInteract split(/,/,q{list.conf;s 3;l -0;q});;
-     1: sub t0 {
-  >>x2:     1;
-     3: }
-     4: sub t1 {
-    x5:     t0();
+    0: use Devel::DbInteract split(/,/,q{list.conf;s 3;l -0;q});;
+    1: sub t0 {
+  >>2:     1;
+    3: }
+    4: sub t1 {
+  1>5:     t0();
 @@ list at level 1
 -e:0010  t2();
 -e:0002    1;
 -e
-    x2:     1;
-     3: }
-     4: sub t1 {
-  >>x5:     t0();
-     6: }
-     7: sub t2 {
-    x8:     t1();
+  >>2:     1;
+    3: }
+    4: sub t1 {
+  1>5:     t0();
+    6: }
+    7: sub t2 {
+  2>8:     t1();
 @@ list at level 2
 -e:0010  t2();
 -e:0002    1;
 -e
-    x5:     t0();
-     6: }
-     7: sub t2 {
-  >>x8:     t1();
-     9: }
-    x10: t2();
-     11:
+  1>5:     t0();
+    6: }
+    7: sub t2 {
+  2>8:     t1();
+    9: }
+  3>10: t2();
+    11:
 @@ list at level 3
 -e:0010  t2();
 -e:0002    1;
 -e
-     7: sub t2 {
-    x8:     t1();
-     9: }
-  >>x10: t2();
-     11:
-     12:
-     13:
+    7: sub t2 {
+  2>8:     t1();
+    9: }
+  3>10: t2();
+    11:
+    12:
+    13:
 @@ list unexisting level
 -e:0010  t2();
 -e:0002    1;
 @@ list by name
 -e:0010  t2();
 -e
-     4: sub t1 {
-    x5:     t0();
-     6: }
+    4: sub t1 {
+   x5:     t0();
+    6: }
 @@ list unexisting by name
 -e:0010  t2();
 @@ deparse at level 0
@@ -335,6 +351,18 @@ sub main::t2 {
 @@ deparse unexisting level
 -e:0010  t2();
 -e:0002    1;
+@@ recursive level
+-e:0001  my $level = 0;
+-e:0004    1;
+-e
+    0: use Devel::DbInteract split(/,/,q{go 4;l .;q});;
+   x1: my $level = 0;
+    2: sub recursive {
+  1>3:     recursive()   if $level++ < 3;
+  >>4:     1;
+    5: }
+  4>6: recursive();
+    7:
 @@ deparse by reference
 -e:0001  my $x = sub { 1+$y };
 -e:0002  my $z;
