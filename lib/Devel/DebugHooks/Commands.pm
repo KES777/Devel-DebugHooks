@@ -171,10 +171,11 @@ sub list {
 			# Frames are counted from the end. -1 subscript is for current frame
 			my $frames =  DB::state( 'stack' );
 			return -2   if $line +1 > @$frames;
+			DB::state( 'list.level', $line );
 			( $file, $line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
-			# TODO: save window level to show vars automatically at that level
 		}
 		elsif( $line eq '.' ) {
+			DB::state( 'list.level', 0 );
 			# TODO: 'current' means file and line! FIX this in other places too
 			$file =  DB::state( 'file' );
 			$line =  DB::state( 'line' );
@@ -478,7 +479,7 @@ $DB::commands =  {
 	# TODO: print list of vars which refer this one
 	,vars => sub {
 		my $type  =  0;
-		my $level =  0;
+		my $level;
 		my @vars  =  ();
 		for( split " ", shift ) {
 			$type |= ~0   if /^a|all$/;
@@ -493,6 +494,7 @@ $DB::commands =  {
 			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
 		$type ||=  3;  # TODO: make defaults configurable
+		$level //=  DB::state( 'list.level' );
 
 
 		my $dbg_frames =  0;
