@@ -261,6 +261,13 @@ sub list {
 
 
 
+sub dd {
+	require Data::Dump;
+	Data::Dump::pp( @_ );
+}
+
+
+
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
@@ -271,13 +278,11 @@ sub watch {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ watches };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+			print $DB::OUT "  " .dd( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ watches } };
 		}
 
@@ -335,7 +340,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh Data::Dump::pp( \%DB::stop_in_sub, $traps );
+	print $fh dd( \%DB::stop_in_sub, $traps );
 
 	return 1;
 }
@@ -367,13 +372,11 @@ sub action {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ action };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+			print $DB::OUT "  " .dd( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ action } };
 		}
 
@@ -405,8 +408,7 @@ $DB::commands =  {
 	},
 
 	,st => sub {
-		require Data::Dump;
-		print $DB::OUT Data::Dump::pp( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
+		print $DB::OUT dd( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
 		1;
@@ -774,12 +776,10 @@ $DB::commands =  {
 		1;
 	}
 	,e => sub {
-		require Data::Dump;
-
 		return {
 			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
 			code => sub {
-				print $DB::OUT Data::Dump::pp( @_ ) ."\n";
+				print $DB::OUT dd( @_ ) ."\n";
 			}
 		}
 	}
