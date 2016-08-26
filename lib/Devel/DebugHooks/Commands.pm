@@ -594,9 +594,19 @@ $DB::commands =  {
 			}
 		}
 
-		if( @vars ) {
-			# print $DB::OUT @{ $my }{ @vars }, @{ $our }{ @vars };
-			print $DB::OUT @vars; # FIX: use dumper
+		if( $var ) {
+			my( $sigil, $name, $extra ) =  $var =~ m/^(.)(\w+)(.*)$/;
+
+			$var =  $sigil .$name;
+			unless( exists $my->{ $var } || exists $our->{ $var } ) {
+				print $DB::OUT "Variable '$var' does not exists at this scope\n";
+				return -1;
+			}
+
+			my $value =  $my->{ $var }  ||  $our->{ $var };
+			$value =  $$value   if $sigil eq '$';
+			eval "\$value =  \$value$extra; 1"   or die $@;
+			print $DB::OUT dd( $value ), "\n";
 		}
 
 		1;
