@@ -378,14 +378,15 @@ $DB::commands =  {
 	# Return from sub call to the first OP at some outer frame
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
 	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
-	# we set $DB::single value to 1 which will be restored at &pop_frame
+	# we set $DB::single value to 1 which will be restored by &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
 		$frames_out //=  1;
 
-		my $stack_size =  @{ DB::state( 'stack' ) };
+		my $stack =  DB::state( 'stack' );
+		my $stack_size =  @$stack;
 		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
@@ -393,10 +394,10 @@ $DB::commands =  {
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -$frames_out .. -1 ];
+		$_->{ single } =  0   for @$stack[ -$frames_out .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out-1 ];
+		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
 
 		return;
 	}

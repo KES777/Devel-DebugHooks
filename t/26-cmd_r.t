@@ -186,7 +186,7 @@ PERL
 
 is
 	n( `$^X $lib -d:DbInteract='s 2;r;r' -e '$script'` )
-	,$files->{ 'return chained' }
+	,$files->{ 'stop at chain' }
 	,'Stop at next chained sub when returning from the last';
 
 
@@ -258,7 +258,7 @@ __DATA__
 -e:0011  t2();
 -e:0002    1;
 -e:0012  4;
-@@ return chained
+@@ stop at chain
 -e:0013  c4();
 -e:0008    c2();
 -e:0002    1;
