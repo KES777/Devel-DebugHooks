@@ -32,6 +32,15 @@ Because of the @_ has aliases to arguments
 	$DB::single =  0;
 	test( $DB::single );
 
+	# Example 2:
+	sub test {
+		$@ =  'Oops';
+		my( $x ) =  @_;
+		print $x; # Oops
+	}
+	$@ =  'Exception';
+	test( $@ );
+
 
 When you are in DB::sub
 Frame for target subroutine is NOT created. It is when you pass control by the chain making `return &$DB::sub`. This is the good design to hide debugger frame from client's code. But you probably will have problem making call to some debugger's subs. The problem is the `caller` will show that call is maden from client's code instead of real source -- &DB::sub

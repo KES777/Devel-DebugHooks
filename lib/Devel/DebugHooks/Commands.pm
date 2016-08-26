@@ -417,7 +417,7 @@ $DB::commands =  {
 	# Return from sub call to the first OP at some outer frame
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
 	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
-	# we set $DB::single value to 1 which will be restored at &pop_frame
+	# we set $DB::single value to 1 which will be restored by &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
