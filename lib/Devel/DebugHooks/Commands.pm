@@ -478,10 +478,10 @@ $DB::commands =  {
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
-		my $type  =  0;
-		my $level;
-		my @vars  =  ();
-		for( split " ", shift ) {
+		my( $level, $type, $var ) =
+			(' '.shift) =~ m/^(?:\s+-(\d+))?(?:\s+([amogucs]+))?(?:\s+([\$\%\*\&].*))?$/;
+
+		for( split '', $type ) {
 			$type |= ~0   if /^a|all$/;
 			$type |= 1    if /^m|my$/;
 			$type |= 2    if /^o|our$/;
@@ -489,9 +489,6 @@ $DB::commands =  {
 			$type |= 8    if /^u|used$/;
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;       #u+c
-
-			$level =  $1  if /^-(\d+)$/;
-			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
 		$level //=  DB::state( 'list.level' );
 		$type  //=  DB::state( 'vars.type' ) // 3;
