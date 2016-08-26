@@ -325,12 +325,24 @@ sub int_vrbl {
 sub dbg_vrbl {
 	my( $self, $name, $value ) =  @_;
 
+
+	print $DB::OUT "\n\n"   if $self->{ debug }
+		&&( $name eq 'state'  ||  $name eq 'stack' );
 	return $DB::state   if $name eq 'state';
 
 
 	my $dbg =  $self->{ instance };
+	my $old_value =  $dbg->{ $name } // 'undef';
+	my $new_value =  '';
 	if( @_ >= 3 ) {
-		$dbg->{ $name } =  $value;
+		$new_value =  ' -> '. ($value//'undef');
+		defined $value
+			? $dbg->{ $name } =  $value
+			: delete $dbg->{ $name };
+	}
+
+	if( $self->{ debug } ) {
+		print $DB::OUT " DBG::$name: $old_value$new_value\n";
 	}
 
 
@@ -377,10 +389,14 @@ sub state {
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
+			for my $option ( sort keys %$_ ) {
+				print $DB::OUT $option, ' =  ', $_->{ $option }, "\n";
+			}
 			for( @{ $_->{ stack } } ) {
 				for my $key ( sort keys %$_ ) {
-					next   if ref $_->{ $key };
-					print $DB::OUT "  $key => " .$_->{ $key } .";";
+					my $value =  $_->{ $key };
+					$value =  ref $value ? ref $value : $value;
+					print $DB::OUT "  $key => $value;";
 				}
 				print $DB::OUT "\n";
 			}
@@ -389,8 +405,6 @@ sub state {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
 		print $DB::OUT '-'x20 ."\n$file:$line:";
-
-		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
 	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
@@ -1214,7 +1228,7 @@ sub interact {
 	my $old =  $DB::options{ dd };
 	$DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
-		print "\n" ."*"x80 ."\n"   if $DB::options{ ddd };
+		print "\n" .(" "x60 ."*"x20 ."\n")x10   if $DB::options{ ddd };
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
 		$DB::options{ dd } =  $old;
