@@ -128,6 +128,35 @@ is
 	,$files->{ 'do n steps in sub' }
 	,"Do N steps at once in sub";
 
+is
+	n( `$^X $lib -d:DbInteract='go 5;n;s;q' -e '$script'` )
+	,$files->{ 'into after over' }
+	,"Step into after step over";
+
+
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	sub c3 {
+		1;
+	}
+	sub c2 {
+		\&c3;
+	}
+	sub c1 {
+		c2();
+	}
+	sub c4 {
+		c1->();
+	}
+	c4();
+	2;
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='s 2;n;n' -e '$script'` )
+	,$files->{ 'stay at chain' }
+	,"Do not leave chain when step over inside it";
+
 
 
 __DATA__
@@ -160,3 +189,13 @@ __DATA__
 -e:0008  t2();
 -e:0005    t1();
 -e:0009  3;
+@@ into after over
+-e:0008  t2();
+-e:0005    t1();
+-e:0006    t1();
+-e:0002    1;
+@@ stay at chain
+-e:0013  c4();
+-e:0008    c2();
+-e:0002    1;
+-e:0014  2;

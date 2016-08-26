@@ -422,8 +422,12 @@ $DB::commands =  {
 	,n => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 
+		my $stack =  DB::state( 'stack' );
+		# Do not stop if subcall is maden
+		$stack->[ -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  };
+
 		# If the current OP is last OP in this sub we stop at *some* outer frame
-		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
+		$_->{ single } =  2   for @$stack;
 
 		return;
 	}

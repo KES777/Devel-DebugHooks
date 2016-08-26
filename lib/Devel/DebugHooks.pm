@@ -469,6 +469,7 @@ BEGIN {
 	$DB::variables =  {()
 		,'*'         =>  \&dbg_vrbl
 		,single      =>  \&int_vrbl
+		,on_frame    =>  \&frm_vrbl
 		,file        =>  \&frm_vrbl
 		,goto_frames =>  \&frm_vrbl
 		,line        =>  \&frm_vrbl
@@ -1026,6 +1027,7 @@ sub DB {
 	establish_cleanup \&restore_context;
 
 
+
 	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"
 		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
 		if $DB::options{ ddd };
@@ -1034,6 +1036,11 @@ sub DB {
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 	my $steps_left =  DB::state( 'steps_left' );
 	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
+
+
+	# Clear command state after it is finished
+	DB::state( 'on_frame', undef );
+
 
 	my $stop =  0;
 	my $traps =  DB::traps();
@@ -1300,7 +1307,7 @@ sub push_frame2 {
 		}
 
 		my $stack =  DB::state( 'stack' );
-		push @{ $stack }, {()
+		my $frame =  {()
 			# Until we stop at a callee last known cursor position is the caller position
 			,package     =>  $stack->[-1]{ package }
 			,file        =>  $stack->[-1]{ file    }
@@ -1310,6 +1317,8 @@ sub push_frame2 {
 			,goto_frames =>  []
 			,type        =>  $_[0]
 		};
+		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
+		push @{ $stack }, $frame;
 
 		# DB::state( 'goto_frames', [] );
 	}
@@ -1380,9 +1389,6 @@ sub sub {
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
-
-	# Do not stop inside sub for STEP_OVER debugger command
-	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	$DB::inSUB =  0;
 	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };
