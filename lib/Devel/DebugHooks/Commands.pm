@@ -493,8 +493,8 @@ $DB::commands =  {
 			$level =  $1  if /^-(\d+)$/;
 			push @vars, $1   if /^([\%\$\@]\S+)$/;
 		}
-		$type ||=  3;  # TODO: make defaults configurable
 		$level //=  DB::state( 'list.level' );
+		$type  //=  DB::state( 'vars.type' ) // 3;
 
 
 		my $dbg_frames =  0;
