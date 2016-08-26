@@ -493,7 +493,7 @@ $DB::commands =  {
 			$type |= 24   if /^s|sub$/;       #u+c
 		}
 		$level //=  DB::state( 'list.level' );
-		$type  //=  DB::state( 'vars.type' ) // 3;
+		$type  //=  DB::state( 'vars.type' ) // 3   unless $var;
 
 
 		my $dbg_frames =  0;
