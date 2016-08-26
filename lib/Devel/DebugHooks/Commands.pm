@@ -383,6 +383,7 @@ $DB::commands =  {
 	,r => sub {
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
+		my $leave_chain =  defined $frames_out;
 		$frames_out //=  1;
 
 		my $stack =  DB::state( 'stack' );
@@ -398,6 +399,10 @@ $DB::commands =  {
 
 		# and stop at some outer frame
 		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
+
+		# Do not stop if subcall is maden
+		$stack->[ -$frames_out -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  }
+			if $leave_chain  &&  $frames_out < $stack_size; # have parent frame
 
 		return;
 	}

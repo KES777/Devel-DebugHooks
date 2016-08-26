@@ -189,6 +189,11 @@ is
 	,$files->{ 'stop at chain' }
 	,'Stop at next chained sub when returning from the last';
 
+is
+	n( `$^X $lib -d:DbInteract='s 2;r 1' -e '$script'` )
+	,$files->{ 'return from chain' }
+	,'Stop at next OP after chain';
+
 
 
 __DATA__
@@ -262,4 +267,8 @@ __DATA__
 -e:0013  c4();
 -e:0008    c2();
 -e:0002    1;
+-e:0014  2;
+@@ return from chain
+-e:0013  c4();
+-e:0008    c2();
 -e:0014  2;
