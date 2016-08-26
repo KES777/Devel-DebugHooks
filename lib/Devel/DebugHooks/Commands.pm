@@ -378,14 +378,16 @@ $DB::commands =  {
 	# Return from sub call to the first OP at some outer frame
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
 	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
-	# we set $DB::single value to 1 which will be restored at &pop_frame
+	# we set $DB::single value to 1 which will be restored by &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
+		my $leave_chain =  defined $frames_out;
 		$frames_out //=  1;
 
-		my $stack_size =  @{ DB::state( 'stack' ) };
+		my $stack =  DB::state( 'stack' );
+		my $stack_size =  @$stack;
 		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
@@ -393,10 +395,14 @@ $DB::commands =  {
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -$frames_out .. -1 ];
+		$_->{ single } =  0   for @$stack[ -$frames_out .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out-1 ];
+		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
+
+		# Do not stop if subcall is maden
+		$stack->[ -$frames_out -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  }
+			if $leave_chain  &&  $frames_out < $stack_size; # have parent frame
 
 		return;
 	}
@@ -422,8 +428,12 @@ $DB::commands =  {
 	,n => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 
+		my $stack =  DB::state( 'stack' );
+		# Do not stop if subcall is maden
+		$stack->[ -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  };
+
 		# If the current OP is last OP in this sub we stop at *some* outer frame
-		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
+		$_->{ single } =  2   for @$stack;
 
 		return;
 	}

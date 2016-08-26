@@ -106,6 +106,31 @@ is
 	,"Double step from sub";
 
 
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	sub c3 {
+		1;
+	}
+	sub c2 {
+		\&c3;
+	}
+	sub c1 {
+		c2();
+	}
+	sub c4 {
+		c1->();
+	}
+	c4();
+	2;
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='s 2;s;s;s' -e '$script'` )
+	,$files->{ 'chained steps' }
+	,"Steps through chained call";
+
+
+
 __DATA__
 @@ sbs
 -e:0001  1;
@@ -129,3 +154,9 @@ __DATA__
 -e:0007  t2();
 -e:0002    1;
 -e:0008  3;
+@@ chained steps
+-e:0013  c4();
+-e:0008    c2();
+-e:0005    \&c3;
+-e:0002    1;
+-e:0014  2;

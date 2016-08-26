@@ -325,12 +325,24 @@ sub int_vrbl {
 sub dbg_vrbl {
 	my( $self, $name, $value ) =  @_;
 
+
+	print $DB::OUT "\n\n"   if $self->{ debug }
+		&&( $name eq 'state'  ||  $name eq 'stack' );
 	return $DB::state   if $name eq 'state';
 
 
 	my $dbg =  $self->{ instance };
+	my $old_value =  $dbg->{ $name } // 'undef';
+	my $new_value =  '';
 	if( @_ >= 3 ) {
-		$dbg->{ $name } =  $value;
+		$new_value =  ' -> '. ($value//'undef');
+		defined $value
+			? $dbg->{ $name } =  $value
+			: delete $dbg->{ $name };
+	}
+
+	if( $self->{ debug } ) {
+		print $DB::OUT " DBG::$name: $old_value$new_value\n";
 	}
 
 
@@ -377,10 +389,14 @@ sub state {
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
+			for my $option ( sort keys %$_ ) {
+				print $DB::OUT $option, ' =  ', $_->{ $option }, "\n";
+			}
 			for( @{ $_->{ stack } } ) {
 				for my $key ( sort keys %$_ ) {
-					next   if ref $_->{ $key };
-					print $DB::OUT "  $key => " .$_->{ $key } .";";
+					my $value =  $_->{ $key };
+					$value =  ref $value ? ref $value : $value;
+					print $DB::OUT "  $key => $value;";
 				}
 				print $DB::OUT "\n";
 			}
@@ -389,8 +405,6 @@ sub state {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
 		print $DB::OUT '-'x20 ."\n$file:$line:";
-
-		print $DB::OUT "\n\n"   if $name eq 'state'  ||  $name eq 'stack';
 	}
 
 	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
@@ -469,6 +483,7 @@ BEGIN {
 	$DB::variables =  {()
 		,'*'         =>  \&dbg_vrbl
 		,single      =>  \&int_vrbl
+		,on_frame    =>  \&frm_vrbl
 		,file        =>  \&frm_vrbl
 		,goto_frames =>  \&frm_vrbl
 		,line        =>  \&frm_vrbl
@@ -1026,6 +1041,7 @@ sub DB {
 	establish_cleanup \&restore_context;
 
 
+
 	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"
 		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
 		if $DB::options{ ddd };
@@ -1034,6 +1050,11 @@ sub DB {
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 	my $steps_left =  DB::state( 'steps_left' );
 	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
+
+
+	# Clear command state after it is finished
+	DB::state( 'on_frame', undef );
+
 
 	my $stop =  0;
 	my $traps =  DB::traps();
@@ -1207,7 +1228,7 @@ sub interact {
 	my $old =  $DB::options{ dd };
 	$DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
-		print "\n" ."*"x80 ."\n"   if $DB::options{ ddd };
+		print "\n" .(" "x60 ."*"x20 ."\n")x10   if $DB::options{ ddd };
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
 		$DB::options{ dd } =  $old;
@@ -1300,7 +1321,7 @@ sub push_frame2 {
 		}
 
 		my $stack =  DB::state( 'stack' );
-		push @{ $stack }, {()
+		my $frame =  {()
 			# Until we stop at a callee last known cursor position is the caller position
 			,package     =>  $stack->[-1]{ package }
 			,file        =>  $stack->[-1]{ file    }
@@ -1310,6 +1331,8 @@ sub push_frame2 {
 			,goto_frames =>  []
 			,type        =>  $_[0]
 		};
+		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
+		push @{ $stack }, $frame;
 
 		# DB::state( 'goto_frames', [] );
 	}
@@ -1347,10 +1370,7 @@ sub push_frame {
 
 	if( $DB::options{ ddd } ) {
 		print $DB::OUT "STACK:\n";
-		for my $frame ( @{ DB::state( 'stack' ) } ) {
-			printf $DB::OUT "    %s %s -- %s:%s\n",
-				map{ $frame->{ $_ } // '' } qw/ single sub file line /;
-		}
+		DB::state( 'stack' );
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
 }
@@ -1383,9 +1403,6 @@ sub sub {
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
-
-	# Do not stop inside sub for STEP_OVER debugger command
-	sub{ DB::state( 'single', 0 ) }->()   if sub{ DB::state( 'single' ) }->() & 2;
 
 	$DB::inSUB =  0;
 	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };

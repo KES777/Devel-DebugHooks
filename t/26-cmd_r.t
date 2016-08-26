@@ -49,8 +49,13 @@ PERL
 
 is
 	n( `$^X $lib -d:DbInteract='s;s;r;r' -e '$script'` )
-	,$files->{ return }
+	,$files->{ 'return' }
 	,"Returning from subroutine";
+
+is
+	n( `$^X $lib -d:DbInteract='s;r;q' -e '$script'` )
+	,$files->{ 'return #2' }
+	,"Returning from subroutine. Do not stop at sub calls";
 
 is
 	n( `$^X $lib -d:DbInteract='go 2;r;r' -e '$script'` )
@@ -161,12 +166,46 @@ is
 # my $cmds =  '@DB::stack;go 2;@DB::stack;r;@DB::stack;r;@DB::stack';
 
 
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	sub c3 {
+		1;
+	}
+	sub c2 {
+		\&c3;
+	}
+	sub c1 {
+		c2();
+	}
+	sub c4 {
+		c1->();
+	}
+	c4();
+	2;
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='s 2;r;r' -e '$script'` )
+	,$files->{ 'stop at chain' }
+	,'Stop at next chained sub when returning from the last';
+
+is
+	n( `$^X $lib -d:DbInteract='s 2;r 1' -e '$script'` )
+	,$files->{ 'return from chain' }
+	,'Stop at next OP after chain';
+
+
+
 __DATA__
 @@ return
 -e:0009  t2();
 -e:0006    t1();
 -e:0002    1;
 -e:0007    3;
+-e:0010  4;
+@@ return #2
+-e:0009  t2();
+-e:0006    t1();
 -e:0010  4;
 @@ return and stop
 -e:0009  t2();
@@ -224,3 +263,12 @@ __DATA__
 -e:0011  t2();
 -e:0002    1;
 -e:0012  4;
+@@ stop at chain
+-e:0013  c4();
+-e:0008    c2();
+-e:0002    1;
+-e:0014  2;
+@@ return from chain
+-e:0013  c4();
+-e:0008    c2();
+-e:0014  2;
