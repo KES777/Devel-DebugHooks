@@ -85,7 +85,7 @@ sub _cursor_position {
 
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
-	my( $file, $from, $to, $run_file, $run_line ) =  @_;
+	my( $file, $from, $to ) =  @_;
 
 	# Fix window boundaries
 	my $source =  DB::source( $file );
@@ -165,17 +165,14 @@ sub list {
 
 
 	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
-		my( $run_file, $run_line );
 		if( $stack && !$file ) {
 			DB::state( 'cmd.list.level', -$line -1 );
 			# Here $line is stack frame number from the last frame
 			# Frames are counted from the end. -1 subscript is for current frame
 			my $frames =  DB::state( 'stack' );
 			return -2   if $line +1 > @$frames;
-			( $run_file, $run_line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
+			( $file, $line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
 			# TODO: save window level to show vars automatically at that level
-			$file =  $run_file;
-			$line =  $run_line;
 		}
 		elsif( $line eq '.' ) {
 			# TODO: 'current' means file and line! FIX this in other places too
@@ -190,7 +187,7 @@ sub list {
 			$to   =  $line +$lines_after;
 			$line =  $line -$lines_before;
 		}
-		_list( $file, $line, $to, $run_file, $run_line );
+		_list( $file, $line, $to );
 
 
 		# Move cursor to the next window.
