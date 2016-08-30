@@ -198,7 +198,7 @@ sub list {
 		DB::state( 'list.file', $file );
 		DB::state( 'list.line', $to +$lines_before +1 );
 	}
-	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(\w+|&\d*)?$/ ) {
+	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(&\d*|.+)?$/ ) {
 		my $deparse =  sub {
 			require B::Deparse;
 			my( $coderef ) =  @_;
