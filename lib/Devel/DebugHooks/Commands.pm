@@ -138,7 +138,8 @@ sub _list {
 
 		# Print source line
 		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
-		$sl =  " $sl"   if length $sl > 1; # $sl(source line) have at least "\n"
+		$sl  =  " $sl";                       # Space after line number
+		$sl .=  "\n"   unless $sl =~ m/\n$/s; # Last line maybe without EL
 		print $DB::OUT $sl;
 	}
 }
