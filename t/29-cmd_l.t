@@ -88,6 +88,16 @@ is
 	,"List the source from first line";
 
 is
+	n( `$^X $lib -d:DbInteract='list.conf;l 0;l;l;l;q' -e '$script'` )
+	,$files->{ 'list next' }
+	,"List next winidow of sources";
+
+is
+	n( `$^X $lib -d:DbInteract='list.conf2;l 0;l;l;l;q' -e '$script'` )
+	,$files->{ 'list next2' }
+	,"List next winidow of sources #2";
+
+is
 	n( `$^X $lib -d:DbInteract='list.conf;l 8;q' -e '$script'` )
 	,$files->{ 'list middle' }
 	,"List the source at a middle";
@@ -111,11 +121,6 @@ is
 	n( `$^X $lib -d:DbInteract='list.conf;l 100;q' -e '$script'` )
 	,$files->{ 'list unexisting' }
 	,"List not existing line";
-
-is
-	n( `$^X $lib -d:DbInteract='list.conf;l .;l;l;q' -e '$script'` )
-	,$files->{ 'list next' }
-	,"List next winidow of sources";
 
 
 is
@@ -262,20 +267,53 @@ ab>>2:     2;
 @@ list next
 -e:0010  t2();
 -e
+    0: use Devel::DbInteract split(/,/,q{list.conf;l 0;l;l;l;q});;
+    1: sub t0 {
+   x2:     1;
+    3: }
+-e
+    4: sub t1 {
+   x5:     t0();
+    6: }
     7: sub t2 {
    x8:     t1();
+    9: }
+  >>10: t2();
+-e
+    11:
+    12:
+    13:
+    14:
+    15:
+    16:
+    17: # Perl implicitly adds one new line after this one
+-e
+    18:
+@@ list next2
+-e:0010  t2();
+-e
+    0: use Devel::DbInteract split(/,/,q{list.conf2;l 0;l;l;l;q});;
+    1: sub t0 {
+   x2:     1;
+-e
+    3: }
+    4: sub t1 {
+   x5:     t0();
+    6: }
+    7: sub t2 {
+   x8:     t1();
+-e
     9: }
   >>10: t2();
     11:
     12:
     13:
--e
     14:
+-e
     15:
     16:
     17: # Perl implicitly adds one new line after this one
     18:
--e
 @@ list at level 0
 -e:0010  t2();
 -e:0002    1;

@@ -66,6 +66,13 @@ $DB::commands->{ 'list.conf' } =  sub {
 
 
 
+$DB::commands->{ 'list.conf2' } =  sub {
+	$Devel::DebugHooks::Commands::lines_before =  3;
+	$Devel::DebugHooks::Commands::lines_after  =  2;
+};
+
+
+
 sub bbreak {
 	return   if $off;
 
