@@ -156,17 +156,19 @@ sub list {
 	if( $args eq '' ) {
 		my $file =  DB::state( 'list.file' );
 		my $line =  DB::state( 'list.line' );
-		_list( $file, $line -$lines_before, $line +$lines_after );
+		 $line += $lines_after +1;
+		_list( $file, $line, $line +$lines_before +$lines_after  );
 
 		# Move cursor to the next window.
 		# Window is: lines before, current line and lines after
-		DB::state( 'list.line',  $line +$lines_after +$lines_before +1 );
+		DB::state( 'list.line',  $line +$lines_before );
 
 		return 1;
 	}
 
 
 	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
+		my $from;
 		if( $stack && !$file ) {
 			# Here $line is stack frame number from the last frame
 			# Frames are counted from the end. -1 subscript is for current frame
@@ -185,17 +187,23 @@ sub list {
 			$file =  file( $file );
 		}
 
-		unless( $to ) {
-			$to   =  $line +$lines_after;
-			$line =  $line -$lines_before;
+
+		if( $to ) {
+			$from =  $line;
+			$line =  $to -$lines_after;
 		}
-		_list( $file, $line, $to );
+		else {
+			$from =  $line -$lines_before;
+			$to   =  $line +$lines_after;
+		}
+
+		_list( $file, $from, $to );
 
 
 		# Move cursor to the next window.
 		# Window is: lines before, current line and lines after
 		DB::state( 'list.file', $file );
-		DB::state( 'list.line', $to +$lines_before +1 );
+		DB::state( 'list.line', $line );
 	}
 	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(&\d*|.+)?$/ ) {
 		my $deparse =  sub {
