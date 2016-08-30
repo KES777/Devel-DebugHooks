@@ -168,7 +168,6 @@ sub list {
 
 	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
 		if( $stack && !$file ) {
-			DB::state( 'cmd.list.level', -$line -1 );
 			# Here $line is stack frame number from the last frame
 			# Frames are counted from the end. -1 subscript is for current frame
 			my $frames =  DB::state( 'stack' );
