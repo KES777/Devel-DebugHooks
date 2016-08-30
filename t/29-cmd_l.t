@@ -51,7 +51,7 @@ my $files =  get_data_section();
 		2;
 	}
 
-	1;
+	1;    
 	t();
 PERL
 
@@ -211,7 +211,7 @@ is
 
 __DATA__
 @@ list
--e:0005  1;
+-e:0005  1;    
 -e:0002    2;
 -e
     0: use Devel::DbInteract split(/,/,q{list.conf;b 2;a 2 1;s 2;l .;q});;

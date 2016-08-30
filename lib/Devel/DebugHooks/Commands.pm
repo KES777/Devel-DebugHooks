@@ -140,6 +140,7 @@ sub _list {
 		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
 		$sl  =  " $sl";                       # Space after line number
 		$sl .=  "\n"   unless $sl =~ m/\n$/s; # Last line maybe without EL
+		$sl  =~ s/\s+\n$/\n/s;                # Remove whitespaces at EOL
 		print $DB::OUT $sl;
 	}
 }
