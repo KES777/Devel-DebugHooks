@@ -498,6 +498,8 @@ BEGIN {
 	#TODO: cache output until debugger is connected
 	$OUT                       //= \*STDOUT;
 
+	$options{ undef }          //=  '';        # Text to print for undefined values
+
 	$options{ dd }             //=  0;         # controls debugger debugging
 	$options{ ddd }            //=  0;         # print debug info
 
