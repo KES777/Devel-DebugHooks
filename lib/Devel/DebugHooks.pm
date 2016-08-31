@@ -392,7 +392,9 @@ sub state {
 			for my $option ( sort keys %$_ ) {
 				print $DB::OUT $option, ' =  ', $_->{ $option }, "\n";
 			}
+			my $CNT =  5;
 			for( @{ $_->{ stack } } ) {
+				last   if $CNT-- == 0;
 				for my $key ( sort keys %$_ ) {
 					my $value =  $_->{ $key };
 					$value =  ref $value ? ref $value : $value;
