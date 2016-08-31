@@ -809,6 +809,7 @@ $DB::commands =  {
 			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
 			code => sub {
 				print $DB::OUT dd( @_ ) ."\n";
+				return 1;
 			}
 		}
 	}
