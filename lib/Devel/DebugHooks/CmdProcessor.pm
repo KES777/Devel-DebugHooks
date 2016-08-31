@@ -19,7 +19,7 @@ sub process {
 	print $DB::OUT "Command '$cmd' processed\n"   if $DB::options{ ddd };
 	do{ print $DB::OUT "'$cmd' command died: $@"; return -1; }   if $@;
 
-	defined $result ? return $result : return;
+	return $result;
 }
 
 1;

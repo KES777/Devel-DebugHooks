@@ -1182,14 +1182,16 @@ sub process {
 		# negative: something wrong happened while running the command
 		my $result =  scall( $code, @args );
 		return   unless defined $result;
-		if( $result ) {
-			return $result   unless ref $result  &&  ref $result eq 'HASH';
 
+		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
 			local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 			@args =  DB::eval( $result->{ expr } );
 			redo PROCESS;
 		}
+
+
+		return $result   unless $result == 0;
 	}
 
 	# else no such command exists the entered string will be evaluated
