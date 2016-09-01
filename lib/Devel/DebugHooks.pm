@@ -962,7 +962,7 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
-		@DB::context =  ( \@_, (caller 1)[8..10], $@, $_ );
+		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
 	}
 
 
@@ -1031,7 +1031,7 @@ sub postponed {
 
 
 # TODO: implement: on_enter, on_leave, on_compile
-sub DB {
+sub my_DB {
 	establish_cleanup sub {
 		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
 		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
@@ -1144,10 +1144,20 @@ sub DB {
 
 
 
+sub DB {
+	# WORKAROUND: Thanks for mst
+	# the 'sub DB' pad stack isn't getting pushed to allocate a new pad if
+	# you set '$^D|=(1<<30) and reenter DB::DB
+	# So I call general sub. '&' used to leave @_ intact
+	&my_DB;
+}
+
+
+
 sub init {
 	# For each step at client's script we should update current position
 	# Also we should do same thing at &DB::sub
-	my( $p, $f, $l ) = caller(1);
+	my( $p, $f, $l ) = caller(2);
 	state( 'package', $p );
 	state( 'file',    $f );
 	state( 'line',    $l );
