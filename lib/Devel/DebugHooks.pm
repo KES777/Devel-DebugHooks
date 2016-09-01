@@ -578,6 +578,9 @@ BEGIN {
 	# It is limited to the first enclosing block of the BEGIN block
 }
 
+
+# NOTICE: Because of DB::DB, DB::sub, DB::postpone etc. subs take effect
+# as soon as compiled we should &applyOptions at compile time
 BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define

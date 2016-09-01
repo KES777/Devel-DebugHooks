@@ -1,3 +1,20 @@
+DB::DB called when any of the variables is true:
+
+    $DB::trace, $DB::single, $DB::signal
+
+And:
+
+    Execution of your program reaches a point that can hold a breakpoint
+
+DB::DB is not called when:
+
+	Code is called from DB::DB
+	sub has not 'is_debuggable' flag (all code compiled at DB has such flag)
+
+
+
+
+
 There are some different context where DB::sub may be called or not.
 You should keep these cases in mind:
 
@@ -86,4 +103,7 @@ old value of $DB::single will be restored by &pop_frame. You should do instead:
 
 
 NOTICE:
-It will be not possible to debug debugger if commands use package global variables. Because of second debugger instance use same ::Commands package and its variables. Think of this like second thread visit same sub while first thread is paused.
+It will be not possible to debug debugger if commands use package global
+variables. Because of second debugger instance use same ::Commands package and
+its variables. Think of this like second thread visit same sub while first
+thread is paused.
