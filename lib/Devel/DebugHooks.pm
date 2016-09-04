@@ -1053,11 +1053,12 @@ sub my_DB {
 	}   if DB::state( 'ddd' );
 	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
 		if DB::state( 'ddd' );
-	local $DB::inDB =  $DB::inDB +1;
-	my( $p, $f, $l ) =  init();
 
 	&save_context;
 	establish_cleanup \&restore_context;
+
+	local $DB::inDB =  $DB::inDB +1;
+	my( $p, $f, $l ) =  init();
 
 
 
