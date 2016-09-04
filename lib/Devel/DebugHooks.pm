@@ -304,6 +304,16 @@ sub applyOptions {
 
 
 
+sub print_state {
+	my( $before, $after ) =  @_;
+	print $DB::OUT
+		$before
+		."DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace"
+		.($after // "\n")
+	;
+}
+
+
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
@@ -390,7 +400,7 @@ sub state {
 		&&  $name ne 'ddd';
 
 	if( $debug ) {
-		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
+		print_state "\n";
 
 		for( @$DB::state ) {
 			print $DB::OUT "***\n";
@@ -1039,8 +1049,7 @@ sub postponed {
 # TODO: implement: on_enter, on_leave, on_compile
 sub my_DB {
 	establish_cleanup sub {
-		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
-		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
+		print_state '', "\nTRAPPED OUT: $DB::ddlvl\n";
 	}   if DB::state( 'ddd' );
 	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
 		if DB::state( 'ddd' );
@@ -1052,9 +1061,7 @@ sub my_DB {
 
 
 
-	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"
-		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
-		if DB::state( 'ddd' );
+	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
@@ -1135,8 +1142,7 @@ sub my_DB {
 
 	# TODO: Implement on_stop event
 
-	print "\n\nl:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n\n"
-		if DB::state( 'ddd' );
+	print_state "\n\n", "\n\n"   if DB::state( 'ddd' );
 	{
 		local $DB::options{ dd } =  0;
 		mcall( 'bbreak', $DB::dbg );
@@ -1302,8 +1308,9 @@ sub pop_frame {
 	local $DB::inSUB =  1;
 
 	my $last =  pop @{ DB::state( 'stack' ) };
-	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
-		. "    $last->{ file }:$last->{ line }\n\n"
+	print_state "POP  FRAME <<<< ",
+			."  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
+			. "    $last->{ file }:$last->{ line }\n\n"
 		if DB::state( 'ddd' );
 
 	if( @{ DB::state( 'stack' ) } ) {
@@ -1325,9 +1332,7 @@ sub push_frame2 {
 		test();
 		3;
 	}
-
-	print $DB::OUT "PUSH FRAME $_[0] >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
-		if DB::state( 'ddd' );
+	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $DB::sub\n"   if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
@@ -1402,7 +1407,7 @@ sub push_frame {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	$DB::_sub =  $DB::sub;
-	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  "
+	print_state "DB::sub  ", "  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
 		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
