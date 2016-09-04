@@ -381,8 +381,9 @@ mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value ) =  @_;
 
-	my $debug =  $DB::options{ ddd }
-		&&  ( $DB::single  ||  $DB::options{ ddd } == 2 );
+	my $ddd =  $DB::state->[ -1 ]{ ddd };
+	my $debug =  $ddd
+		&&  ( $DB::single  ||  $ddd == 2 );
 
 	if( $debug ) {
 		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
@@ -503,7 +504,7 @@ BEGIN {
 	$options{ undef }          //=  '';        # Text to print for undefined values
 
 	$options{ dd }             //=  0;         # controls debugger debugging
-	$options{ ddd }            //=  0;         # print debug info
+	# $options{ ddd }            //=  0;         # print debug info
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
@@ -867,7 +868,7 @@ BEGIN { # Initialization goes here
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
-		print "mcall ${context}->$method\n"   if $DB::options{ ddd };
+		print "mcall ${context}->$method\n"   if DB::state( 'ddd' );
 		scall( $sub, @_ );
 	}
 
@@ -878,7 +879,7 @@ BEGIN { # Initialization goes here
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
-		if( $DB::options{ ddd } ) {
+		if( DB::state( 'ddd' ) ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
@@ -915,7 +916,7 @@ BEGIN { # Initialization goes here
 			DB::state( 'single', DB::state( 'single' ) );
 
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
-				if $DB::options{ ddd };
+				if DB::state( 'ddd' );
 
 			if( $DB::options{ dd } ) {
 				pop @{ DB::state( 'state' ) };
@@ -923,7 +924,7 @@ BEGIN { # Initialization goes here
 				$options{ dd } =  0;
 
 				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
-					if $DB::options{ ddd };
+					if DB::state( 'ddd' );
 			}
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
@@ -932,12 +933,11 @@ BEGIN { # Initialization goes here
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
 		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
 		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
-		local $options{ ddd } =  $options{ ddd }   if $DB::options{ dd };
 
 
 		if( $DB::options{ dd } ) {
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
-				if $DB::options{ ddd };
+				if DB::state( 'ddd' );
 
 			push @{ DB::state( 'state' ) }, { stack => [ {()
 				,goto_frames => []
@@ -948,7 +948,6 @@ BEGIN { # Initialization goes here
 			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
-			$DB::options{ ddd } =  0;
 			$dbg_call   =  0;
 		}
 		else {
@@ -1038,9 +1037,9 @@ sub my_DB {
 	establish_cleanup sub {
 		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
 		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
-	}   if $DB::options{ ddd };
+	}   if DB::state( 'ddd' );
 	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
-		if $DB::options{ ddd };
+		if DB::state( 'ddd' );
 	local $DB::inDB =  $DB::inDB +1;
 	my( $p, $f, $l ) =  init();
 
@@ -1051,7 +1050,7 @@ sub my_DB {
 
 	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"
 		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
-		if $DB::options{ ddd };
+		if DB::state( 'ddd' );
 
 	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
@@ -1133,7 +1132,7 @@ sub my_DB {
 	# TODO: Implement on_stop event
 
 	print "\n\nl:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n\n"
-		if $DB::options{ ddd };
+		if DB::state( 'ddd' );
 	{
 		local $DB::options{ dd } =  0;
 		mcall( 'bbreak', $DB::dbg );
@@ -1209,13 +1208,13 @@ sub process {
 
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
-	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
+	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if DB::state( 'ddd' );
 	my @result =  DB::eval( $str );
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
 	elsif( !$quiet ) {
-		print $DB::OUT "\nEvaluation result:\n"   if $DB::options{ ddd };
+		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
 		@result =  map{ $_ // $DB::options{ undef } } @result;
 		local $" =  $DB::options{ '"' }  //  $";
 		print $DB::OUT "@result\n";
@@ -1247,7 +1246,7 @@ sub interact {
 	my $old =  $DB::options{ dd };
 	$DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
-		print "\n" .(" "x60 ."*"x20 ."\n")x10   if $DB::options{ ddd };
+		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
 		$DB::options{ dd } =  $old;
@@ -1301,7 +1300,7 @@ sub pop_frame {
 	my $last =  pop @{ DB::state( 'stack' ) };
 	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
 		. "    $last->{ file }:$last->{ line }\n\n"
-		if $DB::options{ ddd };
+		if DB::state( 'ddd' );
 
 	if( @{ DB::state( 'stack' ) } ) {
 		# Restore $DB::single for upper frame
@@ -1324,7 +1323,7 @@ sub push_frame2 {
 	}
 
 	print $DB::OUT "PUSH FRAME $_[0] >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
-		if $DB::options{ ddd };
+		if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
@@ -1336,7 +1335,7 @@ sub push_frame2 {
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
-			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if DB::state( 'ddd' );
 		}
 
 		my $stack =  DB::state( 'stack' );
@@ -1387,7 +1386,7 @@ sub trace_returns {
 sub push_frame {
 	scall( \&push_frame2, @_ );
 
-	if( $DB::options{ ddd } ) {
+	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
 		DB::state( 'stack' );
 		print $DB::OUT "Frame created for $DB::sub\n\n";
@@ -1402,7 +1401,7 @@ sub sub {
 	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
-		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
+		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
 
 	if( $dbg_call
 	) {
@@ -1411,12 +1410,12 @@ sub sub {
 		return &$DB::sub
 	}
 
-	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
+	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if DB::state( 'ddd' );
 	$DB::inSUB =  1;
 
 
 	# manual localization
-	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
+	print $DB::OUT "\nCreating frame for $DB::sub\n"   if DB::state( 'ddd' );
 	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
@@ -1424,7 +1423,7 @@ sub sub {
 	push_frame( 'C' );
 
 	$DB::inSUB =  0;
-	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };
+	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if DB::state( 'ddd' );
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
