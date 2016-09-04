@@ -354,9 +354,12 @@ sub dbg_vrbl {
 sub frm_vrbl {
 	my( $self, $name, $value ) =  @_;
 
-
-	my $frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
-	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
+	my $frame;
+	{
+		local $self->{ debug };
+		$frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
+		# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
+	}
 
 	my $old_value =  $frame->{ $name } // 'undef';
 	my $new_value =  '';
