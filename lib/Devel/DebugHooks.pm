@@ -383,7 +383,8 @@ sub state {
 
 	my $ddd =  $DB::state->[ -1 ]{ ddd };
 	my $debug =  $ddd
-		&&  ( $DB::single  ||  $ddd == 2 );
+		&&  ( $DB::single  ||  $ddd == 2 )
+		&&  $name ne 'ddd';
 
 	if( $debug ) {
 		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
