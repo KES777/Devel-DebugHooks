@@ -980,11 +980,11 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
-		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"
-			if DB::state( 'ddd' );
-
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
 		DB::state( 'inDB', 1 );
+
+		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"
+			if DB::state( 'ddd' );
 	}
 
 
@@ -993,11 +993,12 @@ BEGIN { # Initialization goes here
 	# to prevent $file:$line updated in unexpected way
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
+		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"
+			if DB::state( 'ddd' );
+
 		DB::state( 'inDB', undef );
 		$@ =  $DB::context[ 4 ];
 
-		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"
-			if DB::state( 'ddd' );
 	}
 } # end of provided DB::API
 
