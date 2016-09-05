@@ -310,7 +310,7 @@ sub print_state {
 	my( undef, $f, $l ) =  caller;
 	print $DB::OUT
 		$before ."$f:$l: "
-		."DB::state: l:" .@$DB::state ." b:$DB::inDB:$DB::inSUB d:"
+		."DB::state: l:" .@$DB::state ." b:" .(DB::state('inDB')//0) ." d:"
 		.(DB::state( 'dbg_call' )//'0') ." s:$DB::single t:$DB::trace"
 		.($after // "\n")
 	;
@@ -428,7 +428,6 @@ sub state {
 	}
 
 	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
-	my $inSUB =  $DB::state->[ -1 ]{ inSUB };
 	my $level =  -1;
 	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
 	my $instance =  $DB::state->[ $level ];
@@ -473,7 +472,7 @@ our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
-#our $ddlvl;          # Level of debugger debugging <= @$DB::state
+# our $ddlvl;          # Level of debugger debugging <= @$DB::state
 # our $inDB;           # Flag which shows we are currently in debugger
 # our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
