@@ -310,7 +310,7 @@ sub print_state {
 	my( undef, $f, $l ) =  caller;
 	print $DB::OUT
 		$before ."$f:$l: "
-		."DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace"
+		."DB::state: l:" .@$DB::state ." b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace"
 		.($after // "\n")
 	;
 }
@@ -472,7 +472,7 @@ our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
-our $ddlvl;          # Level of debugger debugging
+#our $ddlvl;          # Level of debugger debugging <= @$DB::state
 our $inDB;           # Flag which shows we are currently in debugger
 our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
@@ -604,7 +604,6 @@ BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
 	$DB::dbg_call //=  0;
-	$DB::ddlvl    //=  0;
 	$DB::inDB     //=  0;
 	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
@@ -949,7 +948,6 @@ BEGIN { # Initialization goes here
 		establish_cleanup $scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
-		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
 		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
 
 
@@ -961,7 +959,6 @@ BEGIN { # Initialization goes here
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
-			$DB::ddlvl++;
 			DB::state( 'single', 1 );
 			$^D |=  1<<30;
 
@@ -1214,7 +1211,6 @@ sub process {
 
 		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
-			local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 			@args =  DB::eval( $result->{ expr } );
 			redo PROCESS;
 		}
@@ -1425,7 +1421,7 @@ sub sub {
 		return &$DB::sub
 	}
 
-	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if DB::state( 'ddd' );
+	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if DB::state( 'ddd' );
 	sub{ DB::state( 'inDB', 1 ) }->();
 
 
@@ -1438,7 +1434,7 @@ sub sub {
 	push_frame( 'C' );
 
 	sub{ DB::state( 'inDB', undef ) }->();
-	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if DB::state( 'ddd' );
+	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if DB::state( 'ddd' );
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
