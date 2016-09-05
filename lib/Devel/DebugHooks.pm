@@ -340,7 +340,7 @@ sub dbg_vrbl {
 	return $DB::state   if $name eq 'state';
 
 
-	my $dbg =  $self->{ instance };
+	my $dbg =  $self->{ instance } // $DB::state->[-1];
 	my $old_value =  $dbg->{ $name } // 'undef';
 	my $new_value =  '';
 	if( @_ >= 3 ) {
@@ -351,7 +351,7 @@ sub dbg_vrbl {
 	}
 
 	if( $self->{ debug } ) {
-		print $DB::OUT " DBG::$name: $old_value$new_value\n";
+		print $DB::OUT " DBG::$name($self->{level}): $old_value$new_value\n";
 	}
 
 
@@ -380,7 +380,7 @@ sub frm_vrbl {
 	}
 
 	if( $self->{ debug } ) {
-		print $DB::OUT " FRM::$name: $old_value$new_value\n";
+		print $DB::OUT " FRM::$name($self->{level}): $old_value$new_value\n";
 	}
 
 
@@ -437,8 +437,9 @@ sub state {
 
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
-			,debug =>  $debug
+			,debug    =>  $debug
 			,instance =>  $instance
+			,level    =>  $level
 		}
 		,@_
 	);
