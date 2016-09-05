@@ -399,16 +399,17 @@ sub state {
 		&&  $name ne 'ddd';
 
 	if( $debug ) {
-		print_state "\n";
+		print_state "\n    ";
 
 		for( @$DB::state ) {
-			print $DB::OUT "***\n";
+			print $DB::OUT "    ***\n";
 			for my $option ( sort keys %$_ ) {
-				print $DB::OUT $option, ' =  ', $_->{ $option }, "\n";
+				print $DB::OUT '    ', $option, ' =  ', $_->{ $option }, "\n";
 			}
 			my $CNT =  5;
 			for( @{ $_->{ stack } } ) {
 				last   if $CNT-- == 0;
+				print $DB::OUT "    ";
 				for my $key ( sort keys %$_ ) {
 					my $value =  $_->{ $key };
 					$value =  ref $value ? ref $value : $value;
@@ -420,7 +421,7 @@ sub state {
 
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n$file:$line:";
+		print $DB::OUT '    ', '-'x20 ."\n$file:$line:";
 	}
 
 	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
