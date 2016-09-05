@@ -354,7 +354,7 @@ sub dbg_vrbl {
 	}
 
 	if( $self->{ debug } ) {
-		print $DB::OUT " DBG::$name($self->{level}): $old_value$new_value\n";
+		print $DB::OUT " DBG::$name: $old_value$new_value\n";
 	}
 
 
@@ -383,7 +383,7 @@ sub frm_vrbl {
 	}
 
 	if( $self->{ debug } ) {
-		print $DB::OUT " FRM::$name($self->{level}): $old_value$new_value\n";
+		print $DB::OUT " FRM::$name: $old_value$new_value\n";
 	}
 
 
@@ -422,15 +422,20 @@ sub state {
 			}
 		}
 
-		my($file, $line) =  (caller 0)[1,2];
-		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '    ', '-'x20 ."\n$file:$line:";
+		print $DB::OUT '    ', '-'x20 ."\n";
 	}
 
 	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
 	my $level =  -1;
 	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
 	my $instance =  $DB::state->[ $level ];
+
+	if( $debug ) {
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
+		print $DB::OUT "($level)$file:$line: ";
+	}
+
 	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
@@ -438,11 +443,12 @@ sub state {
 		return;
 	}
 
+
+
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug    =>  $debug
 			,instance =>  $instance
-			,level    =>  $level
 		}
 		,@_
 	);
