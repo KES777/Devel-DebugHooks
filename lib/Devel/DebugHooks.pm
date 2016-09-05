@@ -307,6 +307,8 @@ sub applyOptions {
 sub print_state {
 	my( $before, $after ) =  @_;
 
+	local $DB::state->[ -1 ]{ ddd };
+
 	my( undef, $f, $l ) =  caller;
 	print $DB::OUT
 		$before ."$f:$l: "
@@ -397,10 +399,10 @@ sub state {
 	my( $name, $value ) =  @_;
 
 	my $ddd =  $DB::state->[ -1 ]{ ddd };
-	my $debug =  $ddd
-		&&  $name ne 'ddd' && $name ne 'dbg_call' && $name ne 'inDB';
+	my $debug =  $ddd  &&  $name ne 'ddd'
+		&&  ( $DB::single  ||  $ddd == 2 );
 
-	if( $debug  &&  ( $DB::single  ||  $ddd == 2 ) ) {
+	if( $debug ) {
 		print_state "\n    ";
 
 		for( @$DB::state ) {
