@@ -1306,9 +1306,8 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
-	local $DB::inSUB =  1;
-
-	my $last =  pop @{ DB::state( 'stack' ) };
+	my $state =  $DB::state;
+	my $last =  pop @{ $state->[ -(@$state >= 2 ? 2 : 1) ]{ stack } };
 	print_state "POP  FRAME <<<< ",
 			."  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
 			. "    $last->{ file }:$last->{ line }\n\n"
