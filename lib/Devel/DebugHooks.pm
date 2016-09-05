@@ -398,10 +398,9 @@ sub state {
 
 	my $ddd =  $DB::state->[ -1 ]{ ddd };
 	my $debug =  $ddd
-		&&  ( $DB::single  ||  $ddd == 2 )
-		&&  $name ne 'ddd';
+		&&  $name ne 'ddd' && $name ne 'dbg_call' && $name ne 'inDB';
 
-	if( $debug ) {
+	if( $debug  &&  ( $DB::single  ||  $ddd == 2 ) ) {
 		print_state "\n    ";
 
 		for( @$DB::state ) {
