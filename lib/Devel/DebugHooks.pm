@@ -1423,7 +1423,7 @@ sub sub {
 	}
 
 	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if DB::state( 'ddd' );
-	DB::state( 'inSUB', 1 );
+	sub{ DB::state( 'inDB', 1 ) }->();
 
 
 	# manual localization
@@ -1434,7 +1434,7 @@ sub sub {
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
 
-	DB::state( 'inSUB', undef );
+	sub{ DB::state( 'inDB', undef ) }->();
 	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if DB::state( 'ddd' );
 
 	{
