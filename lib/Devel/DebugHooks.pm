@@ -979,6 +979,9 @@ BEGIN { # Initialization goes here
 
 
 	sub save_context {
+		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"
+			if DB::state( 'ddd' );
+
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
 		DB::state( 'inDB', 1 );
 	}
@@ -991,6 +994,9 @@ BEGIN { # Initialization goes here
 	sub restore_context {
 		DB::state( 'inDB', undef );
 		$@ =  $DB::context[ 4 ];
+
+		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"
+			if DB::state( 'ddd' );
 	}
 } # end of provided DB::API
 
@@ -1051,12 +1057,6 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub my_DB {
-	establish_cleanup sub {
-		print_state '', "\nTRAPPED OUT: $DB::ddlvl\n";
-	}   if DB::state( 'ddd' );
-	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
-		if DB::state( 'ddd' );
-
 	&save_context;
 	establish_cleanup \&restore_context;
 
