@@ -929,12 +929,6 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
-			# $DB::single =  DB::state( 'single' );
-			DB::state( 'single', DB::state( 'single' ) );
-
-			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
-				if DB::state( 'ddd' );
-
 			if( $DB::options{ dd } ) {
 				pop @{ DB::state( 'state' ) };
 
@@ -944,8 +938,13 @@ BEGIN { # Initialization goes here
 					if DB::state( 'ddd' );
 			}
 
+			# $DB::single =  DB::state( 'single' );
+			DB::state( 'single', DB::state( 'single' ) );
+
 			DB::state( 'dbg_call', undef );
 
+			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
+				if DB::state( 'ddd' );
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
 		establish_cleanup $scall_cleanup;
