@@ -306,8 +306,10 @@ sub applyOptions {
 
 sub print_state {
 	my( $before, $after ) =  @_;
+
+	my( undef, $f, $l ) =  caller;
 	print $DB::OUT
-		$before
+		$before ."$f:$l: "
 		."DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace"
 		.($after // "\n")
 	;
