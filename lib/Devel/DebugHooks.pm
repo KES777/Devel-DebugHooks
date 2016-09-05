@@ -424,9 +424,10 @@ sub state {
 		print $DB::OUT '-'x20 ."\n$file:$line:";
 	}
 
-	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
-	$low =  0   if $low  &&  $DB::inDB == 2;
-	my $level =  $DB::ddlvl -$low;
+	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
+	my $inSUB =  $DB::state->[ -1 ]{ inSUB };
+	my $level =  1;
+	$level =  2   if @$DB::state >= 2  &&  !$inDB  && !$inSUB;
 	my $instance =  $DB::state->[ $level ];
 	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
@@ -979,6 +980,7 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
+		DB::state( 'inDB', 1 );
 	}
 
 
@@ -987,6 +989,7 @@ BEGIN { # Initialization goes here
 	# to prevent $file:$line updated in unexpected way
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
+		DB::state( 'inDB', undef );
 		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
@@ -1057,7 +1060,6 @@ sub my_DB {
 	&save_context;
 	establish_cleanup \&restore_context;
 
-	local $DB::inDB =  $DB::inDB +1;
 	my( $p, $f, $l ) =  init();
 
 
@@ -1420,7 +1422,7 @@ sub sub {
 	}
 
 	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if DB::state( 'ddd' );
-	$DB::inSUB =  1;
+	DB::state( 'inSUB', 1 );
 
 
 	# manual localization
@@ -1431,7 +1433,7 @@ sub sub {
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
 
-	$DB::inSUB =  0;
+	DB::state( 'inSUB', undef );
 	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if DB::state( 'ddd' );
 
 	{
