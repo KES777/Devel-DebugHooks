@@ -336,8 +336,7 @@ sub dbg_vrbl {
 	my( $self, $name, $value ) =  @_;
 
 
-	print $DB::OUT "\n\n"   if $self->{ debug }
-		&&( $name eq 'state'  ||  $name eq 'stack' );
+	print $DB::OUT "DBG::$name\n"   if $self->{ debug } && $name eq 'state';
 	return $DB::state   if $name eq 'state';
 
 
