@@ -434,7 +434,7 @@ sub state {
 	if( $debug ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT "($level)$file:$line: ";
+		print $DB::OUT -$level ." $file:$line: ";
 	}
 
 	unless( $instance ) {
