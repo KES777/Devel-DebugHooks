@@ -1423,7 +1423,7 @@ sub sub {
 		."\n"
 		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
 
-	if( DB::state( 'dbg_call' )
+	if( sub{ DB::state( 'dbg_call' ) }->()
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
