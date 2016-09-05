@@ -429,8 +429,8 @@ sub state {
 
 	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
 	my $inSUB =  $DB::state->[ -1 ]{ inSUB };
-	my $level =  1;
-	$level =  2   if @$DB::state >= 2  &&  !$inDB  && !$inSUB;
+	my $level =  -1;
+	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
 	my $instance =  $DB::state->[ $level ];
 	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
@@ -474,8 +474,8 @@ our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
 #our $ddlvl;          # Level of debugger debugging <= @$DB::state
-our $inDB;           # Flag which shows we are currently in debugger
-our $inSUB;          # Flag which shows we are currently in debugger
+# our $inDB;           # Flag which shows we are currently in debugger
+# our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
@@ -604,8 +604,6 @@ BEGIN {
 BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
-	$DB::inDB     //=  0;
-	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 
@@ -703,6 +701,7 @@ BEGIN { # Initialization goes here
 
 
 	sub eval_cleanup {
+		DB::state( 'inDB', 1 );
 		DB::state( 'eval', undef );
 	}
 	mutate_sub_is_debuggable( \&eval_cleanup, 0 );
@@ -730,6 +729,7 @@ BEGIN { # Initialization goes here
 
 		establish_cleanup \&eval_cleanup;
 		DB::state( 'eval', 1 );
+		DB::state( 'inDB', undef );
 
 
 		local $^D;
@@ -958,11 +958,12 @@ BEGIN { # Initialization goes here
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 				if DB::state( 'ddd' );
 
-			push @{ DB::state( 'state' ) }, { stack => [ {()
+			push @{ DB::state( 'state' ) }, { inDB => 1, stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
 			DB::state( 'single', 1 );
+			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
@@ -1310,11 +1311,12 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
-	my $state =  $DB::state;
-	my $last =  pop @{ $state->[ -(@$state >= 2 ? 2 : 1) ]{ stack } };
+	DB::state( 'inDB', 1 );
+	my $stack =  DB::state( 'stack' );
+	my $last =  pop @$stack;
 	print_state "POP  FRAME <<<< ",
-			."  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
-			. "    $last->{ file }:$last->{ line }\n\n"
+			."  --  $last->{ sub }\@". @$stack ."\n"
+			."    $last->{ file }:$last->{ line }\n\n"
 		if DB::state( 'ddd' );
 
 	if( @{ DB::state( 'stack' ) } ) {
@@ -1326,6 +1328,7 @@ sub pop_frame {
 		#TODO: Write error somewere
 		$DB::single =  0;
 	}
+	DB::state( 'inDB', undef );
 }
 
 
