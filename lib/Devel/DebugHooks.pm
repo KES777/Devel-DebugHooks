@@ -962,6 +962,7 @@ BEGIN { # Initialization goes here
 				,type        => 'D'
 			} ] };
 			DB::state( 'single', 1 );
+			DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 
