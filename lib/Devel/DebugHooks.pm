@@ -345,8 +345,8 @@ sub log_access {
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
-	no strict "refs";
 	if( @_ >= 3 ) {
+		no strict "refs";
 		if( $self->{ debug } ) {
 			print $DB::OUT " ( DB::$name: ${ \"DB::$name\" } -> $value )";
 		}
