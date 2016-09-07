@@ -408,7 +408,9 @@ sub state {
 		for( @$DB::state ) {
 			print $DB::OUT "    ***\n";
 			for my $option ( sort keys %$_ ) {
-				print $DB::OUT '    ', $option, ' =  ', $_->{ $option }, "\n";
+				my $value =  $_->{ $option };
+				$value =  ref $value ? ref $value : $value;
+				print $DB::OUT '    ', $option, " =  $value\n";
 			}
 			my $CNT =  5;
 			for( @{ $_->{ stack } } ) {
