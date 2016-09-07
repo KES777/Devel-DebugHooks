@@ -363,14 +363,8 @@ sub int_vrbl {
 sub dbg_vrbl {
 	my $self =  shift;
 
-
-	if( $_[0] eq 'state' ) {
-		print $DB::OUT "DBG::$_[0]\n"   if $self->{ debug };
-		return $DB::state;
-	}
-
-
 	my $dbg =  $self->{ instance } // $DB::state->[-1];
+
 	return log_access( ($self->{ debug } ? 'DBG' : undef) ,$dbg	,@_ );
 }
 
@@ -384,7 +378,6 @@ sub frm_vrbl {
 		local $self->{ debug };
 		$frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
 	}
-
 
 	return log_access( ($self->{ debug } ? 'FRM' : undef) ,$frame ,@_ );
 }
@@ -488,7 +481,7 @@ our %options;
 our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
-our $variables;      # Hash which defines behaviour for values available through 'state'
+our $variables;      # Hash which defines behaviour for values available through &DB::state
 	# There three types of variables:
 	# Debugger internal variables -- global values from DB:: package
 	# Debugger instance variables -- values which exists in current debugger instance
@@ -961,7 +954,7 @@ BEGIN { # Initialization goes here
 			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
 
 			if( $DB::options{ dd } ) {
-				pop @{ DB::state( 'state' ) };
+				pop @$DB::state;
 
 				$options{ dd } =  0;
 				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
@@ -990,7 +983,7 @@ BEGIN { # Initialization goes here
 			# So we use &DB::state after instance initialization
 			# NOTICE: Because of &scall is designed to work from debugger. We
 			# should keep { inDB } state when create new instance: inDB => 1
-			push @{ DB::state( 'state' ) }, { inDB => 1, stack => [ {()
+			push @$DB::state, { inDB => 1, stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
