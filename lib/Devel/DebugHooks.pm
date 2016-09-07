@@ -1081,13 +1081,20 @@ sub import { # NOTE: The import is called at CT yet
 
 
 # We define posponed/sub as soon as possible to be able watch whole process
+# NOTICE: At this sub we reenter debugger
 sub postponed {
 	if( $options{ trace_load } ) {
 		#TODO: implement local_state to localize debugger state values
+		my $old_inDB =  DB::state( 'inDB' );
 		DB::state( 'inDB', 1 );
 		#FIX: process exceptions
 		mcall( 'trace_load', $DB::dbg, @_ );
-		DB::state( 'inDB', undef );
+
+		# When we are in debugger and we require module the execution will be
+		# interrupted and we REENTER debugger
+		# TODO: study this case and IT:
+		# T: We are { dd } and run command that 'require'
+		DB::state( 'inDB', $old_inDB );
 	}
 }
 
