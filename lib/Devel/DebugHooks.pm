@@ -887,6 +887,13 @@ BEGIN { # Initialization goes here
 	}
 
 
+
+	sub ddd {
+		return $DB::state->[ -1 ]{ ddd };
+	}
+
+
+
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		my $method =  shift;
