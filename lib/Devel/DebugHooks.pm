@@ -319,6 +319,29 @@ sub print_state {
 }
 
 
+
+sub log_access {
+	my( $debug, $hash, $name, $value ) =  @_;
+
+	my $old_value =  $hash->{ $name } // 'undef';
+	my $new_value =  '';
+	if( @_ >= 4 ) {
+		$new_value =  ' -> '. ($value//'undef');
+		defined $value
+			? $hash->{ $name } =  $value
+			: delete $hash->{ $name };
+	}
+
+	if( defined $debug ) {
+		print $DB::OUT " $debug::$name: $old_value$new_value\n";
+	}
+
+
+	return $hash->{ $name };
+}
+
+
+
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
@@ -338,58 +361,32 @@ sub int_vrbl {
 
 
 sub dbg_vrbl {
-	my( $self, $name, $value ) =  @_;
+	my $self =  shift;
 
 
-	print $DB::OUT "DBG::$name\n"   if $self->{ debug } && $name eq 'state';
-	return $DB::state   if $name eq 'state';
+	if( $_[0] eq 'state' ) {
+		print $DB::OUT "DBG::$_[0]\n"   if $self->{ debug };
+		return $DB::state;
+	}
 
 
 	my $dbg =  $self->{ instance } // $DB::state->[-1];
-	my $old_value =  $dbg->{ $name } // 'undef';
-	my $new_value =  '';
-	if( @_ >= 3 ) {
-		$new_value =  ' -> '. ($value//'undef');
-		defined $value
-			? $dbg->{ $name } =  $value
-			: delete $dbg->{ $name };
-	}
-
-	if( $self->{ debug } ) {
-		print $DB::OUT " DBG::$name: $old_value$new_value\n";
-	}
-
-
-	return $dbg->{ $name };
+	return log_access( ($self->{ debug } ? 'DBG' : undef) ,$dbg	,@_ );
 }
 
 
 
 sub frm_vrbl {
-	my( $self, $name, $value ) =  @_;
+	my $self =  shift;
 
 	my $frame;
 	{
 		local $self->{ debug };
 		$frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
-		# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
-	}
-
-	my $old_value =  $frame->{ $name } // 'undef';
-	my $new_value =  '';
-	if( @_ >= 3 ) {
-		$new_value =  ' -> '. ($value//'undef');
-		defined $value
-			? $frame->{ $name } =  $value
-			: delete $frame->{ $name };
-	}
-
-	if( $self->{ debug } ) {
-		print $DB::OUT " FRM::$name: $old_value$new_value\n";
 	}
 
 
-	return $frame->{ $name };
+	return log_access( ($self->{ debug } ? 'FRM' : undef) ,$frame ,@_ );
 }
 
 
