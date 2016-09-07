@@ -398,9 +398,9 @@ mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value ) =  @_;
 
-	my $ddd =  $DB::state->[ -1 ]{ ddd };
-	my $debug =  $ddd  &&  $name ne 'ddd'
-		&&  ( $DB::single  ||  $ddd == 2 );
+	# Do not debug access into 'ddd' flag
+	my $ddd =  $name ne 'ddd'  &&  $DB::state->[ -1 ]{ ddd };
+	my $debug =  $ddd  &&  ( $DB::single  ||  $ddd >= 2 );
 
 	if( $debug ) {
 		print_state "\n    ";
