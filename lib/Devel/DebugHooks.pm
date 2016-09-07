@@ -911,7 +911,11 @@ BEGIN { # Initialization goes here
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
-		if( DB::state( 'ddd' ) ) {
+		# When we call from user's code his frame may have not 'ddd'
+		# But if this will be debugger debugging we should set { ddd } flag.
+		# See next line below:
+		# DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
+		if( DB::state( 'ddd' ) || $DB::options{ dd } >= 2 ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
