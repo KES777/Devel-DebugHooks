@@ -910,6 +910,8 @@ BEGIN { # Initialization goes here
 
 
 	sub scall {
+		#TODO: assert { inDB } == 1
+
 		# When we start debugger debugging with verbose output
 		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
 		# we should not lose any output info
@@ -956,6 +958,8 @@ BEGIN { # Initialization goes here
 		# Manual localization
 		my $scall_cleanup =  sub {
 			print $DB::OUT "Debugger command DONE\n"   if $ddd;
+
+			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
 
 			if( $DB::options{ dd } ) {
 				pop @{ DB::state( 'state' ) };
@@ -1339,6 +1343,7 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
+	$DB::single =  1; #FIX: For debugging purpose only
 	DB::state( 'inDB', 1 );
 	my $stack =  DB::state( 'stack' );
 	my $last =  pop @$stack;
@@ -1353,7 +1358,7 @@ sub pop_frame {
 	} else {
 		# Something nasty happened at &push_frame, because of we are at
 		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
-		#TODO: Write error somewere
+		print $DB::OUT "Error happen while &pop_frame. Pay attention to this!\n";
 		$DB::single =  0;
 	}
 	DB::state( 'inDB', undef );
@@ -1375,6 +1380,7 @@ sub push_frame2 {
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
 		if( !DB::state( 'eval' ) ) {
+			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
 			my( $p, $f, $l ) =  caller 2;
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
