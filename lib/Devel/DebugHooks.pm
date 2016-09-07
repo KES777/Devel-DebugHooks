@@ -890,16 +890,8 @@ BEGIN { # Initialization goes here
 
 
 
-	sub ddd {
-		# When we start debugger debugging with verbose output
-		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
-		# we should not lose any output info, for example from &mcall, &scall
-		# until we setup initial state for new debugger instance
-		# (See 'IN  DEBUGGER')
-		return $DB::state->[ -1 ]{ ddd }  #||  $DB::options{ dd } >= 2
-			# HACK: Always return level of debugging output
-			|| $DB::options{ dd } && $DB::options{ dd } -1
-		;
+	sub _ddd {
+		return $DB::state->[ -1 ]{ ddd };
 	}
 
 
@@ -910,17 +902,27 @@ BEGIN { # Initialization goes here
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
-		print "mcall ${context}->$method\n"   if ddd;
+		print "mcall ${context}->$method\n"
+			if DB::state( 'ddd' )  ||  $DB::options{ dd } >= 2;
 		scall( $sub, @_ );
 	}
 
 
 
 	sub scall {
+		# When we start debugger debugging with verbose output
+		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
+		# we should not lose any output info
+		# until we setup initial state for new debugger instance
+		# See "Create new debugger's state instance" below
+		my $ddd =  DB::state( 'ddd' )  #||  $DB::options{ dd } >= 2
+			# HACK: Always return level of debugging output
+			||  $DB::options{ dd } && $DB::options{ dd } -1;
+
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
-		if( ddd ) {
+		if( $ddd ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
@@ -953,13 +955,13 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
+			print $DB::OUT "Debugger command DONE\n"   if $ddd;
+
 			if( $DB::options{ dd } ) {
 				pop @{ DB::state( 'state' ) };
 
 				$options{ dd } =  0;
-
-				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
-					if DB::state( 'ddd' );
+				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
 			}
 
 			# $DB::single =  DB::state( 'single' );
@@ -967,8 +969,7 @@ BEGIN { # Initialization goes here
 
 			DB::state( 'dbg_call', undef );
 
-			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
-				if DB::state( 'ddd' );
+			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
 		establish_cleanup $scall_cleanup;
@@ -977,25 +978,33 @@ BEGIN { # Initialization goes here
 		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
 
 
+		# Create new debugger's state instance
 		if( $DB::options{ dd } ) {
-			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
-				if DB::state( 'ddd' );
+			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"   if $ddd;
 
+			# NOTICE: We should not we set debugger states directly when create
+			# new state instance. We will not see changes at debug output
+			# So we use &DB::state after instance initialization
+			# NOTICE: Because of &scall is designed to work from debugger. We
+			# should keep { inDB } state when create new instance: inDB => 1
 			push @{ DB::state( 'state' ) }, { inDB => 1, stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
-			DB::state( 'single', 1 );
+			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
+			# A new debugger instance has its own { ddd } flag
 			DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
+			$DB::dbg_call =  0;
 		}
 		else {
 			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
+		print $DB::OUT "Call debugger command\n"   if $ddd;
 		return shift->( @_[ 1..$#_ ] );
 
 		# my $method =  shift;
@@ -1007,7 +1016,7 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
-		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"   if ddd;
+		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"   if _ddd;
 		DB::state( 'inDB', 1 );
 	}
 
@@ -1018,7 +1027,7 @@ BEGIN { # Initialization goes here
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
 		DB::state( 'inDB', undef );
-		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"   if ddd;
+		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"   if _ddd;
 		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
@@ -1432,20 +1441,24 @@ sub push_frame {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	#FIX: where to setup 'inDB' state?
 	$DB::_sub =  $DB::sub;
 	print_state "DB::sub  ", "  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
 		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
 
-	if( sub{ DB::state( 'dbg_call' ) }->()
+	# if( sub{ DB::state( 'dbg_call' ) }->()
+	if( $DB::dbg_call
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
+
+		# sub{ DB::state( 'inDB', undef ) }->();
 		return &$DB::sub
 	}
 
-	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if DB::state( 'ddd' );
+	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
 	sub{ DB::state( 'inDB', 1 ) }->();
 
 
@@ -1458,7 +1471,7 @@ sub sub {
 	push_frame( 'C' );
 
 	sub{ DB::state( 'inDB', undef ) }->();
-	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if DB::state( 'ddd' );
+	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if _ddd;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
