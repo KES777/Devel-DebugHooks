@@ -1083,7 +1083,11 @@ sub import { # NOTE: The import is called at CT yet
 # We define posponed/sub as soon as possible to be able watch whole process
 sub postponed {
 	if( $options{ trace_load } ) {
+		#TODO: implement local_state to localize debugger state values
+		DB::state( 'inDB', 1 );
+		#FIX: process exceptions
 		mcall( 'trace_load', $DB::dbg, @_ );
+		DB::state( 'inDB', undef );
 	}
 }
 
@@ -1426,7 +1430,10 @@ sub push_frame2 {
 
 
 sub trace_returns {
+	DB::state( 'inDB', 1 );
+	#FIX: process exceptions
 	mcall( 'trace_returns', $DB::dbg, @_ );
+	DB::state( 'inDB', undef );
 }
 
 
