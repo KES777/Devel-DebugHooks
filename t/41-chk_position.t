@@ -74,7 +74,7 @@ $cmds =  'off;go 8;go,trace_returns,trace_subs';
 is
 	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'position in subs' }
-	,'Position should be updated when call and return to/from subs';
+	,'Position should be updated when call and return to/from subs #2';
 
 $cmds =  'e 1+1;DB::state( "line" );q';
 is
@@ -86,7 +86,13 @@ $cmds =  'e t0;DB::state( "line" );q';
 is
 	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'prevent when eval' }
-	,'Position should not be updated when we make sub call while eval EXPR';
+	,'Position should not be updated when we call sub call while eval EXPR';
+
+$cmds =  't0;DB::state( "line" );q';
+is
+	n( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'prevent when eval' }
+	,'Position should not be updated when we call sub from debugger';
 
 
 
