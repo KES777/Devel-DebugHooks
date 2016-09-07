@@ -103,7 +103,7 @@ sub watch {
 
 
 sub bbreak {
-	my $info =  "\n" .' =' x30 ."$DB::dbg_call\n";
+	my $info =  "\n" .' =' x30 .DB::state( 'inDB' ) ."\n";
 
 	$info .=  sprintf "%s:%s    %s"
 		,DB::state( 'file' )
@@ -304,11 +304,49 @@ sub applyOptions {
 
 
 
+sub print_state {
+	my( $before, $after ) =  @_;
+
+	local $DB::state->[ -1 ]{ ddd };
+
+	my( undef, $f, $l ) =  caller;
+	print $DB::OUT
+		$before ."$f:$l: "
+		."DB::state: l:" .@$DB::state ." d:" .(DB::state('inDB')//0)
+		." s:$DB::single t:$DB::trace"
+		.($after // "\n")
+	;
+}
+
+
+
+sub log_access {
+	my( $debug, $hash, $name, $value ) =  @_;
+
+	my $old_value =  $hash->{ $name } // 'undef';
+	my $new_value =  '';
+	if( @_ >= 4 ) {
+		$new_value =  ' -> '. ($value//'undef');
+		defined $value
+			? $hash->{ $name } =  $value
+			: delete $hash->{ $name };
+	}
+
+	if( defined $debug ) {
+		print $DB::OUT " $debug::$name: $old_value$new_value\n";
+	}
+
+
+	return $hash->{ $name };
+}
+
+
+
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
-	no strict "refs";
 	if( @_ >= 3 ) {
+		no strict "refs";
 		if( $self->{ debug } ) {
 			print $DB::OUT " ( DB::$name: ${ \"DB::$name\" } -> $value )";
 		}
@@ -323,56 +361,25 @@ sub int_vrbl {
 
 
 sub dbg_vrbl {
-	my( $self, $name, $value ) =  @_;
+	my $self =  shift;
 
+	my $dbg =  $self->{ instance } // $DB::state->[-1];
 
-	print $DB::OUT "\n\n"   if $self->{ debug }
-		&&( $name eq 'state'  ||  $name eq 'stack' );
-	return $DB::state   if $name eq 'state';
-
-
-	my $dbg =  $self->{ instance };
-	my $old_value =  $dbg->{ $name } // 'undef';
-	my $new_value =  '';
-	if( @_ >= 3 ) {
-		$new_value =  ' -> '. ($value//'undef');
-		defined $value
-			? $dbg->{ $name } =  $value
-			: delete $dbg->{ $name };
-	}
-
-	if( $self->{ debug } ) {
-		print $DB::OUT " DBG::$name: $old_value$new_value\n";
-	}
-
-
-	return $dbg->{ $name };
+	return log_access( ($self->{ debug } ? 'DBG' : undef) ,$dbg	,@_ );
 }
 
 
 
 sub frm_vrbl {
-	my( $self, $name, $value ) =  @_;
+	my $self =  shift;
 
-
-	my $frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
-	# my $frame =  $stack->[ -1 ]{ sub } eq 'DB::state' ? $stack->[ -2 ] : $stack->[ -1 ];
-
-	my $old_value =  $frame->{ $name } // 'undef';
-	my $new_value =  '';
-	if( @_ >= 3 ) {
-		$new_value =  ' -> '. ($value//'undef');
-		defined $value
-			? $frame->{ $name } =  $value
-			: delete $frame->{ $name };
+	my $frame;
+	{
+		local $self->{ debug };
+		$frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
 	}
 
-	if( $self->{ debug } ) {
-		print $DB::OUT " FRM::$name: $old_value$new_value\n";
-	}
-
-
-	return $frame->{ $name };
+	return log_access( ($self->{ debug } ? 'FRM' : undef) ,$frame ,@_ );
 }
 
 
@@ -381,20 +388,24 @@ mutate_sub_is_debuggable( \&state, 0 );
 sub state {
 	my( $name, $value ) =  @_;
 
-	my $debug =  $DB::options{ ddd }
-		&&  ( $DB::single  ||  $DB::options{ ddd } == 2 );
+	# Do not debug access into 'ddd' flag
+	my $ddd =  $name ne 'ddd'  &&  $DB::state->[ -1 ]{ ddd };
+	my $debug =  $ddd  &&  ( $DB::single  ||  $ddd >= 2 );
 
 	if( $debug ) {
-		print $DB::OUT "\nDB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
+		print_state "\n    ";
 
 		for( @$DB::state ) {
-			print $DB::OUT "***\n";
+			print $DB::OUT "    ***\n";
 			for my $option ( sort keys %$_ ) {
-				print $DB::OUT $option, ' =  ', $_->{ $option }, "\n";
+				my $value =  $_->{ $option };
+				$value =  ref $value ? ref $value : $value;
+				print $DB::OUT '    ', $option, " =  $value\n";
 			}
 			my $CNT =  5;
 			for( @{ $_->{ stack } } ) {
 				last   if $CNT-- == 0;
+				print $DB::OUT "    ";
 				for my $key ( sort keys %$_ ) {
 					my $value =  $_->{ $key };
 					$value =  ref $value ? ref $value : $value;
@@ -404,15 +415,20 @@ sub state {
 			}
 		}
 
-		my($file, $line) =  (caller 0)[1,2];
-		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT '-'x20 ."\n$file:$line:";
+		print $DB::OUT '    ', '-'x20 ."\n";
 	}
 
-	my $low   =  ( $DB::ddlvl  &&  !$DB::inSUB ) ? 1 : 0;
-	$low =  0   if $low  &&  $DB::inDB == 2;
-	my $level =  $DB::ddlvl -$low;
+	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
+	my $level =  -1;
+	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
 	my $instance =  $DB::state->[ $level ];
+
+	if( $debug ) {
+		my($file, $line) =  (caller 0)[1,2];
+		$file =~ s'.*?([^/]+)$'$1'e;
+		print $DB::OUT -$level ." $file:$line: ";
+	}
+
 	unless( $instance ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
@@ -420,9 +436,11 @@ sub state {
 		return;
 	}
 
+
+
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
-			,debug =>  $debug
+			,debug    =>  $debug
 			,instance =>  $instance
 		}
 		,@_
@@ -448,14 +466,14 @@ our $dbg;            # debugger object/class
 our $package;        # current package
 our $file;           # current file
 our $line;           # current line number
-our $dbg_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
 our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
 					 # This allows us to spy the DB::'s values for a given frame
-our $ddlvl;          # Level of debugger debugging
-our $inDB;           # Flag which shows we are currently in debugger
-our $inSUB;          # Flag which shows we are currently in debugger
+# our $ddlvl;          # Level of debugger debugging <= @$DB::state
+# our $dbg_call;       # keep silent at DB::sub/lsub while do external call from DB::*
+# our $inDB;           # Flag which shows we are currently in debugger
+# our $inSUB;          # Flag which shows we are currently in debugger
 # TODO? does it better to implement TTY object?
 our $IN;
 our $OUT;
@@ -463,7 +481,7 @@ our %options;
 our $interaction;    # True if we interact with dbg client
 our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
 					 # maintained at 'trace_subs'
-our $variables;      # Hash which defines behaviour for values available through 'state'
+our $variables;      # Hash which defines behaviour for values available through &DB::state
 	# There three types of variables:
 	# Debugger internal variables -- global values from DB:: package
 	# Debugger instance variables -- values which exists in current debugger instance
@@ -503,7 +521,7 @@ BEGIN {
 	$options{ undef }          //=  '';        # Text to print for undefined values
 
 	$options{ dd }             //=  0;         # controls debugger debugging
-	$options{ ddd }            //=  0;         # print debug info
+	# $options{ ddd }            //=  0;         # print debug info
 
 	$options{ s }              //=  0;         # compile time option
 	$options{ w }              //=  0;         # compile time option
@@ -584,10 +602,6 @@ BEGIN {
 BEGIN { # Initialization goes here
 	# When we 'use Something' from this module the DB::sub is called at compile time
 	# If we do not we can still init them when define
-	$DB::dbg_call //=  0;
-	$DB::ddlvl    //=  0;
-	$DB::inDB     //=  0;
-	$DB::inSUB    //=  0;
 	$DB::interaction //=  0;
 	# TODO: set $DB::trace at CT
 
@@ -685,6 +699,7 @@ BEGIN { # Initialization goes here
 
 
 	sub eval_cleanup {
+		DB::state( 'inDB', 1 );
 		DB::state( 'eval', undef );
 	}
 	mutate_sub_is_debuggable( \&eval_cleanup, 0 );
@@ -713,6 +728,9 @@ BEGIN { # Initialization goes here
 		establish_cleanup \&eval_cleanup;
 		DB::state( 'eval', 1 );
 
+		my $package =  DB::state( 'package' );
+		DB::state( 'inDB', undef );
+
 
 		local $^D;
 		# FIX: when we eval user's sub the main script frame is changed
@@ -725,7 +743,7 @@ BEGIN { # Initialization goes here
 		# local $_ =  $DB::context[4];
 
 		local @_ =  @{ $DB::context[0] };
-		eval "$usercontext; package " .state( 'package' ) .";\n#line 1\n$expr";
+		eval "$usercontext; package $package;\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
 	}
@@ -782,10 +800,10 @@ BEGIN { # Initialization goes here
 		$level =  0;
 		local $" =  ' -';
 
-		# The $dbg_call is an internal variable of DB:: module. If it is true
+		# The $inDB is an internal variable of DB:: module. If it is true
 		# then we know that debugger frames are exists. In other case no sense
 		# to check callstask for frames generated by debugger subs
-		if( $dbg_call ) {
+		if( DB::state( 'inDB' ) ) {
 
 			my $found =  0;
 			# Skip debugger frames from stacktrace
@@ -824,8 +842,8 @@ BEGIN { # Initialization goes here
 				};
 			}
 
-			# We can not make $DB::dbg_call variable private because we use localization
-			# In theory someone may change the $DB::dbg_call from outside
+			# We can not make $DB::inDB variable private because we use localization
+			# In theory someone may change the $DB::inDB from outside
 			# Therefore we prevent us from empty results when debugger frames
 			# not exist at the stack
 			$level =  0   unless $found;
@@ -861,24 +879,43 @@ BEGIN { # Initialization goes here
 	}
 
 
+
+	sub _ddd {
+		return $DB::state->[ -1 ]{ ddd };
+	}
+
+
+
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		my $method =  shift;
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
-		print "mcall ${context}->$method\n"   if $DB::options{ ddd };
+		print "mcall ${context}->$method\n"
+			if DB::state( 'ddd' )  ||  $DB::options{ dd } >= 2;
 		scall( $sub, @_ );
 	}
 
 
 
 	sub scall {
+		die "You can make debugger call only from debugger"
+			unless DB::state( 'inDB' );
+
+		# When we start debugger debugging with verbose output
+		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
+		# we should not lose any output info
+		# until we setup initial state for new debugger instance
+		# See "Create new debugger's state instance" below
+		my $ddd =  DB::state( 'ddd' )  #||  $DB::options{ dd } >= 2
+			# HACK: Always return level of debugging output
+			||  $DB::options{ dd } && $DB::options{ dd } -1;
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
-		if( $DB::options{ ddd } ) {
+		if( $ddd ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
@@ -906,55 +943,63 @@ BEGIN { # Initialization goes here
 		# So prevent infinite DB::sub reentrance manually. One way to compete this:
 		# my $stub = sub { &$DB::sub };
 		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
-		# Another:
-		local $dbg_call      =  $dbg_call +1;
+		# Another: the { inDB } flag
 
 		# Manual localization
 		my $scall_cleanup =  sub {
+			#FIX: Actually we are in debugger here ...
+			# DB::state( 'inDB', 1 );
+			print $DB::OUT "Debugger command DONE\n"   if $ddd;
+
+			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
+
+			if( $DB::options{ dd } ) {
+				pop @$DB::state;
+
+				$options{ dd } =  0;
+				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
+			}
+
+			# ... check which instance we are restore right values from?
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
-			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"
-				if $DB::options{ ddd };
 
-			if( $DB::options{ dd } ) {
-				pop @{ DB::state( 'state' ) };
-
-				$options{ dd } =  0;
-
-				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
-					if $DB::options{ ddd };
-			}
+			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
 		establish_cleanup $scall_cleanup;
 
 		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
-		local $ddlvl          =  $ddlvl            if $DB::options{ dd };
 		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
-		local $options{ ddd } =  $options{ ddd }   if $DB::options{ dd };
 
 
+		# Create new debugger's state instance
 		if( $DB::options{ dd } ) {
-			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
-				if $DB::options{ ddd };
+			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"   if $ddd;
 
-			push @{ DB::state( 'state' ) }, { stack => [ {()
+			# NOTICE: We should not we set debugger states directly when create
+			# new state instance. We will not see changes at debug output
+			# So we use &DB::state after instance initialization
+			# NOTICE: Because of &scall is designed to work from debugger. We
+			# should keep { inDB } state when create new instance: inDB => 1
+			push @$DB::state, { inDB => 1, stack => [ {()
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
-			$DB::ddlvl++;
-			DB::state( 'single', 1 );
+			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
+			# A new debugger instance has its own { ddd } flag
+			DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
+			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 
 			$DB::options{ dd  } =  0;
-			$DB::options{ ddd } =  0;
-			$dbg_call   =  0;
 		}
 		else {
 			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
 		}
 
+		print $DB::OUT "Call debugger command\n"   if $ddd;
 		return shift->( @_[ 1..$#_ ] );
 
 		# my $method =  shift;
@@ -966,6 +1011,8 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
+		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"   if _ddd;
+		DB::state( 'inDB', 1 );
 	}
 
 
@@ -974,6 +1021,8 @@ BEGIN { # Initialization goes here
 	# to prevent $file:$line updated in unexpected way
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
+		DB::state( 'inDB', undef );
+		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"   if _ddd;
 		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
@@ -1025,9 +1074,20 @@ sub import { # NOTE: The import is called at CT yet
 
 
 # We define posponed/sub as soon as possible to be able watch whole process
+# NOTICE: At this sub we reenter debugger
 sub postponed {
 	if( $options{ trace_load } ) {
+		#TODO: implement local_state to localize debugger state values
+		my $old_inDB =  DB::state( 'inDB' );
+		DB::state( 'inDB', 1 );
+		#FIX: process exceptions
 		mcall( 'trace_load', $DB::dbg, @_ );
+
+		# When we are in debugger and we require module the execution will be
+		# interrupted and we REENTER debugger
+		# TODO: study this case and IT:
+		# T: We are { dd } and run command that 'require'
+		DB::state( 'inDB', $old_inDB );
 	}
 }
 
@@ -1035,23 +1095,14 @@ sub postponed {
 
 # TODO: implement: on_enter, on_leave, on_compile
 sub my_DB {
-	establish_cleanup sub {
-		print $DB::OUT "DB::state: l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n";
-		print $DB::OUT "TRAPPED OUT: $DB::ddlvl\n";
-	}   if $DB::options{ ddd };
-	print $DB::OUT "\nTRAPPED IN: $DB::ddlvl\n\n"
-		if $DB::options{ ddd };
-	local $DB::inDB =  $DB::inDB +1;
-	my( $p, $f, $l ) =  init();
-
 	&save_context;
 	establish_cleanup \&restore_context;
 
+	my( $p, $f, $l ) =  init();
 
 
-	printf $DB::OUT "DB::DB  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n"
-		."    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l
-		if $DB::options{ ddd };
+
+	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
@@ -1132,8 +1183,7 @@ sub my_DB {
 
 	# TODO: Implement on_stop event
 
-	print "\n\nl:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace\n\n"
-		if $DB::options{ ddd };
+	print_state "\n\n", "\n\n"   if DB::state( 'ddd' );
 	{
 		local $DB::options{ dd } =  0;
 		mcall( 'bbreak', $DB::dbg );
@@ -1198,7 +1248,6 @@ sub process {
 
 		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
-			local $DB::ddlvl =  $DB::ddlvl -1   if $DB::ddlvl;
 			@args =  DB::eval( $result->{ expr } );
 			redo PROCESS;
 		}
@@ -1209,13 +1258,13 @@ sub process {
 
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
-	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if $DB::options{ ddd };
+	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if DB::state( 'ddd' );
 	my @result =  DB::eval( $str );
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
 	elsif( !$quiet ) {
-		print $DB::OUT "\nEvaluation result:\n"   if $DB::options{ ddd };
+		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
 		@result =  map{ $_ // $DB::options{ undef } } @result;
 		local $" =  $DB::options{ '"' }  //  $";
 		print $DB::OUT "@result\n";
@@ -1247,7 +1296,7 @@ sub interact {
 	my $old =  $DB::options{ dd };
 	$DB::options{ dd } =  0;
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
-		print "\n" .(" "x60 ."*"x20 ."\n")x10   if $DB::options{ ddd };
+		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
 		$DB::options{ dd } =  $old;
@@ -1267,7 +1316,7 @@ sub interact {
 sub goto {
 	#FIX: IT: when trace_goto disabled we can not step over goto
 	return   unless $options{ trace_goto };
-	return   if $dbg_call;
+	return   if DB::state( 'inDB' );
 
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
@@ -1296,12 +1345,14 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
-	local $DB::inSUB =  1;
-
-	my $last =  pop @{ DB::state( 'stack' ) };
-	print $DB::OUT "POP  FRAME <<<< l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $last->{ sub }\@". @{ DB::state( 'stack' ) } ."\n"
-		. "    $last->{ file }:$last->{ line }\n\n"
-		if $DB::options{ ddd };
+	$DB::single =  1; #FIX: For debugging purpose only
+	DB::state( 'inDB', 1 );
+	my $stack =  DB::state( 'stack' );
+	my $last =  pop @$stack;
+	print_state "POP  FRAME <<<< ",
+			."  --  $last->{ sub }\@". @$stack ."\n"
+			."    $last->{ file }:$last->{ line }\n\n"
+		if DB::state( 'ddd' );
 
 	if( @{ DB::state( 'stack' ) } ) {
 		# Restore $DB::single for upper frame
@@ -1309,9 +1360,10 @@ sub pop_frame {
 	} else {
 		# Something nasty happened at &push_frame, because of we are at
 		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
-		#TODO: Write error somewere
+		print $DB::OUT "Error happen while &pop_frame. Pay attention to this!\n";
 		$DB::single =  0;
 	}
+	DB::state( 'inDB', undef );
 }
 
 
@@ -1322,9 +1374,7 @@ sub push_frame2 {
 		test();
 		3;
 	}
-
-	print $DB::OUT "PUSH FRAME $_[0] >>>>  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  $DB::sub\n"
-		if $DB::options{ ddd };
+	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $DB::sub\n"   if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
@@ -1332,11 +1382,12 @@ sub push_frame2 {
 		# Most actual info we get when we trace script step-by-step at this case
 		# those vars have sharp last opcode location.
 		if( !DB::state( 'eval' ) ) {
+			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
 			my( $p, $f, $l ) =  caller 2;
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
-			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if $DB::options{ ddd };
+			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if DB::state( 'ddd' );
 		}
 
 		my $stack =  DB::state( 'stack' );
@@ -1379,7 +1430,10 @@ sub push_frame2 {
 
 
 sub trace_returns {
+	DB::state( 'inDB', 1 );
+	#FIX: process exceptions
 	mcall( 'trace_returns', $DB::dbg, @_ );
+	DB::state( 'inDB', undef );
 }
 
 
@@ -1387,7 +1441,7 @@ sub trace_returns {
 sub push_frame {
 	scall( \&push_frame2, @_ );
 
-	if( $DB::options{ ddd } ) {
+	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
 		DB::state( 'stack' );
 		print $DB::OUT "Frame created for $DB::sub\n\n";
@@ -1398,33 +1452,37 @@ sub push_frame {
 
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
+	#FIX: where to setup 'inDB' state?
 	$DB::_sub =  $DB::sub;
-	print $DB::OUT "DB::sub  l:$DB::ddlvl b:$DB::inDB:$DB::inSUB d:$DB::dbg_call s:$DB::single t:$DB::trace  --  "
+	print_state "DB::sub  ", "  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
-		if $DB::options{ ddd } && $DB::sub ne 'DB::can_break';
+		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
+		#TODO: We could use { trace_internals } flag to see debugger calls
 
-	if( $dbg_call
+	if( DB::state( 'inDB' )
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
+
+		# sub{ DB::state( 'inDB', undef ) }->();
 		return &$DB::sub
 	}
 
-	print $DB::OUT "SUB IN: $DB::ddlvl\n"   if $DB::options{ ddd };
-	$DB::inSUB =  1;
+	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
+	sub{ DB::state( 'inDB', 1 ) }->();
 
 
 	# manual localization
-	print $DB::OUT "\nCreating frame for $DB::sub\n"   if $DB::options{ ddd };
+	print $DB::OUT "\nCreating frame for $DB::sub\n"   if DB::state( 'ddd' );
 	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
 
-	$DB::inSUB =  0;
-	print $DB::OUT "SUB OUT: $DB::ddlvl\n"   if $DB::options{ ddd };
+	sub{ DB::state( 'inDB', undef ) }->();
+	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if _ddd;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
@@ -1461,7 +1519,7 @@ sub sub {
 # http://perldoc.perl.org/perldebguts.html#Debugger-Internals
 sub lsub : lvalue {
 	my $x;
-	if( $dbg_call ) {
+	if( DB::state( 'inDB' ) ) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } };
 		$x =  &$DB::sub
 	}
