@@ -907,7 +907,8 @@ BEGIN { # Initialization goes here
 
 
 	sub scall {
-		#TODO: assert { inDB } == 1
+		die "You can make debugger call only from debugger"
+			unless DB::state( 'inDB' );
 
 		# When we start debugger debugging with verbose output
 		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
