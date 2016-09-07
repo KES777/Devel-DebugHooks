@@ -78,13 +78,17 @@ is
 	,"Quit from debug debugger command process";
 
 
-
 $cmds =  ' $DB::options{ dd } =  1;debug;s 9;right();q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'call debugger sub' }
 	,"Subroutine call from debugger scope when debug debugger command";
 
+$cmds =  ' $DB::options{ dd } =  1;debug;s 13;DB::state( "line" );q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'DB::state when dd' }
+	,"Get debugger state while debugger debugging";
 
 
 $cmds =  ' $DB::options{ dd } =  1;s;r;q';
@@ -184,6 +188,13 @@ xxx/DbInteract.pm:XXXX    2;
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 xxx/DbInteract.pm:XXXX    1;
 scope
+@@ DB::state when dd
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1 at -e:4
+xxx/DbInteract.pm:XXXX    3;
+4
 @@ outer step into
 -e:0004  t1();
 1
