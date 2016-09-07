@@ -889,7 +889,15 @@ BEGIN { # Initialization goes here
 
 
 	sub ddd {
-		return $DB::state->[ -1 ]{ ddd };
+		# When we start debugger debugging with verbose output
+		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
+		# we should not lose any output info, for example from &mcall, &scall
+		# until we setup initial state for new debugger instance
+		# (See 'IN  DEBUGGER')
+		return $DB::state->[ -1 ]{ ddd }  #||  $DB::options{ dd } >= 2
+			# HACK: Always return level of debugging output
+			|| $DB::options{ dd } && $DB::options{ dd } -1
+		;
 	}
 
 
@@ -900,22 +908,17 @@ BEGIN { # Initialization goes here
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
-		print "mcall ${context}->$method\n"   if DB::state( 'ddd' );
+		print "mcall ${context}->$method\n"   if ddd;
 		scall( $sub, @_ );
 	}
 
 
 
 	sub scall {
-
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
 		my( $from, $f, $l, $sub );
-		# When we call from user's code his frame may have not 'ddd'
-		# But if this will be debugger debugging we should set { ddd } flag.
-		# See next line below:
-		# DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
-		if( DB::state( 'ddd' ) || $DB::options{ dd } >= 2 ) {
+		if( ddd ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
