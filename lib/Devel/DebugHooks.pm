@@ -954,6 +954,8 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
+			#FIX: Actually we are in debugger here ...
+			# DB::state( 'inDB', 1 );
 			print $DB::OUT "Debugger command DONE\n"   if $ddd;
 
 			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
@@ -965,6 +967,7 @@ BEGIN { # Initialization goes here
 				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
 			}
 
+			# ... check which instance we are restore right values from?
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
@@ -1462,6 +1465,7 @@ sub sub {
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
 		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
+		#TODO: We could use { trace_internals } flag to see debugger calls
 
 	if( DB::state( 'inDB' )
 	) {
