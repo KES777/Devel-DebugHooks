@@ -1459,8 +1459,10 @@ sub sub {
 	#FIX: where to setup 'inDB' state?
 	$DB::_sub =  $DB::sub;
 	print_state "DB::sub  ", "  --  "
-		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
-		."\n"
+		.sub{
+			(ref $DB::sub ? ref $DB::sub : $DB::sub)
+			."<-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}\n"
+		}->()
 		if sub{ DB::state( 'ddd' ) }->() && $DB::sub ne 'DB::can_break';
 		#TODO: We could use { trace_internals } flag to see debugger calls
 
