@@ -321,23 +321,23 @@ sub print_state {
 
 
 sub log_access {
-	my( $debug, $hash, $name, $value ) =  @_;
+	my( $debug, $context, $hash, $name, $value ) =  @_;
 
 	my $old_value =  $hash->{ $name } // 'undef';
 	my $new_value =  '';
-	if( @_ >= 4 ) {
+	if( @_ >= 5 ) {
 		$new_value =  ' -> '. ($value//'undef');
 		defined $value
 			? $hash->{ $name } =  $value
 			: delete $hash->{ $name };
 	}
 
-	if( defined $debug ) {
+	if( $debug  &&  ( @_ >= 5 || $debug >= 2 ) ) {
 		# We are not interested at address of value only its state
 		# Also this makes life happy when we compare diff for two debugger output
 		$old_value =  ref $old_value ? ref $old_value : $old_value;
 		$new_value =  ref $new_value ? ref $new_value : $new_value;
-		print $DB::OUT " $debug::$name: $old_value$new_value\n";
+		print $DB::OUT " $context::$name: $old_value$new_value\n";
 	}
 
 
@@ -353,6 +353,7 @@ sub int_vrbl {
 		no strict "refs";
 		if( $self->{ debug } ) {
 			print $DB::OUT " ( DB::$name: ${ \"DB::$name\" } -> $value )";
+			$self->{ debug }++   if $preserve_frame;
 		}
 
 		${ "DB::$name" } =  $value;
@@ -369,7 +370,7 @@ sub dbg_vrbl {
 
 	my $dbg =  $self->{ instance } // $DB::state->[-1];
 
-	return log_access( ($self->{ debug } ? 'DBG' : undef) ,$dbg	,@_ );
+	return log_access( $self->{ debug }, 'DBG', $dbg, @_ );
 }
 
 
@@ -383,7 +384,7 @@ sub frm_vrbl {
 		$frame =  dbg_vrbl( $self, 'stack' )->[ -1 ];
 	}
 
-	return log_access( ($self->{ debug } ? 'FRM' : undef) ,$frame ,@_ );
+	return log_access( $self->{ debug }, 'FRM', $frame, @_ );
 }
 
 
@@ -394,9 +395,9 @@ sub state {
 
 	# Do not debug access into 'ddd' flag
 	my $ddd =  $name ne 'ddd'  &&  $DB::state->[ -1 ]{ ddd };
-	my $debug =  $ddd  &&  ( $DB::single  ||  $ddd >= 2 );
+	my $debug =  $ddd;
 
-	if( $debug ) {
+	if( $ddd && $ddd >= 3 ) {
 		print_state "\n    ";
 
 		for( @$DB::state ) {
@@ -427,7 +428,7 @@ sub state {
 	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
 	my $instance =  $DB::state->[ $level ];
 
-	if( $debug ) {
+	if( $debug && ( @_ >= 2 || $debug >= 2 ) ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
 		print $DB::OUT -$level ." $file:$line: ";
