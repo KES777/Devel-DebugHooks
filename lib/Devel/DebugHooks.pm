@@ -1350,7 +1350,7 @@ sub pop_frame {
 	my $stack =  DB::state( 'stack' );
 	my $last =  pop @$stack;
 	print_state "POP  FRAME <<<< ",
-			."  --  $last->{ sub }\@". @$stack ."\n"
+			"  --  $last->{ sub }\@". @$stack ."\n"
 			."    $last->{ file }:$last->{ line }\n\n"
 		if DB::state( 'ddd' );
 
