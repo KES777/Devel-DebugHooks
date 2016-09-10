@@ -904,9 +904,6 @@ BEGIN { # Initialization goes here
 
 
 	sub scall {
-		die "You can make debugger call only from debugger"
-			unless DB::state( 'inDB' );
-
 		# When we start debugger debugging with verbose output
 		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
 		# we should not lose any output info
@@ -935,6 +932,9 @@ BEGIN { # Initialization goes here
 
 			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n"
 		}
+
+		die "You can make debugger call only from debugger"
+			unless DB::state( 'inDB' );
 
 
 		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
