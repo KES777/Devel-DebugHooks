@@ -451,6 +451,42 @@ sub state {
 	);
 }
 
+
+
+sub _ddd {
+	return $DB::state->[ -1 ]{ ddd };
+}
+
+
+
+sub new {
+	push @$DB::state, { stack =>  [ {()
+		,goto_frames =>  []
+		# ,type => 'D'
+	} ], @_ };
+
+	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
+		if _ddd;
+
+	my $self;
+}
+
+
+
+sub DESTROY {
+	# Clear { dd } flag to prevent debugging for next command
+	DB::state( 'dd', undef );
+
+	print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
+		if _ddd;
+	pop @$DB::state;
+	# NOTICE: previous frame is always have { inDB } flag on because there is
+	# no any way to run new debugger instance as from debugger
+	# (See &DB::scall and assert { inDB } check)
+}
+
+
+
 # Used perl internal variables:
 # ${ ::_<filename }  # maintained at 'file' and 'sources'
 # @{ ::_<filename }  # maintained at 'source' and 'can_break'
@@ -496,14 +532,6 @@ our $variables;      # Hash which defines behaviour for values available through
 # Do DB:: configuration stuff here
 # Default debugger behaviour while it is loading
 BEGIN {
-	#TODO: implement sub to init new debugger instance
-	$DB::state =  [ { stack =>  [ {()
-		#TODO: testcase to catch warnings
-		# Use of uninitialized value in scalar assignment at state:+5
-		,single      =>  $DB::single
-		,goto_frames =>  []
-	} ] } ];
-
 	$DB::variables =  {()
 		,'*'         =>  \&dbg_vrbl
 		,single      =>  \&int_vrbl
@@ -521,6 +549,11 @@ BEGIN {
 	$IN                        //= \*STDIN;
 	#TODO: cache output until debugger is connected
 	$OUT                       //= \*STDOUT;
+
+	#FIX: Where apply 'ddd' from command line?
+	#TODO: Describe why we do not use { inDB } flag here
+	DB::new;
+	DB::state( single =>  $DB::single );
 
 	$options{ undef }          //=  '';        # Text to print for undefined values
 
@@ -886,12 +919,6 @@ BEGIN { # Initialization goes here
 
 
 
-	sub _ddd {
-		return $DB::state->[ -1 ]{ ddd };
-	}
-
-
-
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		my $method =  shift;
@@ -963,13 +990,7 @@ BEGIN { # Initialization goes here
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
-			if( DB::state( 'dd' ) ) {
-				# Clear { dd } flag to prevent debugging for next command
-				DB::state( 'dd', undef );
-
-				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
-				pop @$DB::state;
-			}
+			DB::DESTROY   if DB::state( 'dd' );
 
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
@@ -981,20 +1002,17 @@ BEGIN { # Initialization goes here
 
 		# Create new debugger's state instance
 		if( my $dd =  DB::state( 'dd' ) ) {
-			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"   if $ddd;
-
 			# NOTICE: We should not set debugger states directly when create
 			# new state instance. We will not see changes at debug output
 			# So we use &DB::state after instance initialization
 			# NOTICE: Because of &scall is designed to work from debugger. We
 			# should keep { inDB } state when create new instance: inDB => 1
-			push @$DB::state, { inDB => 1, stack => [ {()
-				,goto_frames => []
-				,type        => 'D'
-			} ] };
-			# A new debugger instance has its own { ddd } flag
-			DB::state( 'ddd', $dd -1 )   if $dd >= 2;
-			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
+			DB::new(()
+				,inDB  => 1
+				# A new debugger instance has its own { ddd } flag
+				,( $dd >= 2 ? (ddd => $dd -1) : () )
+			);
+			DB::state( 'single', 1 );
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 		}
