@@ -55,7 +55,7 @@ is
 	,"Stop on first script OP";
 
 is
-	n( `$^X $lib -d:DbInteract='q,Stop' -e '$script'` )
+	n( `$^X $lib -d:DbInteract='scalar\@{ DB::state( "stack" ) };q,Stop' -e '$script'` )
 	,$files->{ 'BEGIN' }
 	,"Stop at BEGIN block OP";
 
@@ -71,5 +71,6 @@ __DATA__
 -e:0002  print "OK\n";
 @@ BEGIN
 -e:0001  BEGIN{ 1; }
+2
 @@ end
 OK

@@ -299,7 +299,7 @@ sub applyOptions {
 		if defined $DB::options{ trace_line };
 
 	$^P &= ~0x20   if $DB::options{ NonStop };
-	DB::state( 'stack' )->[0]{ single } =  1   if $DB::options{ Stop };
+	DB::state( 'single', 1 )   if $DB::options{ Stop };
 }
 
 
@@ -428,6 +428,7 @@ sub state {
 		print $DB::OUT '    ', '-'x20 ."\n";
 	}
 
+	# Force access into last instance if we are in debugger
 	my $inDB  =  $DB::state->[ -1 ]{ inDB  };
 	my $level =  -1;
 	$level =  -2   if @$DB::state >= 2  &&  !$inDB  &&  $name ne 'inDB';
@@ -466,7 +467,10 @@ sub _ddd {
 
 
 sub new {
-	push @$DB::state, { stack =>  [ {()
+	# NOTICE: After creating new debugger instance we are in debugger yet
+	# So we set { inDB } flag. It allows us safely initialize new debugger
+	# instance through &DB::state ( see &DB::state )
+	push @$DB::state, { inDB => 1, stack =>  [ {()
 		,goto_frames =>  []
 		# ,type => 'D'
 	} ], @_ };
@@ -1012,10 +1016,7 @@ BEGIN { # Initialization goes here
 			# NOTICE: We should not set debugger states directly when create
 			# new state instance. We will not see changes at debug output
 			# So we use &DB::state after instance initialization
-			# NOTICE: Because of &scall is designed to work from debugger. We
-			# should keep { inDB } state when create new instance: inDB => 1
 			DB::new(()
-				,inDB  => 1
 				# A new debugger instance has its own { ddd } flag
 				,( $dd >= 2 ? (ddd => $dd -1) : () )
 			);
@@ -1099,6 +1100,7 @@ sub import { # NOTE: The import is called at CT yet
 	# Now debugger and all required modules are loaded. We should set
 	# corresponding perl debugger *internal* values based on given %DB::options
 	applyOptions();
+	DB::state( 'inDB', undef );
 }
 
 
@@ -1576,6 +1578,12 @@ sub lsub : lvalue {
 # It is better to load modules at the end of DB::
 # because of they will be visible to 'trace_load'
 use Devel::DebugHooks::Commands;
+
+
+# DB::state( 'inDB', undef );
+# TODO: After this module is loaded the &import is called
+# Enable debugging for importing process of DB:: modules
+# If you flush { inDB } we will trace sub calls while loading those modules
 
 
 
