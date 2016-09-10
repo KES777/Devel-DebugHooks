@@ -955,11 +955,13 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
-			#FIX: Actually we are in debugger here ...
-			# DB::state( 'inDB', 1 );
 			print $DB::OUT "Debugger command DONE\n"   if $ddd;
 
 			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
+			# NOTICE: Because  we are in debugger here we should setup { inDB }
+			# flag but we are leaving debugger and interesting at user's context
+			# $DB::single =  DB::state( 'single' );
+			DB::state( 'single', DB::state( 'single' ) );
 
 			if( DB::state( 'dd' ) ) {
 				# Clear { dd } flag to prevent debugging for next command
@@ -968,11 +970,6 @@ BEGIN { # Initialization goes here
 				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
 				pop @$DB::state;
 			}
-
-			# ... check which instance we are restore right values from?
-			# $DB::single =  DB::state( 'single' );
-			DB::state( 'single', DB::state( 'single' ) );
-
 
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
@@ -995,9 +992,9 @@ BEGIN { # Initialization goes here
 				,goto_frames => []
 				,type        => 'D'
 			} ] };
-			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
 			# A new debugger instance has its own { ddd } flag
 			DB::state( 'ddd', $dd -1 )   if $dd >= 2;
+			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
 		}
@@ -1189,7 +1186,7 @@ sub my_DB {
 
 	# TODO: Implement on_stop event
 
-	print_state "\n\n", "\n\n"   if DB::state( 'ddd' );
+	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
 	mcall( 'bbreak', $DB::dbg );
 	1 while( defined interact() );
 	mcall( 'abreak', $DB::dbg );
