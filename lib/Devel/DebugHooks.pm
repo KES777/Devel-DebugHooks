@@ -982,7 +982,7 @@ BEGIN { # Initialization goes here
 		if( $DB::options{ dd } ) {
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"   if $ddd;
 
-			# NOTICE: We should not we set debugger states directly when create
+			# NOTICE: We should not set debugger states directly when create
 			# new state instance. We will not see changes at debug output
 			# So we use &DB::state after instance initialization
 			# NOTICE: Because of &scall is designed to work from debugger. We
@@ -1461,10 +1461,10 @@ sub sub {
 	print_state "DB::sub  ", "  --  "
 		.sub{ "$DB::sub <-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}" }->()
 		."\n"
-		if DB::state( 'ddd' ) && $DB::sub ne 'DB::can_break';
+		if sub{ DB::state( 'ddd' ) }->() && $DB::sub ne 'DB::can_break';
 		#TODO: We could use { trace_internals } flag to see debugger calls
 
-	if( DB::state( 'inDB' )
+	if( sub{ DB::state( 'inDB' ) }->()
 	) {
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 		# TODO: Here we may log internall subs call chain
