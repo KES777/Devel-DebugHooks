@@ -394,10 +394,15 @@ sub state {
 	my( $name, $value ) =  @_;
 
 	# Do not debug access into 'ddd' flag
-	my $ddd =  $name ne 'ddd'  &&  $DB::state->[ -1 ]{ ddd };
-	my $debug =  $ddd;
+	my $debug =  $name ne 'ddd'  &&  $DB::state->[ -1 ]{ ddd } // 0;
+	# If we run debugger command do not trace access to debugger state
+	$debug -=  3   if $DB::state->[ -1 ]{ cmd }  &&  $name ne 'cmd';
+	$debug  =  0   if $debug < 0;
 
-	if( $ddd && $ddd >= 3 ) {
+	# Show full stack only when verbose mode ON and only before changes
+	# or before implicit changes: when debugger command take whole 'stack'
+	# and manipulate data directly
+	if( $debug  &&  $debug >= 3  && ( @_ >= 2 || $name eq 'stack' ) ) {
 		print_state "\n    ";
 
 		for( @$DB::state ) {
@@ -985,7 +990,8 @@ BEGIN { # Initialization goes here
 		my $scall_cleanup =  sub {
 			print $DB::OUT "Debugger command DONE\n"   if $ddd;
 
-			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
+			DB::state( 'cmd', undef );
+
 			# NOTICE: Because  we are in debugger here we should setup { inDB }
 			# flag but we are leaving debugger and interesting at user's context
 			# $DB::single =  DB::state( 'single' );
@@ -1019,6 +1025,7 @@ BEGIN { # Initialization goes here
 		}
 		else {
 			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
+			DB::state( 'cmd', 1 );
 		}
 
 		print $DB::OUT "Call debugger command\n"   if $ddd;
@@ -1360,7 +1367,6 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
-	$DB::single =  1; #FIX: For debugging purpose only
 	DB::state( 'inDB', 1 );
 	my $stack =  DB::state( 'stack' );
 	my $last =  pop @$stack;
