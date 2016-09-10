@@ -1125,7 +1125,7 @@ sub postponed {
 
 
 # TODO: implement: on_enter, on_leave, on_compile
-sub my_DB {
+sub DB_my {
 	&save_context;
 	establish_cleanup \&restore_context;
 
@@ -1227,7 +1227,7 @@ sub DB {
 	# the 'sub DB' pad stack isn't getting pushed to allocate a new pad if
 	# you set '$^D|=(1<<30) and reenter DB::DB
 	# So I call general sub. '&' used to leave @_ intact
-	&my_DB;
+	&DB_my;
 }
 
 
