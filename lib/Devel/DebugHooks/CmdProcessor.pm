@@ -11,7 +11,10 @@ sub process {
 	$args_str //=  '';
 
 
-	return 0   unless  $cmd  &&  exists $DB::commands->{ $cmd };
+	unless(  $cmd  &&  exists $DB::commands->{ $cmd } ) {
+		print $DB::OUT "No such command: '$cmd'\n"   if DB::state( 'ddd' );
+		return 0;
+	}
 
 	# The command also should return defined value to keep interaction
 	print $DB::OUT "Start to process '$cmd' command\n"   if DB::state( 'ddd' );

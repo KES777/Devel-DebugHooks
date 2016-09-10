@@ -729,6 +729,8 @@ BEGIN { # Initialization goes here
 		# BUG: PadWalker does not show DB::eval's lexicals
 		# Q? It is better that PadWalker return undef instead of warn when out of level
 
+		print $DB::OUT "Evaluating '$expr'...\n"   if DB::state( 'ddd' );
+
 		establish_cleanup \&eval_cleanup;
 		DB::state( 'eval', 1 );
 
@@ -1256,7 +1258,6 @@ sub process {
 
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
-	print $DB::OUT "\nNo command found. Evaluating '$str'...\n"   if DB::state( 'ddd' );
 	my @result =  DB::eval( $str );
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
