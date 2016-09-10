@@ -524,7 +524,7 @@ BEGIN {
 
 	$options{ undef }          //=  '';        # Text to print for undefined values
 
-	$options{ dd }             //=  0;         # controls debugger debugging
+	# $options{ dd }             //=  0;         # controls debugger debugging
 	# $options{ ddd }            //=  0;         # print debug info
 
 	$options{ s }              //=  0;         # compile time option
@@ -896,8 +896,9 @@ BEGIN { # Initialization goes here
 		my $context =  $_[0];
 		my $sub =  $context->can( $method );
 
+		my $dd =  DB::state( 'dd' ) // 0;
 		print "mcall ${context}->$method\n"
-			if DB::state( 'ddd' )  ||  $DB::options{ dd } >= 2;
+			if DB::state( 'ddd' )  ||  $dd >= 2;
 		scall( $sub, @_ );
 	}
 
@@ -905,13 +906,14 @@ BEGIN { # Initialization goes here
 
 	sub scall {
 		# When we start debugger debugging with verbose output
-		# $DB::optoins{ dd } >= 2 the user frame may have not { ddd } but
+		# { dd } >= 2 the user frame may have not { ddd } but
 		# we should not lose any output info
 		# until we setup initial state for new debugger instance
 		# See "Create new debugger's state instance" below
-		my $ddd =  DB::state( 'ddd' )  #||  $DB::options{ dd } >= 2
+		my $dd =  DB::state( 'dd' ) // 0;
+		my $ddd =  DB::state( 'ddd' )  #||  { dd } >= 2
 			# HACK: Always return level of debugging output
-			||  $DB::options{ dd } && $DB::options{ dd } -1;
+			||  $dd && ($dd -1);
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
@@ -957,11 +959,12 @@ BEGIN { # Initialization goes here
 
 			$DB::single =  1; #FIX: ONLY FOR DEBUGGING (see &state)
 
-			if( $DB::options{ dd } ) {
-				pop @$DB::state;
+			if( DB::state( 'dd' ) ) {
+				# Clear { dd } flag to prevent debugging for next command
+				DB::state( 'dd', undef );
 
-				$options{ dd } =  0;
 				print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"   if $ddd;
+				pop @$DB::state;
 			}
 
 			# ... check which instance we are restore right values from?
@@ -974,12 +977,11 @@ BEGIN { # Initialization goes here
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
 		establish_cleanup $scall_cleanup;
 
-		# TODO: testcase 'a 3 $DB::options{ dd } = 1'
-		local $options{ dd }  =  $options{ dd }    if $DB::options{ dd };
+		# TODO: testcase 'a 3 DB::state( dd => 1 )'
 
 
 		# Create new debugger's state instance
-		if( $DB::options{ dd } ) {
+		if( my $dd =  DB::state( 'dd' ) ) {
 			print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"   if $ddd;
 
 			# NOTICE: We should not set debugger states directly when create
@@ -993,11 +995,9 @@ BEGIN { # Initialization goes here
 			} ] };
 			DB::state( 'single', 1 ); #TODO: implement NonStop MODE for { dd }
 			# A new debugger instance has its own { ddd } flag
-			DB::state( 'ddd', $DB::options{ dd } -1 )   if $DB::options{ dd } >= 2;
+			DB::state( 'ddd', $dd -1 )   if $dd >= 2;
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
-
-			$DB::options{ dd  } =  0;
 		}
 		else {
 			DB::state( 'single', 0, 1 ); # Prevent debugging for next call # THIS CONTROLS NESTING
@@ -1188,15 +1188,9 @@ sub my_DB {
 	# TODO: Implement on_stop event
 
 	print_state "\n\n", "\n\n"   if DB::state( 'ddd' );
-	{
-		local $DB::options{ dd } =  0;
-		mcall( 'bbreak', $DB::dbg );
-	}
+	mcall( 'bbreak', $DB::dbg );
 	1 while( defined interact() );
-	{
-		local $DB::options{ dd } =  0;
-		mcall( 'abreak', $DB::dbg );
-	}
+	mcall( 'abreak', $DB::dbg );
 }
 
 
@@ -1295,19 +1289,19 @@ sub interact {
 
 	local $DB::interaction =  $DB::interaction +1;
 
-	# local $DB::options{ dd } =  0; # Localization breaks debugger debugging
-	# because it prevents us to turn ON debugging by command: $DB::options{ dd } =  1;
-	my $old =  $DB::options{ dd };
-	$DB::options{ dd } =  0;
+	# local { dd } =  0; # Localization breaks debugger debugging
+	# because it prevents us to turn ON debugging by command: { dd } =  1;
+	my $old =  DB::state( 'dd' );
+	DB::state( 'dd', undef );
 	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
 		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
-		$DB::options{ dd } =  $old;
+		DB::state( 'dd', $old );
 		return process( $str );
 	}
 	else {
-		$DB::options{ dd } =  $old;
+		DB::state( 'dd', $old );
 	}
 
 	return;
