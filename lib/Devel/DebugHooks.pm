@@ -921,14 +921,14 @@ BEGIN { # Initialization goes here
 
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
-		my $method =  shift;
-		my $context =  $_[0];
+		my $method  =  shift;
+		my $context =  shift;
 		my $sub =  $context->can( $method );
 
 		my $dd =  DB::state( 'dd' ) // 0;
 		print "mcall ${context}->$method\n"
 			if DB::state( 'ddd' )  ||  $dd >= 2;
-		scall( $sub, @_ );
+		scall( $sub, $context, @_ );
 	}
 
 
