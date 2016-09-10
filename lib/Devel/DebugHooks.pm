@@ -333,6 +333,10 @@ sub log_access {
 	}
 
 	if( defined $debug ) {
+		# We are not interested at address of value only its state
+		# Also this makes life happy when we compare diff for two debugger output
+		$old_value =  ref $old_value ? ref $old_value : $old_value;
+		$new_value =  ref $new_value ? ref $new_value : $new_value;
 		print $DB::OUT " $debug::$name: $old_value$new_value\n";
 	}
 
