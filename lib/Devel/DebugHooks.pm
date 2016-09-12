@@ -1208,22 +1208,6 @@ sub my_DB {
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
 		# NOTE: the stop events are not exclusive so we can not use elsif
 
-		# Stop if onetime trap
-		if( exists $trap->{ onetime } ) {
-			# Delete temporary breakpoint
-			delete $trap->{ onetime };
-
-			# Remove info about trap from perl internals if no common traps left
-			unless( keys %$trap ) {
-				# Just trap deleting does not help. We should signal internals
-				# about that we should not stop here anymore
-				$traps->{ state( 'line' ) } =  0; # Perl does not do this automanically. Why?
-				delete $traps->{ state( 'line' ) };
-			}
-
-			$stop ||=  1;
-		}
-
 		# Stop if trap is not disabled and condition evaluated to TRUE value
 		if( !exists $trap->{ disabled }
 			&&  exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } )
@@ -1297,6 +1281,8 @@ sub process {
 		? $str->{ code }
 		: $DB::dbg->can( 'process' )
 	;
+
+	#TODO: assert unless $code;
 
 	my @args =  ( $DB::dbg, $str, @_ );
 	PROCESS: {
