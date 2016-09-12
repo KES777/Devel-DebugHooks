@@ -1493,15 +1493,6 @@ sub push_frame2 {
 	if( $options{ trace_subs } ) {
 		$DB::dbg->trace_subs();
 	}
-
-	# Stop on the first OP in a given subroutine
-	my $sis =  \%DB::stop_in_sub;
-	DB::state( 'single', 1 )
-		# First of all we check full match ...
-		if $sis->{ $DB::sub }
-		# ... then check not disabled partially matched subnames
-		|| grep{ $sis->{ $_ }  &&  $DB::sub =~ m/$_$/ } keys %$sis;
-		# TODO: implement condition to stop on
 }
 }
 

@@ -366,7 +366,8 @@ sub load {
 		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
 
-	@DB::stop_in_sub{ keys %$stops } =  values %$stops;
+	#IT: check we are stopped in right place after loading
+	DB::state( 'on_call', $stops );
 
 
 	return 1;
@@ -388,7 +389,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh dd( \%DB::stop_in_sub, $traps );
+	print $fh dd( DB::state( 'on_call' ), $traps );
 
 	return 1;
 }
@@ -445,6 +446,7 @@ sub action {
 
 
 	my $data =  DB::reg( 'trap', '_action', $file, $line );
+	#FIX: register callback only once at some global structure
 	$$data->{ code } =  \&get_expr_a;
 	push @{ $$data->{ eval } }, $expr;
 
@@ -454,7 +456,24 @@ sub action {
 
 
 
+# Stop on the first OP in a given subroutine
 sub stop_on_call {
+	my( undef, $data, $current_sub ) =  @_;
+	my $target_subs =  $data->{ list };
+
+	if(
+		# IF exists  &&  not disabled (value is TRUE)
+		$target_subs->{ $current_sub }
+
+		# OR exists  &&  not disabled  &&  partially matched name
+		|| grep{
+			$target_subs->{ $_ }
+				&&
+			$current_sub =~ m/$_$/
+		} keys %$target_subs
+	) {
+		DB::state( 'single', 1 ); # Stop on next OP
+	}
 }
 
 
@@ -741,8 +760,6 @@ $DB::commands =  {()
 			$$data->{ list } =
 				{ $subname => defined $sign  &&  $sign eq '-' ? 0 : 1};
 
-			$DB::stop_in_sub{ $subname } =
-				defined $sign  &&  $sign eq '-' ? 0 : 1;
 			return 1;
 		}
 
@@ -787,8 +804,11 @@ $DB::commands =  {()
 			DB::state( 'cmd.f', $cmd_f );
 
 			print $DB::OUT "Stop on subs:\n";
-			print $DB::OUT ' ' .($DB::stop_in_sub{ $_ } ? ' ' : '-') ."$_\n"
-				for keys %DB::stop_in_sub;
+			my $target_subs =  DB::state( 'on_call' ); #TODO: get info
+			$target_subs =  $target_subs->{'breakpoint'}{ list };
+
+			print $DB::OUT ' ' .($target_subs->{ $_ } ? ' ' : '-') ."$_\n"
+				for keys %$target_subs;
 
 			return 1;
 		}
