@@ -1282,7 +1282,7 @@ sub process {
 		}
 
 
-		return $result   unless $result == 0;
+		return $result   unless $result == 0  &&  !ref $str;
 	}
 
 	# else no such command exists the entered string will be evaluated
