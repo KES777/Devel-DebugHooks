@@ -1278,7 +1278,7 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my( $str, $quiet ) =  @_;
+	my $str =  shift;
 
 	my $code =  (ref $str eq 'HASH')
 		? $str->{ code }
@@ -1321,7 +1321,7 @@ sub process {
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
-	elsif( !$quiet ) {
+	elsif( !@_ ) { # Dump results if we do not require them
 		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
 		@result =  map{ $_ // $DB::options{ undef } } @result;
 		local $" =  $DB::options{ '"' }  //  $";
@@ -1337,7 +1337,7 @@ sub process {
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
 
-	return @result   if $quiet;
+	return @result   if @_;
 	return 0;
 }
 
