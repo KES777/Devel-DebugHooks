@@ -1261,8 +1261,12 @@ sub init {
 sub process {
 	my( $str, $quiet ) =  @_;
 
+	my $code =  (ref $str eq 'HASH')
+		? $str->{ code }
+		: $DB::dbg->can( 'process' )
+	;
+
 	my @args =  ( $DB::dbg, $str );
-	my $code =  $DB::dbg->can( 'process' );
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
 		# TRUE    : command found, keep interaction
