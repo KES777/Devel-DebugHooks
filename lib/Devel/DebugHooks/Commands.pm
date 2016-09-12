@@ -288,6 +288,34 @@ sub get_expr {
 
 
 
+sub watch_checker {
+	my( $data, $keys, $nv ) =  @_;
+
+	my $stop =  0;
+	for my $i ( 0 .. $#$keys ) {
+		my $ov =  \$data->{ eval }{ $keys->[ $i ] };
+		# dd( $$ov, $nv->[ $i ], $#$$ov );
+		next   if defined $$ov  &&  @{ $nv->[ $i ] } == grep {
+				defined $$ov->[$_]  &&  defined $nv->[$i][$_]
+				&&  $$ov->[$_] eq $nv->[$i][$_]
+				|| !defined $$ov->[$_]  &&  !defined $nv->[$i][$_]
+			} 0..$#$$ov;
+
+		# Do not stop for first time
+		if( defined $$ov ) {
+			$stop ||=  1;
+			local $" =  ',';
+			print $DB::OUT $keys->[ $i ] .": @$$ov -> @{ $nv->[ $i ] }\n";
+		}
+
+		$$ov =  $nv->[ $i ];
+	}
+
+	$stop;
+}
+
+
+
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
