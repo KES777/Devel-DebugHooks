@@ -1104,7 +1104,8 @@ sub postponed {
 
 
 our %sig =  (()
-	,trap => \&trap
+	,trap   =>  \&trap
+	,untrap =>  \&untrap
 );
 
 sub reg {
@@ -1113,6 +1114,14 @@ sub reg {
 	return $DB::sig{ $sig }->( $name, @extra );
 }
 
+sub unreg {
+	my( $name, $sig ) =  @_;
+
+	return $DB::sig{ "un$sig" }->( $name, @extra );
+}
+
+
+
 sub trap {
 	my( $name, $file, $line ) =  @_;
 	my $traps =  DB::traps( $file );
@@ -1120,6 +1129,32 @@ sub trap {
 	# HACK: Autovivify subscriber if it does not exists yet
 	# Glory Perl. I love it!
 	return \$traps->{ $line }{ $name };
+}
+
+
+
+sub untrap {
+	my( $name, $file, $line ) =  @_;
+	my $traps =  DB::traps( $file );
+
+	#TODO: clear all traps in all files
+	#TODO: clear all specific traps, maybe in all files
+	delete $traps->{ $line }{ $name };
+
+	# Remove info about trap from perl internals if no common traps left
+	# After this &DB::DB will not be called for this line
+	unless( keys %{ $traps->{ $line } } ) {
+		# NOTICE: Deleting a key does not remove a breakpoint for that line
+		# Because key deleting from common hash does not update internal info
+		# TODO: bug report
+		# WORKAROUND: we should explicitly set value to 0 to signal perl
+		# internals there is no trap anymore then delete the key
+		$traps->{ $line } =  0;
+		delete $traps->{ $line };
+	}
+	#IT: Deleting one subscriber should keep others
+
+	return;
 }
 
 
