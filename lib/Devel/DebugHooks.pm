@@ -1109,13 +1109,13 @@ our %sig =  (()
 );
 
 sub reg {
-	my( $name, $sig, @extra ) =  @_;
+	my( $sig, $name, @extra ) =  @_;
 
 	return $DB::sig{ $sig }->( $name, @extra );
 }
 
 sub unreg {
-	my( $name, $sig ) =  @_;
+	my( $sig, $name, @extra ) =  @_;
 
 	return $DB::sig{ "un$sig" }->( $name, @extra );
 }

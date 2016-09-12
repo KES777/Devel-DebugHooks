@@ -344,7 +344,7 @@ sub watch {
 	}
 
 
-	my $data =  DB::reg( '_watch', 'trap', $file, $line );
+	my $data =  DB::reg( 'trap', '_watch', $file, $line );
 	$$data->{ code } =  \&get_expr;
 	# We do not know $expr result until eval it
 	$$data->{ eval }{ $expr } =  undef;
@@ -446,7 +446,7 @@ sub action {
 	}
 
 
-	my $data =  DB::reg( '_action', 'trap', $file, $line );
+	my $data =  DB::reg( 'trap', '_action', $file, $line );
 	$$data->{ code } =  \&get_expr_a;
 	push @{ $$data->{ eval } }, $expr;
 
