@@ -445,8 +445,8 @@ sub action {
 }
 
 
-$DB::commands =  {
-	'.' => sub {
+$DB::commands =  {()
+	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
 
@@ -454,7 +454,7 @@ $DB::commands =  {
 		print $DB::OUT "$curr_file:$line_cursor    $tmp";
 
 		1;
-	},
+	}
 
 	,st => sub {
 		print $DB::OUT dd( DB::state( 'stack' ), DB::state( 'goto_frames' ) );

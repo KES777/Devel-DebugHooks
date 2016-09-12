@@ -768,7 +768,7 @@ BEGIN { # Initialization goes here
 		# Here we should localize only those which values are changed implicitly
 		# or indirectly: exceptions, signals...
 		# In a word those circumstances your code can not control
-		# local $_ =  $DB::context[4];
+		# local $_ =  $DB::context[4]; (See commit:035e182e4f )
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $package;\n#line 1\n$expr";
