@@ -1124,6 +1124,27 @@ sub postponed {
 
 
 
+our %sig =  (()
+	,trap => \&trap
+);
+
+sub reg {
+	my( $name, $sig, @extra ) =  @_;
+
+	return $DB::sig{ $sig }->( $name, @extra );
+}
+
+sub trap {
+	my( $name, $file, $line ) =  @_;
+	my $traps =  DB::traps( $file );
+	# Autovivify subscriber if it does not exists yet
+	$traps->{ $line }{ $name } =  {}   unless exists $traps->{ $line }{ $name };
+
+	return $traps->{ $line }{ $name };
+}
+
+
+
 # TODO: implement: on_enter, on_leave, on_compile
 sub my_DB {
 	&save_context;
@@ -1147,6 +1168,16 @@ sub my_DB {
 
 	my $stop =  0;
 	my $traps =  DB::traps();
+	my $trap =  $traps->{ state( 'line' ) };
+
+	for my $key ( keys %$trap ) {
+		next   unless $key =~ /^_/;
+
+		$stop ||=  process( $trap->{ $key } );
+	}
+
+
+
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
 		# NOTE: the stop events are not exclusive so we can not use elsif
 		# FIX: rename: action -> actions
