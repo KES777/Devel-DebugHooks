@@ -818,13 +818,7 @@ $DB::commands =  {()
 
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
-
-		# The $DB::single will be restored when sub returns. So we set this flag
-		# to continue ignoring debugger traps
-		$DB::options{ NonStop } =  1;
-		# TODO: implement testcase
-		# $script = 'sub t{ #go }; t(); my $x';
-		# Stopped at 'my $x' w/o NonStop
+		#TODO: Implement force mode to run code until the end despite on traps
 
 		return;
 	}
