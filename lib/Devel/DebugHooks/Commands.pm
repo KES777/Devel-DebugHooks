@@ -345,9 +345,9 @@ sub watch {
 
 
 	my $data =  DB::reg( '_watch', 'trap', $file, $line );
-	$data->{ code } =  \&get_expr;
+	$$data->{ code } =  \&get_expr;
 	# We do not know $expr result until eval it
-	$data->{ eval }{ $expr } =  undef;
+	$$data->{ eval }{ $expr } =  undef;
 
 	1;
 }

@@ -1116,10 +1116,10 @@ sub reg {
 sub trap {
 	my( $name, $file, $line ) =  @_;
 	my $traps =  DB::traps( $file );
-	# Autovivify subscriber if it does not exists yet
-	$traps->{ $line }{ $name } =  {}   unless exists $traps->{ $line }{ $name };
 
-	return $traps->{ $line }{ $name };
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$traps->{ $line }{ $name };
 }
 
 
