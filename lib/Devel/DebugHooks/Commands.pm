@@ -453,6 +453,12 @@ sub action {
 }
 
 
+
+sub stop_on_call {
+}
+
+
+
 $DB::commands =  {()
 	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
@@ -729,6 +735,12 @@ $DB::commands =  {()
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
+
+			my $data =  DB::reg( 'call', 'breakpoint' );
+			$$data->{ code } =  \&stop_on_call;
+			$$data->{ list } =
+				{ $subname => defined $sign  &&  $sign eq '-' ? 0 : 1};
+
 			$DB::stop_in_sub{ $subname } =
 				defined $sign  &&  $sign eq '-' ? 0 : 1;
 			return 1;

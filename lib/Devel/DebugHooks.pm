@@ -1106,6 +1106,7 @@ sub postponed {
 our %sig =  (()
 	,trap   =>  \&trap
 	,untrap =>  \&untrap
+	,call   =>  \&call
 );
 
 sub reg {
@@ -1157,6 +1158,17 @@ sub untrap {
 	return;
 }
 
+
+
+sub call {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_call' );
+	$subscribers =  DB::state( 'on_call', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
 
 
 # TODO: implement: on_enter, on_leave, on_compile
@@ -1459,6 +1471,12 @@ sub push_frame2 {
 			,goto_frames =>  []
 			,type        =>  $_[0]
 		};
+
+		my $ev =  DB::state( 'on_call' ) // {};
+		for( keys %$ev ) {
+			process( $ev->{ $_ } );
+		}
+
 		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
 		push @{ $stack }, $frame;
 
