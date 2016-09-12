@@ -277,6 +277,17 @@ sub dd {
 
 
 
+sub get_expr {
+	my( undef, $data ) =  @_;
+	my @expr =  keys %{ $data->{ eval } };
+	# This sub is called with expressions evaluation result
+	# Additionally we pass and source data structure and corresponding keys
+	# Old values we get by those keys
+	return [ sub{ watch_checker( $data, \@expr, \@_ ) }, @expr ];
+}
+
+
+
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
