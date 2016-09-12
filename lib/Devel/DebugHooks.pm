@@ -328,6 +328,7 @@ sub log_access {
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
+	#TODO: do not affect current debugger state if we are { inDB } mode
 	if( @_ >= 3 ) {
 		no strict "refs";
 		if( $self->{ debug } ) {
@@ -1445,7 +1446,8 @@ sub push_frame2 {
 		test();
 		3;
 	}
-	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $DB::sub\n"   if DB::state( 'ddd' );
+	my $sub =  $DB::sub;
+	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n"   if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
@@ -1468,27 +1470,26 @@ sub push_frame2 {
 			,file        =>  $stack->[-1]{ file    }
 			,line        =>  $stack->[-1]{ line    }
 			,single      =>  $stack->[-1]{ single  }
-			,sub         =>  $DB::sub
+			,sub         =>  $sub
 			,goto_frames =>  []
 			,type        =>  $_[0]
 		};
 
-		my $ev =  DB::state( 'on_call' ) // {};
-		for( keys %$ev ) {
-			process( $ev->{ $_ }, $frame );
-		}
-
 		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
 		push @{ $stack }, $frame;
-
-		# DB::state( 'goto_frames', [] );
 	}
 	else {
 		push @{ DB::state( 'goto_frames' ) },
-			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[0] ]
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $sub, $_[0] ]
 	}
 
 
+	my $ev =  DB::state( 'on_call' ) // {};
+	for( keys %$ev ) {
+		process( $ev->{ $_ }, $sub );
+	}
+
+	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
 		$DB::dbg->trace_subs();
 	}
