@@ -1280,7 +1280,8 @@ sub process {
 			$code =  shift @$result;
 			@args =  ();
 			for my $expr ( @$result ) {
-				push @args, [ DB::eval( $expr ) ];
+				#TODO: IT: $expr that is subcommand
+				push @args, [ process( $expr, 1 ) ];
 			}
 
 			redo PROCESS;
@@ -1312,6 +1313,7 @@ sub process {
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
 
+	return @result   if $quiet;
 	return 0;
 }
 
