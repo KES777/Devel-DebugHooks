@@ -81,27 +81,6 @@ sub trace_line {
 
 
 
-sub watch {
-	my $self =  shift;
-	my( $watches ) =  @_;
-
-
-	my $changed =  0;
-	my $smart_match =  eval 'sub{ @{ $_[0] } ~~ @{ $_[1] } }';
-	for my $item ( @$watches ) {
-		unless( $smart_match->( $item->{ old }, $item->{ new } ) ) {
-			$changed ||=  1;
-			# print $DB::OUT "The value of " .$item->{ expr } ." is changed:\n"
-			# 	."The old value: ". Data::Dump::pp( @{ $item->{ old } } ) ."\n"
-			# 	."The new value: ". Data::Dump::pp( @{ $item->{ new } } ) ."\n"
-		}
-	}
-
-
-	return 1;
-}
-
-
 sub bbreak {
 	my $info =  "\n" .' =' x30 .DB::state( 'inDB' ) ."\n";
 
@@ -1190,21 +1169,6 @@ sub my_DB {
 
 			# Actions do not stop execution
 			$stop ||=  0;
-		}
-
-		# Stop on watch expression
-		if( exists $trap->{ watches } ) {
-			# Calculate new values for watch expressions
-			for my $watch_item ( @{ $trap->{ watches } } ) {
-				# FIX: why we use [ undef ]
-				$watch_item->{ old } =  $watch_item->{ new } // [ undef ];
-				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
-			}
-
-			# The 'watch' method should compare 'old' and 'new' values and return
-			# true value if they are differ. Additionaly it may print to $DB::OUT
-			# to show comparison results
-			$stop ||=  mcall( 'watch', $DB::dbg, $trap->{ watches } );
 		}
 
 		# Stop if onetime trap

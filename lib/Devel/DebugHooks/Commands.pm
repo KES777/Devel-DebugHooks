@@ -292,7 +292,7 @@ sub watch_checker {
 	my( $data, $keys, $nv ) =  @_;
 
 	my $stop =  0;
-	for my $i ( 0 .. $#$keys ) {
+	for my $i ( 0 .. $#$keys ) { #TODO: IT: for commit:035e182e4f case
 		my $ov =  \$data->{ eval }{ $keys->[ $i ] };
 		# dd( $$ov, $nv->[ $i ], $#$$ov );
 		next   if defined $$ov  &&  @{ $nv->[ $i ] } == grep {
@@ -327,11 +327,11 @@ sub watch {
 
 	unless( $expr ) {
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
-			next   unless exists $traps->{ $_ }{ watches };
+			next   unless exists $traps->{ $_ }{ _watch };
 
 			print $DB::OUT "line $_:\n";
 			print $DB::OUT "  " .dd( $_ ) ."\n"
-				for @{ $traps->{ $_ }{ watches } };
+				for @{ $traps->{ $_ }{ _watch } };
 		}
 
 		return 1;
@@ -344,9 +344,10 @@ sub watch {
 	}
 
 
-	push @{ $traps->{ $line }{ watches } }, { expr => $expr };
-	#TODO: do not add same expressions
-
+	my $data =  DB::reg( '_watch', 'trap', $file, $line );
+	$data->{ code } =  \&get_expr;
+	# We do not know $expr result until eval it
+	$data->{ eval }{ $expr } =  undef;
 
 	1;
 }
