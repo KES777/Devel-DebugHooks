@@ -1389,10 +1389,11 @@ sub goto {
 	return   unless $options{ trace_goto };
 	return   if DB::state( 'inDB' );
 
+	DB::state( 'inDB', 1 );
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	# scall( \&push_frame2, 'G' );
-	push_frame2( 'G' );
+	push_frame( 'G' );
+	DB::state( 'inDB', undef )
 };
 
 
