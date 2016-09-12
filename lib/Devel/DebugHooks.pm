@@ -1159,17 +1159,6 @@ sub my_DB {
 
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
 		# NOTE: the stop events are not exclusive so we can not use elsif
-		# FIX: rename: action -> actions
-		if( exists $trap->{ action } ) {
-			# Run all actions
-			for my $action ( @{ $trap->{ action } } ) {
-				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				scall( \&process, $action, 1 );
-			}
-
-			# Actions do not stop execution
-			$stop ||=  0;
-		}
 
 		# Stop if onetime trap
 		if( exists $trap->{ onetime } ) {

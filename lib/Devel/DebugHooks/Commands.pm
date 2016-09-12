@@ -103,7 +103,7 @@ sub _list {
 
 		# Print flags
 		if( exists $traps->{ $line } ) {
-			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ _action } ? 'a' : ' ';
 			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
 				: exists $traps->{ $line }{ disabled }? '-'
 				: exists $traps->{ $line }{ condition }? 'b' : ' ';
@@ -411,6 +411,13 @@ sub trace_variable {
 
 
 
+sub get_expr_a {
+	my( undef, $data ) =  @_;
+
+	return [ sub{ 0 }, @{ $data->{ eval } } ];
+}
+
+
 sub action {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))$/;
 
@@ -439,7 +446,10 @@ sub action {
 	}
 
 
-	push @{ $traps->{ $line }{ action } }, $expr;
+	my $data =  DB::reg( '_action', 'trap', $file, $line );
+	$$data->{ code } =  \&get_expr_a;
+	push @{ $$data->{ eval } }, $expr;
+
 
 	return 1;
 }
