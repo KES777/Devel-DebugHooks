@@ -1206,14 +1206,6 @@ sub my_DB {
 
 
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
-		# NOTE: the stop events are not exclusive so we can not use elsif
-
-		# Stop if trap is not disabled and condition evaluated to TRUE value
-		if( !exists $trap->{ disabled }
-			&&  exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } )
-		) {
-			$stop ||=  1;
-		}
 	}
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal

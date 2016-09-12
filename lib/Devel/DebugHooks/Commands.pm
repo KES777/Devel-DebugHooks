@@ -105,8 +105,8 @@ sub _list {
 		if( exists $traps->{ $line } ) {
 			print $DB::OUT exists $traps->{ $line }{ _action } ? 'a' : ' ';
 			print $DB::OUT exists $traps->{ $line }{ _onetime } ? '!'
-				: exists $traps->{ $line }{ disabled }? '-'
-				: exists $traps->{ $line }{ condition }? 'b' : ' ';
+				: exists $traps->{ $line }{_breakpoint}{ disabled }? '-'
+				: exists $traps->{ $line }{_breakpoint}{ condition }? 'b' : ' ';
 		}
 		else {
 			print $DB::OUT '  ';
@@ -478,6 +478,16 @@ sub stop_on_call {
 
 
 
+# Stop if trap is not disabled and condition evaluated to TRUE value
+sub stop_on_line {
+	my( undef, $data ) =  @_;
+
+	return 0   if $data->{ disabled }  ||  !exists $data->{ condition };
+
+	return [ sub{ my $x =  shift; @$x && $x->[0] && 1 }, $data->{ condition } ];
+}
+
+
 $DB::commands =  {()
 	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
@@ -784,16 +794,16 @@ $DB::commands =  {()
 				for( sort{ $a <=> $b } keys %$traps ) {
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
-					next   unless exists $traps->{ $_ }{ condition }
-						||  exists $traps->{ $_ }{ _onetime }
-						||  exists $traps->{ $_ }{ disabled }
-						;
+					# next   unless exists $traps->{ $_ }{_breakpoint}{ condition }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ _onetime }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ disabled }
+					# 	;
 
 					printf $DB::OUT "  %-3d%s %s\n"
 						,$_
 						,exists $traps->{ $_ }{ _onetime }      ? '!'
-							:(exists $traps->{ $_ }{ disabled } ? '-' : ':')
-						,$traps->{ $_ }{ condition }
+							:(exists $traps->{ $_ }{_breakpoint}{ disabled } ? '-' : ':')
+						,$traps->{ $_ }{_breakpoint}{ condition }
 						;
 
 					warn "The breakpoint at $_ is zero and should be deleted"
@@ -831,13 +841,16 @@ $DB::commands =  {()
 			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ), 1 };
 		}
 		else {
+			my $data =  DB::reg( 'trap', '_breakpoint', $file, $line );
+			$$data->{ code } =  \&stop_on_line;
+
 			# TODO: Move trap from/into $traps into/from $disabled_traps
 			# This will allow us to not trigger DB::DB if trap is disabled
-			$traps->{ $line }{ disabled } =  1     if $sign eq '-';
-			delete $traps->{ $line }{ disabled }   if $sign eq '+';
+			$$data->{ disabled } =  1     if $sign eq '-';
+			delete $$data->{ disabled }   if $sign eq '+';
 
-			$traps->{ $line }{ condition } =  $condition   if defined $condition;
-			$traps->{ $line }{ condition } //=  1; # trap always triggered by default
+			$$data->{ condition } =  $condition   if defined $condition;
+			$$data->{ condition } //=  1; # trap always triggered by default
 		}
 
 		1;
@@ -846,6 +859,7 @@ $DB::commands =  {()
 	,go => sub {
 		# If we supply line to go to we just set temporary trap there
 		if( defined $_[0]  &&  $_[0] ne '' ) {
+			#FIX: use &process
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
