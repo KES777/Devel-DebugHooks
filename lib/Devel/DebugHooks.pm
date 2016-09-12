@@ -1297,7 +1297,7 @@ sub process {
 		: $DB::dbg->can( 'process' )
 	;
 
-	my @args =  ( $DB::dbg, $str );
+	my @args =  ( $DB::dbg, $str, @_ );
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
 		# TRUE    : command found, keep interaction
@@ -1474,7 +1474,7 @@ sub push_frame2 {
 
 		my $ev =  DB::state( 'on_call' ) // {};
 		for( keys %$ev ) {
-			process( $ev->{ $_ } );
+			process( $ev->{ $_ }, $frame );
 		}
 
 		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
