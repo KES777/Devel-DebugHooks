@@ -340,7 +340,6 @@ sub watch {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not watch at this point\n";
-		return -1;
 	}
 
 
@@ -442,7 +441,6 @@ sub action {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not set action at this point\n";
-		return -1;
 	}
 
 
