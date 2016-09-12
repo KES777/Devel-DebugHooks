@@ -1278,6 +1278,16 @@ sub process {
 		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
 			@args =  DB::eval( $result->{ expr } );
+
+			redo PROCESS;
+		}
+		elsif( ref $result eq 'ARRAY' ) {
+			$code =  shift @$result;
+			@args =  ();
+			for my $expr ( @$result ) {
+				push @args, [ DB::eval( $expr ) ];
+			}
+
 			redo PROCESS;
 		}
 
