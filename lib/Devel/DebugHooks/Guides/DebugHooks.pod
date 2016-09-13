@@ -1,3 +1,20 @@
+DB::DB called when any of the variables is true:
+
+    $DB::trace, $DB::single, $DB::signal
+
+And:
+
+    Execution of your program reaches a point that can hold a breakpoint
+
+DB::DB is not called when:
+
+	Code is called from DB::DB
+	sub has not 'is_debuggable' flag (all code compiled at DB has such flag)
+
+
+
+
+
 There are some different context where DB::sub may be called or not.
 You should keep these cases in mind:
 
@@ -6,7 +23,7 @@ The DB::sub is not called when you call a subroutine from DB:: namespace
 	sdf {
 		package Test;
 		sub x1 {}
-		sub x2{ x1() }  # Only here DB::sub
+		sub x2{ x1() }  # Only here DB::sub is called
 	}
 
 
@@ -31,6 +48,15 @@ Because of the @_ has aliases to arguments
 
 	$DB::single =  0;
 	test( $DB::single );
+
+	# Example 2:
+	sub test {
+		$@ =  'Oops';
+		my( $x ) =  @_;
+		print $x; # Oops
+	}
+	$@ =  'Exception';
+	test( $@ );
 
 
 When you are in DB::sub
@@ -73,3 +99,11 @@ that $DB::single = 1 does not work. Because after returning from module s sub
 old value of $DB::single will be restored by &pop_frame. You should do instead:
 
     DB::state( 'stack' )->[ -2 ]{ single } =  1;
+
+
+
+NOTICE:
+It will be not possible to debug debugger if commands use package global
+variables. Because of second debugger instance use same ::Commands package and
+its variables. Think of this like second thread visit same sub while first
+thread is paused.

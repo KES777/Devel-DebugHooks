@@ -1,5 +1,12 @@
 package Devel::DebugHooks::Commands;
 
+our $lines_before =  15;
+our $lines_after  =  15;
+
+# FIX: segmentation fault when:
+# use strict;
+# use warnings;
+
 # BEGIN {
 # 	if( $DB::options{ w } ) { require 'warnings.pm';  'warnings'->import(); }
 # 	if( $DB::options{ s } ) { require 'strict.pm';    'strict'->import();   }
@@ -33,28 +40,17 @@ package Devel::DebugHooks::Commands;
 my $file_line =  qr/(?:(.+):)?(\d+|\.)/;
 
 
-# reset $line_cursor if DB::DB were called. BUG: if DB::DB called twice for same line
-my $line_cursor;
-my $old_DB_line  =  -1;
-my $curr_file;
-sub update_fl {
-	my $line =  DB::state( 'line' );
-	if( $old_DB_line != $line ) {
-		$line_cursor =  $old_DB_line =  $line;
-		$curr_file   =  DB::state( 'file' );
-	}
-}
-
-my $cmd_f;
 sub file {
-	update_fl()         unless defined $curr_file;
-	return $curr_file   unless defined $_[0];
-
 	my( $file, $do_not_set ) =  @_;
-	$file =  $cmd_f->[ $file ]
-		if $file =~ m/^(\d+)$/  &&  exists $cmd_f->[ $file ];
 
-	$curr_file =  $file   unless $do_not_set;
+	return DB::state( 'list.file' ) // DB::state( 'file' )
+		unless defined $file;
+
+	my $files =  DB::state( 'cmd.f' );
+	$file =  $files->[ $file ]
+		if $file =~ m/^(\d+)$/  &&  exists $files->[ $file ];
+
+	DB::state( 'list.file', $file )   unless $do_not_set;
 
 	return $file;
 }
@@ -69,137 +65,203 @@ my %cmd_T = (
 );
 
 
+
+sub _cursor_position {
+	my( $frames, $file ) =  @_;
+
+	my $run_level =  0;
+	my $lines;
+	for( @$frames ) {
+		# Frames are counted from the end
+		$lines->{ $_->{ line } } =  $#$frames -$run_level
+			if $_->{ file } eq $file;
+		$run_level++;
+	}
+
+	return $lines;
+}
+
+
+
 # TODO: implement trim for wide lines to fit text into window size
 sub _list {
-	my( $from, $to, $file, $run_file, $run_line ) =  @_;
-	$run_file //=  DB::state( 'file' );
-	$run_line //=  DB::state( 'line' );
+	my( $file, $from, $to ) =  @_;
 
-
-	$file =  file( $file );
+	# Fix window boundaries
 	my $source =  DB::source( $file );
-	my $traps  =  DB::traps( $file );
-
 	$from =  0           if $from < 0;        # TODO: testcase; 0 exists if -d
 	$to   =  $#$source   if $to > $#$source;  # TODO: testcase
 
+	# The place where to display *run marker*: '>>'
+	my $cursor_at =  _cursor_position( DB::state( 'stack' ) ,$file );
+
+
 	print $DB::OUT "$file\n";
+	my $traps  =  DB::traps( $file );
 	for my $line ( $from..$to ) {
 		next   unless exists $source->[ $line ];
 
+		# Print flags
 		if( exists $traps->{ $line } ) {
-			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
-			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
-				: exists $traps->{ $line }{ disabled }? '-'
-				: exists $traps->{ $line }{ condition }? 'b' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ _action } ? 'a' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ _onetime } ? '!'
+				: exists $traps->{ $line }{_breakpoint}{ disabled }? '-'
+				: exists $traps->{ $line }{_breakpoint}{ condition }? 'b' : ' ';
 		}
 		else {
 			print $DB::OUT '  ';
 		}
 
-		print $DB::OUT $file eq $run_file  &&  $line == $run_line ? '>>' : '  ';
 
-		print $DB::OUT DB::can_break( $file, $line ) ? 'x' : ' ';
-		(my $tmp =  $source->[ $line ]) =~ s/\t/    /g; #/
-		$tmp =  " $tmp"   if length $tmp > 1; # $tmp have at least "\n"
-		print $DB::OUT "$line:$tmp";
+		# Print *breakable* and *cursor* marks
+		if( defined( my $level =  $cursor_at->{ $line } ) ) {
+			if( $level ) {
+				if( $level < 10 ) {
+					printf $DB::OUT '%d>', $level;
+				}
+				else {
+					printf $DB::OUT '*>';
+				}
+			}
+			else {
+				printf $DB::OUT '>>';
+			}
+		}
+		else {
+			printf $DB::OUT  DB::can_break( $file, $line ) ? ' x' : '  ';
+		}
+
+
+		# Print source line number
+		print $DB::OUT "$line:";
+
+
+		# Print source line
+		(my $sl =  $source->[ $line ]) =~ s/\t/    /g; #/
+		$sl  =  " $sl";                       # Space after line number
+		$sl .=  "\n"   unless $sl =~ m/\n$/s; # Last line maybe without EL
+		$sl  =~ s/\s+\n$/\n/s;                # Remove whitespaces at EOL
+		print $DB::OUT $sl;
 	}
 }
 
 
 
-# TODO: make variables global/configurable
-my $lines_before =  15;
-my $lines_after  =  15;
 # TODO: tests 'l;l', 'l 0', 'f;l 19 3', 'l .'
 sub list {
-	update_fl();
-	shift   if @_ == 1  &&   (!defined $_[0] || $_[0] eq '');
+	my( $args ) =  @_;
 
-	unless( @_ ) {
 
-		_list( $line_cursor -$lines_before, $line_cursor +$lines_after );
+	# Just list source at current position
+	if( $args eq '' ) {
+		my $file =  DB::state( 'list.file' );
+		my $line =  DB::state( 'list.line' );
+		 $line += $lines_after +1;
+		_list( $file, $line, $line +$lines_before +$lines_after  );
 
-		$line_cursor +=  $lines_after +1 +$lines_before;
+		# Move cursor to the next window.
+		# Window is: lines before, current line and lines after
+		DB::state( 'list.line',  $line +$lines_before );
+
+		return 1;
 	}
 
 
-	if( @_ == 1 ) {
-		my $arg =  shift;
-		if( ( $stack, $file, $line_cursor ) =  $arg =~ m/^(-)?${file_line}$/ ) {
-			my( $run_file, $run_line );
-			if( $stack ) {
-				# TODO: allow to list current sub -0
-				# Here $line_cursor is stack frame number from the top
-				my @frames =  DB::frames();
-				( $run_file, $run_line ) =  @{ $frames[ $line_cursor -1 ] }[3,4];
-				# TODO: save window level to show vars automatically at that level
-				$file        =  $run_file;
-				$line_cursor =  $run_line;
-			}
-			elsif( $line_cursor eq '.' ) {
-				# TODO: 'current' means file and line! FIX this in other places too
-				$file        =  DB::state( 'file' );
-				$line_cursor =  DB::state( 'line' );
-			}
-
-			_list( $line_cursor -$lines_before, $line_cursor +$lines_after, $file, $run_file, $run_line );
-
-			$line_cursor +=  $lines_after +1 +$lines_before;
+	if( my( $stack, $file, $line, $to ) =  $args =~ m/^(-)?${file_line}(?:-(\d+))?$/ ) {
+		my $from;
+		if( $stack && !$file ) {
+			# Here $line is stack frame number from the last frame
+			# Frames are counted from the end. -1 subscript is for current frame
+			my $frames =  DB::state( 'stack' );
+			return -2   if $line +1 > @$frames;
+			DB::state( 'list.level', $line );
+			( $file, $line ) =  @{ $frames->[ -$line -1 ] }{ qw/ file line / };
 		}
-		# NOTICE: $level take effect only if '&' sign present. In other cases (\d*) should not match
-		elsif( my( $coderef, $subname, $level ) =   $arg =~ m/^(\$?)([\S]+|\&)(\d*)$/ ) {
-			my $deparse =  sub {
-				require B::Deparse;
-				my( $coderef ) =  @_;
-				return -1   unless ref $coderef eq 'CODE';
-
-				print $DB::OUT B::Deparse->new("-p", "-sC")
-					->coderef2text( $coderef );
-
-				return 1;
-			};
-
-
-			# 1.List the current sub or n frames before
-			# TODO: Check is it possible to spy subs from goto_frames?
-			# If yes think about interface to access to them ( DB::frames??? )
-			if( $subname eq '&' ) {
-				$level //=  0;
-				# FIX: 'eval' does not update @DB::stack.
-				# Eval exists at real stack but ot does not at our
-				my $coderef =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
-				print $DB::OUT "sub $coderef ";
-				$coderef =  \&$coderef   unless ref $coderef;
-				return $deparse->( $coderef );
-			}
-
-			# 2. List sub by code ref in the variable
-			# TODO: locate this sub at '_<$file' hash and do usual _list
-			# to show breakpoints, lines etc
-			$coderef  &&  return {()
-				,expr =>  "\$$subname"
-				,code =>  $deparse
-			};
-
-
-			# 3. List sub from source
-			$subname =  DB::state( 'package' ) ."::${ subname }"
-				if $subname !~ m/::/;
-
-			# The location format is 'file:from-to'
-			my $location =  DB::location( $subname );
-			if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
-				_list( $2, $3, $1 );
-			}
-
-			return 1;
+		elsif( $line eq '.' ) {
+			DB::state( 'list.level', 0 );
+			# TODO: 'current' means file and line! FIX this in other places too
+			$file =  DB::state( 'file' );
+			$line =  DB::state( 'line' );
 		}
 		else {
-			print $DB::OUT "Unknown paramenter: $arg\n";
-
-			return -1;
+			$file =  file( $file );
 		}
+
+
+		if( $to ) {
+			$from =  $line;
+			$line =  $to -$lines_after;
+		}
+		else {
+			$from =  $line -$lines_before;
+			$to   =  $line +$lines_after;
+		}
+
+		_list( $file, $from, $to );
+
+
+		# Move cursor to the next window.
+		# Window is: lines before, current line and lines after
+		DB::state( 'list.file', $file );
+		DB::state( 'list.line', $line );
+	}
+	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(&\d*|.+)?$/ ) {
+		my $deparse =  sub {
+			require B::Deparse;
+			my( $coderef ) =  @_;
+			return -3   unless ref $coderef eq 'CODE';
+
+			print $DB::OUT B::Deparse->new("-p", "-sC")
+				->coderef2text( $coderef )
+				,"\n"
+			;
+
+			return 1;
+		};
+
+
+		# 1.Deparse the current sub or n frames before
+		# TODO: Check is it possible to spy subs from goto_frames?
+		# If yes think about interface to access to them ( DB::frames??? )
+		if( $subname =~ /^&(\d*)$/ ) {
+			my $level =  $1 // 0;
+			# FIX: 'eval' does not update @DB::stack.
+			# Eval exists at real stack but does not at our
+			my $frames =  DB::state( 'stack' );
+			return -2   if $level +1 > @$frames;
+			my $coderef =  $frames->[ -$level -1 ]{ sub };
+			return -4   if $coderef eq ''; # The main:: namespace
+			print $DB::OUT "sub $coderef ";
+			$coderef =  \&$coderef   unless ref $coderef;
+			return $deparse->( $coderef );
+		}
+
+		# 2. List sub by code ref in the variable
+		# TODO: findout sub name from the reference
+		# TODO: locate this sub at '_<$file' hash and do usual _list
+		# to show breakpoints, lines etc
+		$ref  &&  return {()
+			,expr =>  "\$$subname"
+			,code =>  $deparse
+		};
+
+
+		# 3. List sub from source
+		$subname =  DB::state( 'package' ) ."::${ subname }"
+			if $subname !~ m/::/;
+
+		# The location format is 'file:from-to'
+		my $location =  DB::location( $subname );
+		if( defined $location  &&  $location =~ m/^(.*):(\d+)-(\d+)$/ ) {
+			_list( $1, $2, $3 );
+		}
+
+		return 1;
+	}
+	else {
+		print $DB::OUT "Can not list: $args\n";
+
+		return -1;
 	}
 
 
@@ -208,6 +270,54 @@ sub list {
 
 
 
+sub dd {
+	require Data::Dump;
+	Data::Dump::pp( @_ );
+}
+
+
+
+sub get_expr {
+	my( undef, $data ) =  @_;
+	my @expr =  keys %{ $data->{ eval } };
+	# This sub is called with expressions evaluation result
+	# Additionally we pass and source data structure and corresponding keys
+	# Old values we get by those keys
+	return [ sub{ watch_checker( $data, \@expr, \@_ ) }, @expr ];
+}
+
+
+
+sub watch_checker {
+	my( $data, $keys, $nv ) =  @_;
+
+	my $stop =  0;
+	for my $i ( 0 .. $#$keys ) { #TODO: IT: for commit:035e182e4f case
+		my $ov =  \$data->{ eval }{ $keys->[ $i ] };
+		# dd( $$ov, $nv->[ $i ], $#$$ov );
+		next   if defined $$ov  &&  @{ $nv->[ $i ] } == grep {
+				defined $$ov->[$_]  &&  defined $nv->[$i][$_]
+				&&  $$ov->[$_] eq $nv->[$i][$_]
+				|| !defined $$ov->[$_]  &&  !defined $nv->[$i][$_]
+			} 0..$#$$ov;
+
+		# Do not stop for first time
+		if( defined $$ov ) {
+			$stop ||=  1;
+			local $" =  ',';
+			print $DB::OUT $keys->[ $i ] .": @$$ov -> @{ $nv->[ $i ] }\n";
+		}
+
+		$$ov =  $nv->[ $i ];
+	}
+
+	$stop;
+}
+
+
+
+#TODO: I: global watch when we do not rely on $file:$line and just watching
+# this expression at any place it is mentioned
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
@@ -218,14 +328,12 @@ sub watch {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
-			next   unless exists $traps->{ $_ }{ watches };
+			next   unless exists $traps->{ $_ }{ _watch };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
-				for @{ $traps->{ $_ }{ watches } };
+			print $DB::OUT "  " .dd( $_ ) ."\n"
+				for @{ $traps->{ $_ }{ _watch } };
 		}
 
 		return 1;
@@ -234,13 +342,13 @@ sub watch {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not watch at this point\n";
-		return -1;
 	}
 
 
-	push @{ $traps->{ $line }{ watches } }, { expr => $expr };
-	#TODO: do not add same expressions
-
+	my $data =  DB::reg( 'trap', '_watch', $file, $line );
+	$$data->{ code } =  \&get_expr;
+	# We do not know $expr result until eval it
+	$$data->{ eval }{ $expr } =  undef;
 
 	1;
 }
@@ -260,7 +368,8 @@ sub load {
 		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
 
-	@DB::stop_in_sub{ keys %$stops } =  values %$stops;
+	#IT: check we are stopped in right place after loading
+	DB::state( 'on_call', $stops );
 
 
 	return 1;
@@ -282,7 +391,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh Data::Dump::pp( \%DB::stop_in_sub, $traps );
+	print $fh dd( DB::state( 'on_call' ), $traps );
 
 	return 1;
 }
@@ -304,6 +413,13 @@ sub trace_variable {
 
 
 
+sub get_expr_a {
+	my( undef, $data ) =  @_;
+
+	return [ sub{ 0 }, @{ $data->{ eval } } ];
+}
+
+
 sub action {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))$/;
 
@@ -314,13 +430,11 @@ sub action {
 
 
 	unless( $expr ) {
-		require Data::Dump;
-
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
 			next   unless exists $traps->{ $_ }{ action };
 
 			print $DB::OUT "line $_:\n";
-			print $DB::OUT "  " .Data::Dump::pp( $_ ) ."\n"
+			print $DB::OUT "  " .dd( $_ ) ."\n"
 				for @{ $traps->{ $_ }{ action } };
 		}
 
@@ -330,18 +444,65 @@ sub action {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not set action at this point\n";
-		return -1;
 	}
 
 
-	push @{ $traps->{ $line }{ action } }, $expr;
+	my $data =  DB::reg( 'trap', '_action', $file, $line );
+	#FIX: register callback only once at some global structure
+	$$data->{ code } =  \&get_expr_a;
+	push @{ $$data->{ eval } }, $expr;
+
 
 	return 1;
 }
 
 
-$DB::commands =  {
-	'.' => sub {
+
+# Stop on the first OP in a given subroutine
+sub stop_on_call {
+	my( undef, $data, $current_sub ) =  @_;
+	my $target_subs =  $data->{ list };
+
+	if(
+		# IF exists  &&  not disabled (value is TRUE)
+		$target_subs->{ $current_sub }
+
+		# OR exists  &&  not disabled  &&  partially matched name
+		|| grep{
+			$target_subs->{ $_ }
+				&&
+			$current_sub =~ m/$_$/
+		} keys %$target_subs
+	) {
+		DB::state( 'single', 1 ); # Stop on next OP
+	}
+}
+
+
+
+# Stop if trap is not disabled and condition evaluated to TRUE value
+sub stop_on_line {
+	my( undef, $data ) =  @_;
+
+	return 0   if $data->{ disabled }  ||  !exists $data->{ condition };
+
+	return [ sub{ my $x =  shift; @$x && $x->[0] && 1 }, $data->{ condition } ];
+}
+
+
+
+sub step_done {
+	my( undef, $data ) =  @_;
+	return   if --$data->{ steps_left };
+
+	DB::unreg( 'stop', 'step' );
+	return 1;
+};
+
+
+
+$DB::commands =  {()
+	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
 
@@ -349,11 +510,10 @@ $DB::commands =  {
 		print $DB::OUT "$curr_file:$line_cursor    $tmp";
 
 		1;
-	},
+	}
 
 	,st => sub {
-		require Data::Dump;
-		print $DB::OUT Data::Dump::pp( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
+		print $DB::OUT dd( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
 		print $DB::OUT "S: $DB::single T:$DB::trace A:$DB::signal\n";
 
 		1;
@@ -362,14 +522,16 @@ $DB::commands =  {
 	# Return from sub call to the first OP at some outer frame
 	# In compare to 's' and 'n' commands 'r' will not stop at each OP. So we set
 	# 0 to $DB::single for current frame and N-1 last frames. For target N frame
-	# we set $DB::single value to 1 which will be restored at &pop_frame
+	# we set $DB::single value to 1 which will be restored by &pop_frame
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,r => sub {
 		my( $frames_out, $sharp ) =  shift =~ m/^(\d+)(\^)?$/;
 
+		my $leave_chain =  defined $frames_out;
 		$frames_out //=  1;
 
-		my $stack_size =  @{ DB::state( 'stack' ) };
+		my $stack =  DB::state( 'stack' );
+		my $stack_size =  @$stack;
 		$frames_out =  $stack_size -$frames_out   if $sharp;
 		return -2   if $frames_out < 0; # Do nothing for unexisting frame
 
@@ -377,10 +539,23 @@ $DB::commands =  {
 		$frames_out =  $stack_size   if $frames_out > $stack_size;
 
 		# ... skip N next frames
-		$_->{ single } =  0   for @{ DB::state( 'stack' ) }[ -$frames_out .. -1 ];
+		$_->{ single } =  0   for @$stack[ -$frames_out .. -1 ];
 
 		# and stop at some outer frame
-		$_->{ single } =  1   for @{ DB::state( 'stack' ) }[ -$stack_size .. -$frames_out-1 ];
+		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
+
+		# Do not stop if subcall is maden
+		if( $leave_chain  &&  $frames_out < $stack_size ) { # have parent frame
+			my $handler =  DB::reg( 'call', 'step_over' );
+			# FIX: move 'on_frame' handler code to upper frames if we leave current one
+			$$handler->{ code } =  sub{ DB::state( 'single', 0 ); 1 };
+			$handler =  DB::reg( 'stop', 'step_over' );
+			$$handler->{ code } =  sub{
+				DB::unreg( 'stop', 'step_over' );
+				DB::unreg( 'call', 'step_over' );
+				1;
+			};
+		}
 
 		return;
 	}
@@ -390,7 +565,11 @@ $DB::commands =  {
 	# Because current OP maybe the last OP in sub. It also maybe the last OP in
 	# the outer frame. And so on.
 	,s => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
 
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
@@ -404,10 +583,27 @@ $DB::commands =  {
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
 
+
+		# Do not stop if subcall is maden
+		my $handler =  DB::reg( 'frame', 'step_over' );
+		# FIX: move handler code to upper frames if we leave current one
+		$$handler->{ code } =  sub{ $_[2]{ single } =  0; 1 };
+		$handler =  DB::reg( 'stop', 'step_over' );
+		$$handler->{ code } =  sub{
+			DB::unreg( 'stop', 'step_over' );
+			DB::unreg( 'frame', 'step_over' );
+			1;
+		};
+
+		my $stack =  DB::state( 'stack' );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
-		$_->{ single } =  2   for @{ DB::state( 'stack' ) };
+		$_->{ single } =  2   for @$stack;
 
 		return;
 	}
@@ -415,7 +611,7 @@ $DB::commands =  {
 	# Quit from the debugger
 	,q => sub {
 		for( @$DB::state ) {
-			for( @$_ ) {
+			for( @{ $_->{ stack } } ) { # TODO: implement interface to debugger instance
 				$_->{ single } =  0;
 			}
 		}
@@ -425,10 +621,10 @@ $DB::commands =  {
 
 	# TODO: print list of vars which refer this one
 	,vars => sub {
-		my $type  =  0;
-		my $level =  0;
-		my @vars  =  ();
-		for( split " ", shift ) {
+		my( $level, $type, $var ) =
+			(' '.shift) =~ m/^(?:\s+-(\d+))?(?:\s+([amogucs]+))?(?:\s+([\$\%\*\&].*))?$/;
+
+		for( split '', $type ) {
 			$type |= ~0   if /^a|all$/;
 			$type |= 1    if /^m|my$/;
 			$type |= 2    if /^o|our$/;
@@ -436,20 +632,26 @@ $DB::commands =  {
 			$type |= 8    if /^u|used$/;
 			$type |= 16   if /^c|closured$/;
 			$type |= 24   if /^s|sub$/;       #u+c
+		}
+		$level //=  DB::state( 'list.level' );
+		$type  //=  DB::state( 'vars.type' ) // 3   unless $var;
 
-			$level =  $1  if /^(\d+)$/;
-			push @vars, $1   if /^([\%\$\@]\S+)$/;
+
+		my $dbg_frames =  0;
+		{ # Count debugger frames
+			my @frame;
+			1 while( @frame =  caller( $dbg_frames++ )  and  $frame[3] ne 'DB::DB' );
+			$dbg_frames--;
 		}
 
-		my $dbg_frames =  6;     # Count of debugger frames
-		$type ||=  3;  # TODO: make defaults configurable
-		$level +=  $dbg_frames;  # The first client frame
 
+		#FIX: When we debug debugger we can not 'go <line>' we always stops at
+		#require at third line at PadWalker.pm. Debug who set $DB::state = 1
 		require 'PadWalker.pm';
 		require 'Package/Stash.pm'; # BUG? spoils DB:: by emacs, dbline
 
-		my $my =   PadWalker::peek_my(  $level );
-		my $our =  PadWalker::peek_our( $level );
+		my $my =   PadWalker::peek_my(  $level +$dbg_frames );
+		my $our =  PadWalker::peek_our( $level +$dbg_frames );
 
 		if( $type & 1 ) {
 			# TODO: for terminals which support color show
@@ -501,7 +703,11 @@ $DB::commands =  {
 		if( $type & 8 ) {
 			print $DB::OUT "\nUSED:\n";
 
-			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
+			# First element starts at -1 subscript
+			# FIX: When debug debugger and we step over this statement
+			# the $sub contain reference ot &vars instead of name of last
+			# client's sub
+			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				# TODO: Mojolicious::__ANON__[/home/feelsafe/perl_lib/lib/perl5/Mojolicious.pm:119]
 				# convert this to subroutine refs
@@ -509,6 +715,7 @@ $DB::commands =  {
 				print $DB::OUT "Not in a sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ PadWalker::peek_sub( $sub ) } ), "\n";
 			}
 		}
@@ -516,19 +723,31 @@ $DB::commands =  {
 		if( $type & 16 ) {
 			print $DB::OUT "\nCLOSED OVER:\n";
 
-			my $sub =  DB::state( 'stack' )->[ -$level +$dbg_frames -1 ]{ sub };
+			# First elements starts at -1 subscript
+			my $sub =  DB::state( 'stack' )->[ -$level -1 ]{ sub };
 			if( !defined $sub ) {
 				print $DB::OUT "Not in a sub\n";
 				# print $DB::OUT (ref $sub ) ."Not in a sub: $sub\n";
 			}
 			else {
+				$sub =  \&$sub;
 				print $DB::OUT join( ', ', sort keys %{ (PadWalker::closed_over( $sub ))[0] } ), "\n";
 			}
 		}
 
-		if( @vars ) {
-			# print $DB::OUT @{ $my }{ @vars }, @{ $our }{ @vars };
-			print $DB::OUT @vars; # FIX: use dumper
+		if( $var ) {
+			my( $sigil, $name, $extra ) =  $var =~ m/^(.)(\w+)(.*)$/;
+
+			$var =  $sigil .$name;
+			unless( exists $my->{ $var } || exists $our->{ $var } ) {
+				print $DB::OUT "Variable '$var' does not exists at this scope\n";
+				return -1;
+			}
+
+			my $value =  $my->{ $var }  ||  $our->{ $var };
+			$value =  $$value   if $sigil eq '$';
+			eval "\$value =  \$value$extra; 1"   or die $@;
+			print $DB::OUT dd( $value ), "\n";
 		}
 
 		1;
@@ -551,24 +770,23 @@ $DB::commands =  {
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
-			delete $DB::stop_in_sub{ $subname };
+
+			DB::unreg( 'call', 'breakpoint', $subname );
 			# Q: Should we remove all matched keys?
 			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
+			#FIX: this is copy/paste block. see above
 			$line     =  DB::state( 'line' )   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
-
-			# Q: Why deleting a key does not remove a breakpoint for that line?
-			# A: Because this is the internal hash
-			# WORKAROUND: we should explicitly set value to 0 then delete the key
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
+			# TODO: remove only one action
+			DB::unreg( 'trap', '_breakpoint', $file, $line );
 		}
 
 
+		#TODO? use &DB::process
 		$DB::commands->{ b }->()   if $opts->{ verbose };
 
 		1;
@@ -584,8 +802,12 @@ $DB::commands =  {
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
-			$DB::stop_in_sub{ $subname } =
-				defined $sign  &&  $sign eq '-' ? 0 : 1;
+
+			my $data =  DB::reg( 'call', 'breakpoint' );
+			$$data->{ code } =  \&stop_on_call;
+			$$data->{ list } =
+				{ $subname => defined $sign  &&  $sign eq '-' ? 0 : 1};
+
 			return 1;
 		}
 
@@ -596,7 +818,7 @@ $DB::commands =  {
 
 		# list all breakpoints
 		unless( $line ) {
-			$cmd_f =  [];
+			my $cmd_f =  [];
 			my $file_no =  0;
 			# First display traps in the current file
 			print $DB::OUT "Breakpoints:\n";
@@ -610,16 +832,16 @@ $DB::commands =  {
 				for( sort{ $a <=> $b } keys %$traps ) {
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
-					next   unless exists $traps->{ $_ }{ condition }
-						||  exists $traps->{ $_ }{ onetime }
-						||  exists $traps->{ $_ }{ disabled }
-						;
+					# next   unless exists $traps->{ $_ }{_breakpoint}{ condition }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ _onetime }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ disabled }
+					# 	;
 
 					printf $DB::OUT "  %-3d%s %s\n"
 						,$_
-						,exists $traps->{ $_ }{ onetime }      ? '!'
-							:(exists $traps->{ $_ }{ disabled } ? '-' : ':')
-						,$traps->{ $_ }{ condition }
+						,exists $traps->{ $_ }{ _onetime }      ? '!'
+							:(exists $traps->{ $_ }{_breakpoint}{ disabled } ? '-' : ':')
+						,$traps->{ $_ }{_breakpoint}{ condition }
 						;
 
 					warn "The breakpoint at $_ is zero and should be deleted"
@@ -627,9 +849,14 @@ $DB::commands =  {
 				}
 			}
 
+			DB::state( 'cmd.f', $cmd_f );
+
 			print $DB::OUT "Stop on subs:\n";
-			print $DB::OUT ' ' .($DB::stop_in_sub{ $_ } ? ' ' : '-') ."$_\n"
-				for keys %DB::stop_in_sub;
+			my $target_subs =  DB::state( 'on_call' ); #TODO: get info
+			$target_subs =  $target_subs->{'breakpoint'}{ list };
+
+			print $DB::OUT ' ' .($target_subs->{ $_ } ? ' ' : '-') ."$_\n"
+				for keys %$target_subs;
 
 			return 1;
 		}
@@ -648,16 +875,20 @@ $DB::commands =  {
 		# One time trap just exists or not.
 		# We stop on it uncoditionally, also we can not disable it
 		if( defined $tmp ) {
-			$traps->{ $line }{ onetime } =  undef;
+			my $data =  DB::reg( 'trap', '_onetime', $file, $line );
+			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ); 1 };
 		}
 		else {
+			my $data =  DB::reg( 'trap', '_breakpoint', $file, $line );
+			$$data->{ code } =  \&stop_on_line;
+
 			# TODO: Move trap from/into $traps into/from $disabled_traps
 			# This will allow us to not trigger DB::DB if trap is disabled
-			$traps->{ $line }{ disabled } =  1     if $sign eq '-';
-			delete $traps->{ $line }{ disabled }   if $sign eq '+';
+			$$data->{ disabled } =  1     if $sign eq '-';
+			delete $$data->{ disabled }   if $sign eq '+';
 
-			$traps->{ $line }{ condition } =  $condition   if defined $condition;
-			$traps->{ $line }{ condition } //=  1; # trap always triggered by default
+			$$data->{ condition } =  $condition   if defined $condition;
+			$$data->{ condition } //=  1; # trap always triggered by default
 		}
 
 		1;
@@ -666,18 +897,13 @@ $DB::commands =  {
 	,go => sub {
 		# If we supply line to go to we just set temporary trap there
 		if( defined $_[0]  &&  $_[0] ne '' ) {
+			#FIX: use &process
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
-
-		# The $DB::single will be restored when sub returns. So we set this flag
-		# to continue ignoring debugger traps
-		$DB::options{ NonStop } =  1;
-		# TODO: implement testcase
-		# $script = 'sub t{ #go }; t(); my $x';
-		# Stopped at 'my $x' w/o NonStop
+		#TODO: Implement force mode to run code until the end despite on traps
 
 		return;
 	}
@@ -692,7 +918,7 @@ $DB::commands =  {
 		}
 
 		# List available files
-		$cmd_f   =  [];
+		my $cmd_f   =  [];
 		my $file_no =  0;
 		for( sort $0, values %INC, DB::sources() ) {
 		# for( sort $0, keys %$expr ) {
@@ -701,24 +927,24 @@ $DB::commands =  {
 				print $DB::OUT $file_no++ ." $_\n";
 			}
 		}
+		DB::state( 'cmd.f', $cmd_f );
 
 		1;
 	}
 	,e => sub {
-		require Data::Dump;
-
 		return {
-			expr => shift,
+			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
 			code => sub {
-				print $DB::OUT Data::Dump::pp( @_ ) ."\n";
+				print $DB::OUT dd( @_ ) ."\n";
+				return 1;
 			}
 		}
 	}
 
 	# TODO: give names to ANON
 	,T => sub {
-		my( $level ) =  shift =~ m/^(\d+)$/;
-		$level =  -1   unless $level;
+		my( $one, $count ) =  shift =~ m/^(-?)(\d+)$/;
+		$count =  -1   unless $count; # Show all frames. $count == 0 never
 
 		my $T =  {()
 			,oneline   =>
@@ -729,7 +955,12 @@ $DB::commands =  {
 		my $format =  'multiline';
 
 		my @frames =  DB::frames();
-		my $deep   =  @frames;
+		my $number =  -1;
+		if( $one ) {
+			return 1   unless @frames >= $count; # Check we have enough frames
+			@frames =  $frames[ $count -1 ];     # Get only given frame
+			$number =  -$count;                  # ...and display it number
+		}
 		for my $frame ( @frames ) {
 			my $context =  $frame->[7]? '@' : defined $frame->[7]? '$' : ';';
 			my $type    =  $cmd_T{ $frame->[0] };
@@ -743,10 +974,10 @@ $DB::commands =  {
 				$args = "($args)";
 			}
 
-			my $d =  $frame->[0] eq 'D' ? 'D' : $deep;
+			my $d =  $frame->[0] eq 'D' ? 'D' : $number;
 			print $DB::OUT eval $T->{ $format };
-			$deep--  if $frame->[0] ne 'G';
-			last   unless --$level;
+			$number--  if $frame->[0] ne 'G';
+			last   unless --$count; # Stop to show frames when $count == 0
 		}
 
 		return 1;
@@ -774,17 +1005,13 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
+		#FIX: this is copy/paste block. see above
 		$line     =  DB::state( 'line' )   if $line eq '.';
 		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
-
-		# TODO: remove only one action by number
-		delete $traps->{ $line }{ action };
-		unless( keys %{ $traps->{ $line } } ) {
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
-		}
+		# TODO: remove only one action
+		DB::unreg( 'trap', '_action', $file, $line );
 
 		1;
 	}
@@ -813,6 +1040,16 @@ $DB::commands =  {
 	}
 	,R => sub {
 		`killall uwsgi`;
+	}
+	,d => sub {
+		return {
+			expr => "\$DB::single =  0; \$^D |= (1<<30);"
+				.DB::state( 'db.last_eval', shift ),
+			code => sub {
+				print $DB::OUT "\n@_\n";
+				return 1;
+			}
+		}
 	}
 };
 

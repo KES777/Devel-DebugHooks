@@ -67,6 +67,8 @@ is
 	,$files->{ 'default' }
 	,"Run debugger commands only for 'default' profile";
 
+#TODO: IT for two profiles
+#TODO: IT to pass usual arguments
 
 
 __DATA__

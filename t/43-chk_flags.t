@@ -45,30 +45,32 @@ my $files =  get_data_section();
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-	1;
-	2;
-	3;
+	BEGIN{ 1; }
+	print "OK\n";
 PERL
 
 is
-	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s;q' -e '$script'` )
-	,$files->{ 'action' }
-	,"Set action at line";
+	n( `$^X $lib -d:DbInteract='q' -e '$script'` )
+	,$files->{ 'first OP' }
+	,"Stop on first script OP";
 
 is
-	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` )
-	,$files->{ 'action & steps' }
-	,"Do not skip action when we do K steps";
-print n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` );
+	n( `$^X $lib -d:DbInteract='scalar\@{ DB::state( "stack" ) };q,Stop' -e '$script'` )
+	,$files->{ 'BEGIN' }
+	,"Stop at BEGIN block OP";
+
+is
+	n( `$^X $lib -d:DbInteract='1,NonStop' -e '$script'` )
+	,$files->{ 'end' }
+	,"Run script until the end";
 
 
 
 __DATA__
-@@ action
--e:0001  1;
-YES
--e:0002  2;
-@@ action & steps
--e:0001  1;
-YES
--e:0003  3;
+@@ first OP
+-e:0002  print "OK\n";
+@@ BEGIN
+-e:0001  BEGIN{ 1; }
+2
+@@ end
+OK

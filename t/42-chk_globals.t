@@ -39,6 +39,16 @@ sub nl {
 
 
 
+sub nn {
+    $_ =  n( @_ );
+
+    s#( at ).*$#$1...#gm;    # Remove file:line info
+
+    $_;
+}
+
+
+
 my $cmds;
 my $script;
 my $files =  get_data_section();
@@ -85,6 +95,31 @@ SKIP: {
 
 
 
+($script =  <<'PERL') =~ s#^\t##gm;
+    $_ =  7;
+    @_ = ( 1..$_ );
+    1;
+PERL
+
+is
+    n( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` )
+    ,$files->{ '$_ not clash' }
+    ,"Debugger should show user's \@_ and \$_";
+
+
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	eval { 1/0; };
+	print $@;
+PERL
+
+is
+    nn( `$^X $lib -d:DbInteract='go 2;\$\@;e \$\@;s' -e '$script'` )
+    ,$files->{ 'keep $@' }
+    ,"Do not change exception message (\$@) at user's script";
+
+
+
 __DATA__
 @@ anb
 -e:0002    $a <=> $b
@@ -96,3 +131,15 @@ __DATA__
 3
 4
 1 - 23 - 4
+@@ $_ not clash
+-e:0001      $_ =  7;
+-e:0003      1;
+7
+1 2 3 4 5 6 7
+@@ keep $@
+-e:0001  eval { 1/0; };
+-e:0002  print $@;
+Illegal division by zero at ...
+
+"Illegal division by zero at ...
+Illegal division by zero at ...

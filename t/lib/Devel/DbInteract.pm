@@ -49,6 +49,28 @@ $DB::commands->{ debug } =  sub {
 	4;
 };
 
+my $dbg_global;
+$DB::commands->{ global } =  sub {
+	print ++$dbg_global, "\n";
+};
+$DB::commands->{ right_global } =  sub {
+	print DB::state( 'dbg_global', DB::state( 'dbg_global' )+1 ), "\n";
+};
+
+
+
+$DB::commands->{ 'list.conf' } =  sub {
+	$Devel::DebugHooks::Commands::lines_before =  3;
+	$Devel::DebugHooks::Commands::lines_after  =  3;
+};
+
+
+
+$DB::commands->{ 'list.conf2' } =  sub {
+	$Devel::DebugHooks::Commands::lines_before =  3;
+	$Devel::DebugHooks::Commands::lines_after  =  2;
+};
+
 
 
 sub bbreak {

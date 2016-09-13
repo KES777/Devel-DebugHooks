@@ -64,6 +64,11 @@ is
 PERL
 
 is
+	n( `$^X $lib -d:DbInteract='go t2;q' -e '$script'` )
+	,$files->{ 'go to sub' }
+	,"Run script to the sub";
+
+is
 	n( `$^X $lib -d:DbInteract='go 2;go' -e '$script'` )
 	,$files->{ 'go from sub' }
 	,"Run script from sub until the end";
@@ -81,6 +86,9 @@ __DATA__
 @@ go to line
 -e:0001  1;
 -e:0003  3;
+@@ go to sub
+-e:0008  t2();
+-e:0005    t1();
 @@ go from sub
 -e:0008  t2();
 -e:0002    1;

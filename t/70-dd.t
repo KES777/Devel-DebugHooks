@@ -53,75 +53,103 @@ my $files =  get_data_section();
 PERL
 
 # FIX: we should not require last 's' to see '-e:0002    1;'
-$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;s;s;s;s;r 2;s;q';
+$cmds =  'DB::state( dd => 1 );debug;s 9;s;s;s;s;s;r 2;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd sbs' }
 	,"Debug command step-by-step";
 
-$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s;n;r 2;s;q';
+$cmds =  'DB::state( dd => 1 );debug;s 9;s;n;r 2;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd step over' }
 	,"Debug command with step over";
 
-$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;r;r 2;s;q';
+$cmds =  'DB::state( dd => 1 );debug;s 9;s 2;r;r 2;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd return' }
 	,"Debug command with return";
 
-$cmds =  ' $DB::options{ dd } =  1;debug;s 9;s 2;q';
+$cmds =  'DB::state( dd => 1 );debug;s 9;s 2;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
 
 
-
-$cmds =  ' $DB::options{ dd } =  1;debug;s 9;right();q';
+$cmds =  'DB::state( dd => 1 );debug;s 9;right();q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'call debugger sub' }
 	,"Subroutine call from debugger scope when debug debugger command";
 
+$cmds =  'DB::state( dd => 1 );debug;s 13;DB::state( "line" );q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'DB::state when dd' }
+	,"Get debugger state while debugger debugging";
+
+$cmds =  'DB::state( dd => 1 );debug;s 9;nested;$DB::state->[-1]{stack}[-1]{line};q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'prevent position when call' }
+	,"Position should not be updated when we call sub while { dd }";
+
+$cmds =  'DB::state( dd => 1 );debug;s 9;1+1;$DB::state->[-1]{stack}[-1]{line};q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'prevent position when calc' }
+	,"Position should not be updated when we calcs while { dd }";
 
 
-$cmds =  ' $DB::options{ dd } =  1;s;r;q';
+$cmds =  'DB::state( dd => 1 );s;r;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step into' }
 	,"Step into at client's scipt after debugger debugging";
 
-$cmds =  ' $DB::options{ dd } =  1;n;r;q';
+$cmds =  'DB::state( dd => 1 );n;r;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step over' }
 	,"Step over at client's scipt after debugger debugging";
 
+$cmds =  'DB::state( dd => 1 );global;global;r;q;';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'wrong global vars usage' }
+	,"Debugger commands should not use any global variables";
+
+$cmds =  'DB::state( dd => 1 );right_global;right_global;r;q;';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'global vars usage' }
+	,"Debugger globals per instance";
+
 
 TODO: {
 	local $TODO =  'Implemented debugging for push/pop frame';
 
-	$cmds =  ' $DB::options{ dd } =  1;n;s;s 2;q';
+	$cmds =  'DB::state( dd => 1 );n;s;s 2;q';
 	is
 		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'step into debugger' }
 		,"Step into debugger";
 
-	$cmds =  ' $DB::options{ dd } =  1;n;n;q';
+	$cmds =  'DB::state( dd => 1 );n;n;q';
 	is
 		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'step over' }
 		,"Step over at debugger";
 
-	$cmds =  ' $DB::options{ dd } =  1;s;s;r;r;q';
+	$cmds =  'DB::state( dd => 1 );s;s;r;r;q';
 	is
 		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'return s' }
 		,"Return from debugger. 's' command";
 
-	$cmds =  ' $DB::options{ dd } =  1;n;s;r;r;q';
+	$cmds =  'DB::state( dd => 1 );n;s;r;r;q';
 	is
 		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 		,$files->{ 'return n' }
@@ -172,6 +200,28 @@ xxx/DbInteract.pm:XXXX    2;
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 xxx/DbInteract.pm:XXXX    1;
 scope
+@@ DB::state when dd
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1 at -e:4
+xxx/DbInteract.pm:XXXX    3;
+4
+@@ prevent position when call
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+1 at -e:4
+3
+47
+@@ prevent position when calc
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+xxx/DbInteract.pm:XXXX    1;
+2
+47
 @@ outer step into
 -e:0004  t1();
 1
@@ -182,6 +232,18 @@ xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 1
 xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
 -e:0005  2;
+@@ wrong global vars usage
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1
+2
+@@ global vars usage
+-e:0004  t1();
+1
+xxx/DebugHooks.pm:XXXX    &{ $DB::options{ cmd_processor } .'::process' }( @_ );
+1
+1
 @@ step into debugger
 -e:0004  t1();
 1
