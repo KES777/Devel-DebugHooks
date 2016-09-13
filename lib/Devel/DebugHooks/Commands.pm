@@ -733,8 +733,8 @@ $DB::commands =  {()
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
-			#FIX: use debugger instance states not globals
-			delete $DB::stop_in_sub{ $subname };
+
+			DB::unreg( 'call', 'breakpoint', $subname );
 			# Q: Should we remove all matched keys?
 			# A: No. You may remove required keys. Maybe *subname?
 		}

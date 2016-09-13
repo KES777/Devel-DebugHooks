@@ -1107,9 +1107,10 @@ sub postponed {
 
 
 our %sig =  (()
-	,trap   =>  \&trap
-	,untrap =>  \&untrap
-	,call   =>  \&call
+	,trap    =>  \&trap
+	,untrap  =>  \&untrap
+	,call    =>  \&call
+	,uncall  =>  \&uncall
 );
 
 sub reg {
@@ -1171,6 +1172,16 @@ sub call {
 	# HACK: Autovivify subscriber if it does not exists yet
 	# Glory Perl. I love it!
 	return \$subscribers->{ $name };
+}
+
+
+
+sub uncall {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_call' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_call', undef )   unless keys %$subscribers;
 }
 
 
