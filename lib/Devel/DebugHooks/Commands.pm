@@ -103,10 +103,10 @@ sub _list {
 
 		# Print flags
 		if( exists $traps->{ $line } ) {
-			print $DB::OUT exists $traps->{ $line }{ action    }? 'a' : ' ';
-			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
-				: exists $traps->{ $line }{ disabled }? '-'
-				: exists $traps->{ $line }{ condition }? 'b' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ _action } ? 'a' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ _onetime } ? '!'
+				: exists $traps->{ $line }{_breakpoint}{ disabled }? '-'
+				: exists $traps->{ $line }{_breakpoint}{ condition }? 'b' : ' ';
 		}
 		else {
 			print $DB::OUT '  ';
@@ -277,6 +277,47 @@ sub dd {
 
 
 
+sub get_expr {
+	my( undef, $data ) =  @_;
+	my @expr =  keys %{ $data->{ eval } };
+	# This sub is called with expressions evaluation result
+	# Additionally we pass and source data structure and corresponding keys
+	# Old values we get by those keys
+	return [ sub{ watch_checker( $data, \@expr, \@_ ) }, @expr ];
+}
+
+
+
+sub watch_checker {
+	my( $data, $keys, $nv ) =  @_;
+
+	my $stop =  0;
+	for my $i ( 0 .. $#$keys ) { #TODO: IT: for commit:035e182e4f case
+		my $ov =  \$data->{ eval }{ $keys->[ $i ] };
+		# dd( $$ov, $nv->[ $i ], $#$$ov );
+		next   if defined $$ov  &&  @{ $nv->[ $i ] } == grep {
+				defined $$ov->[$_]  &&  defined $nv->[$i][$_]
+				&&  $$ov->[$_] eq $nv->[$i][$_]
+				|| !defined $$ov->[$_]  &&  !defined $nv->[$i][$_]
+			} 0..$#$$ov;
+
+		# Do not stop for first time
+		if( defined $$ov ) {
+			$stop ||=  1;
+			local $" =  ',';
+			print $DB::OUT $keys->[ $i ] .": @$$ov -> @{ $nv->[ $i ] }\n";
+		}
+
+		$$ov =  $nv->[ $i ];
+	}
+
+	$stop;
+}
+
+
+
+#TODO: I: global watch when we do not rely on $file:$line and just watching
+# this expression at any place it is mentioned
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
@@ -288,11 +329,11 @@ sub watch {
 
 	unless( $expr ) {
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
-			next   unless exists $traps->{ $_ }{ watches };
+			next   unless exists $traps->{ $_ }{ _watch };
 
 			print $DB::OUT "line $_:\n";
 			print $DB::OUT "  " .dd( $_ ) ."\n"
-				for @{ $traps->{ $_ }{ watches } };
+				for @{ $traps->{ $_ }{ _watch } };
 		}
 
 		return 1;
@@ -301,13 +342,13 @@ sub watch {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not watch at this point\n";
-		return -1;
 	}
 
 
-	push @{ $traps->{ $line }{ watches } }, { expr => $expr };
-	#TODO: do not add same expressions
-
+	my $data =  DB::reg( 'trap', '_watch', $file, $line );
+	$$data->{ code } =  \&get_expr;
+	# We do not know $expr result until eval it
+	$$data->{ eval }{ $expr } =  undef;
 
 	1;
 }
@@ -327,7 +368,8 @@ sub load {
 		%{ DB::traps( $_ ) || {} } =  %{ $traps->{ $_ } };
 	}
 
-	@DB::stop_in_sub{ keys %$stops } =  values %$stops;
+	#IT: check we are stopped in right place after loading
+	DB::state( 'on_call', $stops );
 
 
 	return 1;
@@ -349,7 +391,7 @@ sub save {
 	}
 
 	open my $fh, '>', $file   or die $!;
-	print $fh dd( \%DB::stop_in_sub, $traps );
+	print $fh dd( DB::state( 'on_call' ), $traps );
 
 	return 1;
 }
@@ -369,6 +411,13 @@ sub trace_variable {
 	}
 }
 
+
+
+sub get_expr_a {
+	my( undef, $data ) =  @_;
+
+	return [ sub{ 0 }, @{ $data->{ eval } } ];
+}
 
 
 sub action {
@@ -395,18 +444,65 @@ sub action {
 
 	unless( DB::can_break( $file, $line ) ) {
 		print $DB::OUT file(). "This line is not breakable. Can not set action at this point\n";
-		return -1;
 	}
 
 
-	push @{ $traps->{ $line }{ action } }, $expr;
+	my $data =  DB::reg( 'trap', '_action', $file, $line );
+	#FIX: register callback only once at some global structure
+	$$data->{ code } =  \&get_expr_a;
+	push @{ $$data->{ eval } }, $expr;
+
 
 	return 1;
 }
 
 
-$DB::commands =  {
-	'.' => sub {
+
+# Stop on the first OP in a given subroutine
+sub stop_on_call {
+	my( undef, $data, $current_sub ) =  @_;
+	my $target_subs =  $data->{ list };
+
+	if(
+		# IF exists  &&  not disabled (value is TRUE)
+		$target_subs->{ $current_sub }
+
+		# OR exists  &&  not disabled  &&  partially matched name
+		|| grep{
+			$target_subs->{ $_ }
+				&&
+			$current_sub =~ m/$_$/
+		} keys %$target_subs
+	) {
+		DB::state( 'single', 1 ); # Stop on next OP
+	}
+}
+
+
+
+# Stop if trap is not disabled and condition evaluated to TRUE value
+sub stop_on_line {
+	my( undef, $data ) =  @_;
+
+	return 0   if $data->{ disabled }  ||  !exists $data->{ condition };
+
+	return [ sub{ my $x =  shift; @$x && $x->[0] && 1 }, $data->{ condition } ];
+}
+
+
+
+sub step_done {
+	my( undef, $data ) =  @_;
+	return   if --$data->{ steps_left };
+
+	DB::unreg( 'stop', 'step' );
+	return 1;
+};
+
+
+
+$DB::commands =  {()
+	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
 
@@ -414,7 +510,7 @@ $DB::commands =  {
 		print $DB::OUT "$curr_file:$line_cursor    $tmp";
 
 		1;
-	},
+	}
 
 	,st => sub {
 		print $DB::OUT dd( DB::state( 'stack' ), DB::state( 'goto_frames' ) );
@@ -449,8 +545,17 @@ $DB::commands =  {
 		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
 
 		# Do not stop if subcall is maden
-		$stack->[ -$frames_out -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  }
-			if $leave_chain  &&  $frames_out < $stack_size; # have parent frame
+		if( $leave_chain  &&  $frames_out < $stack_size ) { # have parent frame
+			my $handler =  DB::reg( 'call', 'step_over' );
+			# FIX: move 'on_frame' handler code to upper frames if we leave current one
+			$$handler->{ code } =  sub{ DB::state( 'single', 0 ); 1 };
+			$handler =  DB::reg( 'stop', 'step_over' );
+			$$handler->{ code } =  sub{
+				DB::unreg( 'stop', 'step_over' );
+				DB::unreg( 'call', 'step_over' );
+				1;
+			};
+		}
 
 		return;
 	}
@@ -460,7 +565,11 @@ $DB::commands =  {
 	# Because current OP maybe the last OP in sub. It also maybe the last OP in
 	# the outer frame. And so on.
 	,s => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
 
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
@@ -474,12 +583,25 @@ $DB::commands =  {
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
+
+
+		# Do not stop if subcall is maden
+		my $handler =  DB::reg( 'frame', 'step_over' );
+		# FIX: move handler code to upper frames if we leave current one
+		$$handler->{ code } =  sub{ $_[2]{ single } =  0; 1 };
+		$handler =  DB::reg( 'stop', 'step_over' );
+		$$handler->{ code } =  sub{
+			DB::unreg( 'stop', 'step_over' );
+			DB::unreg( 'frame', 'step_over' );
+			1;
+		};
 
 		my $stack =  DB::state( 'stack' );
-		# Do not stop if subcall is maden
-		$stack->[ -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  };
-
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @$stack;
 
@@ -648,24 +770,23 @@ $DB::commands =  {
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
-			delete $DB::stop_in_sub{ $subname };
+
+			DB::unreg( 'call', 'breakpoint', $subname );
 			# Q: Should we remove all matched keys?
 			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
+			#FIX: this is copy/paste block. see above
 			$line     =  DB::state( 'line' )   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
-
-			# Q: Why deleting a key does not remove a breakpoint for that line?
-			# A: Because this is the internal hash
-			# WORKAROUND: we should explicitly set value to 0 then delete the key
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
+			# TODO: remove only one action
+			DB::unreg( 'trap', '_breakpoint', $file, $line );
 		}
 
 
+		#TODO? use &DB::process
 		$DB::commands->{ b }->()   if $opts->{ verbose };
 
 		1;
@@ -681,8 +802,12 @@ $DB::commands =  {
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
-			$DB::stop_in_sub{ $subname } =
-				defined $sign  &&  $sign eq '-' ? 0 : 1;
+
+			my $data =  DB::reg( 'call', 'breakpoint' );
+			$$data->{ code } =  \&stop_on_call;
+			$$data->{ list } =
+				{ $subname => defined $sign  &&  $sign eq '-' ? 0 : 1};
+
 			return 1;
 		}
 
@@ -707,16 +832,16 @@ $DB::commands =  {
 				for( sort{ $a <=> $b } keys %$traps ) {
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
-					next   unless exists $traps->{ $_ }{ condition }
-						||  exists $traps->{ $_ }{ onetime }
-						||  exists $traps->{ $_ }{ disabled }
-						;
+					# next   unless exists $traps->{ $_ }{_breakpoint}{ condition }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ _onetime }
+					# 	||  exists $traps->{ $_ }{_breakpoint}{ disabled }
+					# 	;
 
 					printf $DB::OUT "  %-3d%s %s\n"
 						,$_
-						,exists $traps->{ $_ }{ onetime }      ? '!'
-							:(exists $traps->{ $_ }{ disabled } ? '-' : ':')
-						,$traps->{ $_ }{ condition }
+						,exists $traps->{ $_ }{ _onetime }      ? '!'
+							:(exists $traps->{ $_ }{_breakpoint}{ disabled } ? '-' : ':')
+						,$traps->{ $_ }{_breakpoint}{ condition }
 						;
 
 					warn "The breakpoint at $_ is zero and should be deleted"
@@ -727,8 +852,11 @@ $DB::commands =  {
 			DB::state( 'cmd.f', $cmd_f );
 
 			print $DB::OUT "Stop on subs:\n";
-			print $DB::OUT ' ' .($DB::stop_in_sub{ $_ } ? ' ' : '-') ."$_\n"
-				for keys %DB::stop_in_sub;
+			my $target_subs =  DB::state( 'on_call' ); #TODO: get info
+			$target_subs =  $target_subs->{'breakpoint'}{ list };
+
+			print $DB::OUT ' ' .($target_subs->{ $_ } ? ' ' : '-') ."$_\n"
+				for keys %$target_subs;
 
 			return 1;
 		}
@@ -747,16 +875,20 @@ $DB::commands =  {
 		# One time trap just exists or not.
 		# We stop on it uncoditionally, also we can not disable it
 		if( defined $tmp ) {
-			$traps->{ $line }{ onetime } =  undef;
+			my $data =  DB::reg( 'trap', '_onetime', $file, $line );
+			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ); 1 };
 		}
 		else {
+			my $data =  DB::reg( 'trap', '_breakpoint', $file, $line );
+			$$data->{ code } =  \&stop_on_line;
+
 			# TODO: Move trap from/into $traps into/from $disabled_traps
 			# This will allow us to not trigger DB::DB if trap is disabled
-			$traps->{ $line }{ disabled } =  1     if $sign eq '-';
-			delete $traps->{ $line }{ disabled }   if $sign eq '+';
+			$$data->{ disabled } =  1     if $sign eq '-';
+			delete $$data->{ disabled }   if $sign eq '+';
 
-			$traps->{ $line }{ condition } =  $condition   if defined $condition;
-			$traps->{ $line }{ condition } //=  1; # trap always triggered by default
+			$$data->{ condition } =  $condition   if defined $condition;
+			$$data->{ condition } //=  1; # trap always triggered by default
 		}
 
 		1;
@@ -765,18 +897,13 @@ $DB::commands =  {
 	,go => sub {
 		# If we supply line to go to we just set temporary trap there
 		if( defined $_[0]  &&  $_[0] ne '' ) {
+			#FIX: use &process
 			return 1   if 0 > $DB::commands->{ b }->( "$_[0]!" );
 		}
 
 		$_->{ single } =  0   for @{ DB::state( 'stack' ) };
 
-
-		# The $DB::single will be restored when sub returns. So we set this flag
-		# to continue ignoring debugger traps
-		$DB::options{ NonStop } =  1;
-		# TODO: implement testcase
-		# $script = 'sub t{ #go }; t(); my $x';
-		# Stopped at 'my $x' w/o NonStop
+		#TODO: Implement force mode to run code until the end despite on traps
 
 		return;
 	}
@@ -878,17 +1005,13 @@ $DB::commands =  {
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
+		#FIX: this is copy/paste block. see above
 		$line     =  DB::state( 'line' )   if $line eq '.';
 		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
-
-		# TODO: remove only one action by number
-		delete $traps->{ $line }{ action };
-		unless( keys %{ $traps->{ $line } } ) {
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
-		}
+		# TODO: remove only one action
+		DB::unreg( 'trap', '_action', $file, $line );
 
 		1;
 	}

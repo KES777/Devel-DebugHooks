@@ -81,27 +81,6 @@ sub trace_line {
 
 
 
-sub watch {
-	my $self =  shift;
-	my( $watches ) =  @_;
-
-
-	my $changed =  0;
-	my $smart_match =  eval 'sub{ @{ $_[0] } ~~ @{ $_[1] } }';
-	for my $item ( @$watches ) {
-		unless( $smart_match->( $item->{ old }, $item->{ new } ) ) {
-			$changed ||=  1;
-			# print $DB::OUT "The value of " .$item->{ expr } ." is changed:\n"
-			# 	."The old value: ". Data::Dump::pp( @{ $item->{ old } } ) ."\n"
-			# 	."The new value: ". Data::Dump::pp( @{ $item->{ new } } ) ."\n"
-		}
-	}
-
-
-	return 1;
-}
-
-
 sub bbreak {
 	my $info =  "\n" .' =' x30 .DB::state( 'inDB' ) ."\n";
 
@@ -349,6 +328,7 @@ sub log_access {
 sub int_vrbl {
 	my( $self, $name, $value, $preserve_frame ) =  @_;
 
+	#TODO: do not affect current debugger state if we are { inDB } mode
 	if( @_ >= 3 ) {
 		no strict "refs";
 		if( $self->{ debug } ) {
@@ -710,6 +690,8 @@ BEGIN { # Initialization goes here
 
 		# Returns hashref of traps for $filename keyed by $line
 		sub traps {
+			#TODO: remove default because current position != view position
+			# this makes confusion
 			my $filename =  shift // state( 'file' );
 
 			return   unless file( $filename );
@@ -789,7 +771,7 @@ BEGIN { # Initialization goes here
 		# Here we should localize only those which values are changed implicitly
 		# or indirectly: exceptions, signals...
 		# In a word those circumstances your code can not control
-		# local $_ =  $DB::context[4];
+		# local $_ =  $DB::context[4]; (See commit:035e182e4f )
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $package;\n#line 1\n$expr";
@@ -964,7 +946,7 @@ BEGIN { # Initialization goes here
 				$sub =  "$DB::args[1]::$DB::args[0]";
 			}
 			else {
-				$sub =  $DB::_sub;
+				$sub =  $DB::_sub; #FIX: remove global
 			}
 
 			($f, $l) =  (caller $lvl)[1,2];
@@ -1124,80 +1106,189 @@ sub postponed {
 
 
 
+our %sig =  (()
+	,trap    =>  \&trap
+	,untrap  =>  \&untrap
+	,call    =>  \&call
+	,uncall  =>  \&uncall
+	,trace   =>  \&trace
+	,untrace =>  \&untrace
+	,stop    =>  \&stop
+	,unstop  =>  \&unstop
+	,frame   =>  \&frame
+	,unframe =>  \&unframe
+);
+
+sub reg {
+	my( $sig, $name, @extra ) =  @_;
+
+	return $DB::sig{ $sig }->( $name, @extra );
+}
+
+sub unreg {
+	my( $sig, $name, @extra ) =  @_;
+
+	return $DB::sig{ "un$sig" }->( $name, @extra );
+}
+
+
+
+sub trap {
+	my( $name, $file, $line ) =  @_;
+	my $traps =  DB::traps( $file );
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$traps->{ $line }{ $name };
+}
+
+
+
+sub untrap {
+	my( $name, $file, $line ) =  @_;
+	my $traps =  DB::traps( $file );
+
+	#TODO: clear all traps in all files
+	#TODO: clear all specific traps, maybe in all files
+	delete $traps->{ $line }{ $name };
+
+	# Remove info about trap from perl internals if no common traps left
+	# After this &DB::DB will not be called for this line
+	unless( keys %{ $traps->{ $line } } ) {
+		# NOTICE: Deleting a key does not remove a breakpoint for that line
+		# Because key deleting from common hash does not update internal info
+		# TODO: bug report
+		# WORKAROUND: we should explicitly set value to 0 to signal perl
+		# internals there is no trap anymore then delete the key
+		$traps->{ $line } =  0;
+		delete $traps->{ $line };
+	}
+	#IT: Deleting one subscriber should keep others
+
+	return;
+}
+
+
+
+sub call {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_call' );
+	$subscribers =  DB::state( 'on_call', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub uncall {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_call' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_call', undef )   unless keys %$subscribers;
+}
+
+
+
+sub trace {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_trace' );
+	$subscribers =  DB::state( 'on_trace', {} )   unless $subscribers;
+
+	$DB::trace =  1;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub untrace {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_trace' );
+
+	delete $subscribers->{ $name };
+	unless( keys %$subscribers ) {
+		$DB::trace =  0;
+		DB::state( 'on_trace', undef );
+	}
+}
+
+
+
+sub stop {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_stop' );
+	$subscribers =  DB::state( 'on_stop', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub unstop {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_stop' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_stop', undef )   unless keys %$subscribers;
+}
+
+
+
+sub frame {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_frame' );
+	$subscribers =  DB::state( 'on_frame', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub unframe {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_frame' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_frame', undef )   unless keys %$subscribers;
+}
+
+
+
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB_my {
 	&save_context;
 	establish_cleanup \&restore_context;
 
 	my( $p, $f, $l ) =  init();
-
-
-
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
-	my $steps_left =  DB::state( 'steps_left' );
-	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
-
-
-	# Clear command state after it is finished
-	DB::state( 'on_frame', undef );
 
 
 	my $stop =  0;
 	my $traps =  DB::traps();
+	my $trap =  $traps->{ state( 'line' ) };
+
+	for my $key ( keys %$trap ) {
+		next   unless $key =~ /^_/;
+
+		$stop ||=  process( $trap->{ $key } );
+	}
+	#TODO: implement through reduce
+
+
+
 	if( my $trap =  $traps->{ state( 'line' ) } ) {
-		# NOTE: the stop events are not exclusive so we can not use elsif
-		# FIX: rename: action -> actions
-		if( exists $trap->{ action } ) {
-			# Run all actions
-			for my $action ( @{ $trap->{ action } } ) {
-				# NOTICE: if we do not use scall the $DB::file:$DB::line is broken
-				scall( \&process, $action, 1 );
-			}
-
-			# Actions do not stop execution
-			$stop ||=  0;
-		}
-
-		# Stop on watch expression
-		if( exists $trap->{ watches } ) {
-			# Calculate new values for watch expressions
-			for my $watch_item ( @{ $trap->{ watches } } ) {
-				# FIX: why we use [ undef ]
-				$watch_item->{ old } =  $watch_item->{ new } // [ undef ];
-				$watch_item->{ new } =  [ DB::eval( $watch_item->{ expr } ) ];
-			}
-
-			# The 'watch' method should compare 'old' and 'new' values and return
-			# true value if they are differ. Additionaly it may print to $DB::OUT
-			# to show comparison results
-			$stop ||=  mcall( 'watch', $DB::dbg, $trap->{ watches } );
-		}
-
-		# Stop if onetime trap
-		if( exists $trap->{ onetime } ) {
-			# Delete temporary breakpoint
-			delete $trap->{ onetime };
-
-			# Remove info about trap from perl internals if no common traps left
-			unless( keys %$trap ) {
-				# Just trap deleting does not help. We should signal internals
-				# about that we should not stop here anymore
-				$traps->{ state( 'line' ) } =  0; # Perl does not do this automanically. Why?
-				delete $traps->{ state( 'line' ) };
-			}
-
-			$stop ||=  1;
-		}
-
-		# Stop if trap is not disabled and condition evaluated to TRUE value
-		if( !exists $trap->{ disabled }
-			&&  exists $trap->{ condition }  &&  DB::eval( $trap->{ condition } )
-		) {
-			$stop ||=  1;
-		}
 	}
 	# We ensure here that we stopped by $DB::trace and not any of:
 	# trap, single, signal
@@ -1209,10 +1300,17 @@ sub DB_my {
 	}
 	# TODO: elseif $DB::signal
 
-	return   unless $stop || $DB::single || $DB::signal;
+
+	my $confirm =  1;
+	my $ev =  DB::state( 'on_stop' ) // {};
+	for( keys %$ev ) {
+		$confirm &&=  process( $ev->{ $_ }, $p, $f, $l );
+	}
+
+	#IT: stop on breakpoint while stepping
+	return   unless $stop  ||  $DB::single && $confirm  ||  $DB::signal;
 	# Stop if required or we are in step-by-step mode
 
-	# TODO: Implement on_stop event
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
 	mcall( 'bbreak', $DB::dbg );
@@ -1259,10 +1357,16 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my( $str, $quiet ) =  @_;
+	my $str =  shift;
 
-	my @args =  ( $DB::dbg, $str );
-	my $code =  $DB::dbg->can( 'process' );
+	my $code =  (ref $str eq 'HASH')
+		? $str->{ code }
+		: $DB::dbg->can( 'process' )
+	;
+
+	#TODO: assert unless $code;
+
+	my @args =  ( $DB::dbg, $str, @_ );
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
 		# TRUE    : command found, keep interaction
@@ -1274,11 +1378,22 @@ sub process {
 		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
 			@args =  DB::eval( $result->{ expr } );
+
+			redo PROCESS;
+		}
+		elsif( ref $result eq 'ARRAY' ) {
+			$code =  shift @$result;
+			@args =  ();
+			for my $expr ( @$result ) {
+				#TODO: IT: $expr that is subcommand
+				push @args, [ process( $expr, 1 ) ];
+			}
+
 			redo PROCESS;
 		}
 
 
-		return $result   unless $result == 0;
+		return $result   unless $result == 0  &&  !ref $str;
 	}
 
 	# else no such command exists the entered string will be evaluated
@@ -1287,7 +1402,7 @@ sub process {
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
-	elsif( !$quiet ) {
+	elsif( !@_ ) { # Dump results if we do not require them
 		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
 		@result =  map{ $_ // $DB::options{ undef } } @result;
 		local $" =  $DB::options{ '"' }  //  $";
@@ -1303,6 +1418,7 @@ sub process {
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
 
+	return @result   if @_;
 	return 0;
 }
 
@@ -1342,10 +1458,11 @@ sub goto {
 	return   unless $options{ trace_goto };
 	return   if DB::state( 'inDB' );
 
+	DB::state( 'inDB', 1 );
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	# scall( \&push_frame2, 'G' );
-	push_frame2( 'G' );
+	push_frame( 'G' );
+	DB::state( 'inDB', undef )
 };
 
 
@@ -1397,7 +1514,8 @@ sub push_frame2 {
 		test();
 		3;
 	}
-	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $DB::sub\n"   if DB::state( 'ddd' );
+	my $sub =  $DB::sub;
+	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n"   if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
 		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
@@ -1420,33 +1538,36 @@ sub push_frame2 {
 			,file        =>  $stack->[-1]{ file    }
 			,line        =>  $stack->[-1]{ line    }
 			,single      =>  $stack->[-1]{ single  }
-			,sub         =>  $DB::sub
+			,sub         =>  $sub
 			,goto_frames =>  []
 			,type        =>  $_[0]
 		};
-		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
-		push @{ $stack }, $frame;
 
-		# DB::state( 'goto_frames', [] );
+
+		my $ev =  DB::state( 'on_frame' ) // {};
+		for( keys %$ev ) {
+			process( $ev->{ $_ }, $frame );
+		}
+
+		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
+		# Think about this feature: if( $confirm ) {
+		push @{ $stack }, $frame;
 	}
 	else {
 		push @{ DB::state( 'goto_frames' ) },
-			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $DB::sub, $_[0] ]
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $sub, $_[0] ]
 	}
 
 
+	my $ev =  DB::state( 'on_call' ) // {};
+	for( keys %$ev ) {
+		process( $ev->{ $_ }, $sub );
+	}
+
+	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
 		$DB::dbg->trace_subs();
 	}
-
-	# Stop on the first OP in a given subroutine
-	my $sis =  \%DB::stop_in_sub;
-	DB::state( 'single', 1 )
-		# First of all we check full match ...
-		if $sis->{ $DB::sub }
-		# ... then check not disabled partially matched subnames
-		|| grep{ $sis->{ $_ }  &&  $DB::sub =~ m/$_$/ } keys %$sis;
-		# TODO: implement condition to stop on
 }
 }
 
