@@ -838,7 +838,7 @@ $DB::commands =  {()
 		# We stop on it uncoditionally, also we can not disable it
 		if( defined $tmp ) {
 			my $data =  DB::reg( 'trap', '_onetime', $file, $line );
-			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ), 1 };
+			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ); 1 };
 		}
 		else {
 			my $data =  DB::reg( 'trap', '_breakpoint', $file, $line );
