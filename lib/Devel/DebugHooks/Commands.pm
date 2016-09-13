@@ -739,16 +739,13 @@ $DB::commands =  {()
 			# A: No. You may remove required keys. Maybe *subname?
 		}
 		else {
+			#FIX: this is copy/paste block. see above
 			$line     =  DB::state( 'line' )   if $line eq '.';
 			my $traps =  DB::traps( file( $file, 1 ) );
 			return -1   unless exists $traps->{ $line };
 
-
-			# Q: Why deleting a key does not remove a breakpoint for that line?
-			# A: Because this is the internal hash
-			# WORKAROUND: we should explicitly set value to 0 then delete the key
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
+			# TODO: remove only one action
+			DB::unreg( 'trap', '_breakpoint', $file, $line );
 		}
 
 
@@ -971,17 +968,13 @@ $DB::commands =  {()
 		my( $file, $line ) =  shift =~ m/^${file_line}$/;
 
 
+		#FIX: this is copy/paste block. see above
 		$line     =  DB::state( 'line' )   if $line eq '.';
 		my $traps =  DB::traps( file( $file, 1 ) );
 		return -1   unless exists $traps->{ $line };
 
-
-		# TODO: remove only one action by number
-		delete $traps->{ $line }{ action };
-		unless( keys %{ $traps->{ $line } } ) {
-			$traps->{ $line } =  0;
-			delete $traps->{ $line };
-		}
+		# TODO: remove only one action
+		DB::unreg( 'trap', '_action', $file, $line );
 
 		1;
 	}
