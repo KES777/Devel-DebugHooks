@@ -534,8 +534,17 @@ $DB::commands =  {()
 		$_->{ single } =  1   for @$stack[ -$stack_size .. -$frames_out-1 ];
 
 		# Do not stop if subcall is maden
-		$stack->[ -$frames_out -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  }
-			if $leave_chain  &&  $frames_out < $stack_size; # have parent frame
+		if( $leave_chain  &&  $frames_out < $stack_size ) { # have parent frame
+			my $handler =  DB::reg( 'call', 'step_over' );
+			# FIX: move 'on_frame' handler code to upper frames if we leave current one
+			$$handler->{ code } =  sub{ DB::state( 'single', 0 ); 1 };
+			$handler =  DB::reg( 'stop', 'step_over' );
+			$$handler->{ code } =  sub{
+				DB::unreg( 'stop', 'step_over' );
+				DB::unreg( 'call', 'step_over' );
+				1;
+			};
+		}
 
 		return;
 	}
@@ -561,10 +570,18 @@ $DB::commands =  {()
 	,n => sub {
 		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
 
-		my $stack =  DB::state( 'stack' );
 		# Do not stop if subcall is maden
-		$stack->[ -1 ]{ on_frame } =  sub{ $_[0]{ single } =  0  };
+		my $handler =  DB::reg( 'frame', 'step_over' );
+		# FIX: move handler code to upper frames if we leave current one
+		$$handler->{ code } =  sub{ $_[2]{ single } =  0; 1 };
+		$handler =  DB::reg( 'stop', 'step_over' );
+		$$handler->{ code } =  sub{
+			DB::unreg( 'stop', 'step_over' );
+			DB::unreg( 'frame', 'step_over' );
+			1;
+		};
 
+		my $stack =  DB::state( 'stack' );
 		# If the current OP is last OP in this sub we stop at *some* outer frame
 		$_->{ single } =  2   for @$stack;
 

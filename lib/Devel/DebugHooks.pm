@@ -526,7 +526,6 @@ BEGIN {
 		,'*'         =>  \&dbg_vrbl
 		,single      =>  \&int_vrbl
 		,on_frame    =>  \&frm_vrbl
-		,_on_frame   =>  \&frm_vrbl
 		,file        =>  \&frm_vrbl
 		,goto_frames =>  \&frm_vrbl
 		,line        =>  \&frm_vrbl
@@ -1215,8 +1214,8 @@ sub unstop {
 
 sub frame {
 	my( $name ) =  @_;
-	my $subscribers =  DB::state( '_on_frame' );
-	$subscribers =  DB::state( '_on_frame', {} )   unless $subscribers;
+	my $subscribers =  DB::state( 'on_frame' );
+	$subscribers =  DB::state( 'on_frame', {} )   unless $subscribers;
 
 	# HACK: Autovivify subscriber if it does not exists yet
 	# Glory Perl. I love it!
@@ -1227,10 +1226,10 @@ sub frame {
 
 sub unframe {
 	my( $name ) =  @_;
-	my $subscribers =  DB::state( '_on_frame' );
+	my $subscribers =  DB::state( 'on_frame' );
 
 	delete $subscribers->{ $name };
-	DB::state( '_on_frame', undef )   unless keys %$subscribers;
+	DB::state( 'on_frame', undef )   unless keys %$subscribers;
 }
 
 
@@ -1250,10 +1249,6 @@ sub my_DB {
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 	my $steps_left =  DB::state( 'steps_left' );
 	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
-
-
-	# Clear command state after it is finished
-	DB::state( 'on_frame', undef );
 
 
 	my $stop =  0;
@@ -1524,9 +1519,8 @@ sub push_frame2 {
 			,type        =>  $_[0]
 		};
 
-		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
 
-		my $ev =  DB::state( '_on_frame' ) // {};
+		my $ev =  DB::state( 'on_frame' ) // {};
 		for( keys %$ev ) {
 			process( $ev->{ $_ }, $frame );
 		}
