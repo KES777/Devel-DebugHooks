@@ -55,6 +55,12 @@ is
 	,$files->{ 'action' }
 	,"Set action at line";
 
+is
+	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` )
+	,$files->{ 'action & steps' }
+	,"Do not skip action when we do K steps";
+print n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` );
+
 
 
 __DATA__
@@ -62,3 +68,7 @@ __DATA__
 -e:0001  1;
 YES
 -e:0002  2;
+@@ action & steps
+-e:0001  1;
+YES
+-e:0003  3;

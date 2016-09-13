@@ -89,6 +89,12 @@ is
 	,$files->{ 'enabled trap' }
 	,"Add enabled trap with default condition";
 
+is
+	n( `$^X $lib -d:DbInteract='b 2;s 2;q' -e '$script'` )
+	,$files->{ 'dont miss traps' }
+	,"Stop on trap even if we do many steps at once";
+
+
 
 ($script =  <<'PERL') =~ s#^\t##gm;
 	sub t1 {
@@ -220,6 +226,9 @@ Breakpoints:
 0 -e
   3  : 1
 Stop on subs:
+@@ dont miss traps
+-e:0001  1;
+-e:0002  2;
 @@ stop by line in sub
 -e:0008  t2();
 -e:0002    1;
