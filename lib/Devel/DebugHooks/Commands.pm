@@ -316,6 +316,8 @@ sub watch_checker {
 
 
 
+#TODO: I: global watch when we do not rely on $file:$line and just watching
+# this expression at any place it is mentioned
 sub watch {
 	my( $file, $line, $expr ) =  shift =~ m/^${file_line}(?:\s+(.+))?$/;
 
@@ -731,6 +733,7 @@ $DB::commands =  {()
 				$subname =  DB::state( 'goto_frames' )->[ -1 ][ 3 ];
 				return -1   if ref $subname; # can not set trap on coderef
 			}
+			#FIX: use debugger instance states not globals
 			delete $DB::stop_in_sub{ $subname };
 			# Q: Should we remove all matched keys?
 			# A: No. You may remove required keys. Maybe *subname?
@@ -749,6 +752,7 @@ $DB::commands =  {()
 		}
 
 
+		#TODO? use &DB::process
 		$DB::commands->{ b }->()   if $opts->{ verbose };
 
 		1;

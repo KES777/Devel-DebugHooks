@@ -690,6 +690,8 @@ BEGIN { # Initialization goes here
 
 		# Returns hashref of traps for $filename keyed by $line
 		sub traps {
+			#TODO: remove default because current position != view position
+			# this makes confusion
 			my $filename =  shift // state( 'file' );
 
 			return   unless file( $filename );
@@ -944,7 +946,7 @@ BEGIN { # Initialization goes here
 				$sub =  "$DB::args[1]::$DB::args[0]";
 			}
 			else {
-				$sub =  $DB::_sub;
+				$sub =  $DB::_sub; #FIX: remove global
 			}
 
 			($f, $l) =  (caller $lvl)[1,2];
@@ -1202,6 +1204,7 @@ sub my_DB {
 
 		$stop ||=  process( $trap->{ $key } );
 	}
+	#TODO: implement through reduce
 
 
 
