@@ -526,6 +526,7 @@ BEGIN {
 		,'*'         =>  \&dbg_vrbl
 		,single      =>  \&int_vrbl
 		,on_frame    =>  \&frm_vrbl
+		,_on_frame   =>  \&frm_vrbl
 		,file        =>  \&frm_vrbl
 		,goto_frames =>  \&frm_vrbl
 		,line        =>  \&frm_vrbl
@@ -1113,6 +1114,8 @@ our %sig =  (()
 	,uncall  =>  \&uncall
 	,stop    =>  \&stop
 	,unstop  =>  \&unstop
+	,frame   =>  \&frame
+	,unframe =>  \&unframe
 );
 
 sub reg {
@@ -1187,6 +1190,7 @@ sub uncall {
 }
 
 
+
 sub stop {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_stop' );
@@ -1205,6 +1209,28 @@ sub unstop {
 
 	delete $subscribers->{ $name };
 	DB::state( 'on_stop', undef )   unless keys %$subscribers;
+}
+
+
+
+sub frame {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( '_on_frame' );
+	$subscribers =  DB::state( '_on_frame', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub unframe {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( '_on_frame' );
+
+	delete $subscribers->{ $name };
+	DB::state( '_on_frame', undef )   unless keys %$subscribers;
 }
 
 
@@ -1499,6 +1525,14 @@ sub push_frame2 {
 		};
 
 		$stack->[ -1 ]{ on_frame }( $frame )   if exists $stack->[ -1 ]{ on_frame };
+
+		my $ev =  DB::state( '_on_frame' ) // {};
+		for( keys %$ev ) {
+			process( $ev->{ $_ }, $frame );
+		}
+
+		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
+		# Think about this feature: if( $confirm ) {
 		push @{ $stack }, $frame;
 	}
 	else {
