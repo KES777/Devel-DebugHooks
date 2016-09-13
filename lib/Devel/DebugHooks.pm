@@ -1271,7 +1271,6 @@ sub DB_my {
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
-	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
 
 
@@ -1287,18 +1286,7 @@ sub DB_my {
 	#TODO: implement through reduce
 
 
-
-	if( my $trap =  $traps->{ state( 'line' ) } ) {
-	}
-	# We ensure here that we stopped by $DB::trace and not any of:
-	# trap, single, signal
-	elsif( $DB::trace  &&  !$DB::single  &&  !$DB::signal ) {
-		# FIX? Actually the '$DB::trace' were processed when we do
-		# mcall( 'trace_line', $DB::dbg )
-		# So this condition block is pretty useless
-		$stop ||=  0;
-	}
-	# TODO: elseif $DB::signal
+	#TODO: $DB::signal $DB::trace
 
 
 	my $confirm =  1;
