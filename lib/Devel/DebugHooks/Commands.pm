@@ -490,6 +490,17 @@ sub stop_on_line {
 }
 
 
+
+sub step_done {
+	my( undef, $data ) =  @_;
+	return   if --$data->{ steps_left };
+
+	DB::unreg( 'stop', 'step' );
+	return 1;
+};
+
+
+
 $DB::commands =  {()
 	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
@@ -554,7 +565,11 @@ $DB::commands =  {()
 	# Because current OP maybe the last OP in sub. It also maybe the last OP in
 	# the outer frame. And so on.
 	,s => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
 
 		$_->{ single } =  1   for @{ DB::state( 'stack' ) };
 
@@ -568,7 +583,12 @@ $DB::commands =  {()
 	# After that sub returns $DB::single will be restored because of localizing
 	# Therefore DB::DB will be called at the first OP followed this sub call
 	,n => sub {
-		DB::state( 'steps_left', $1 )   if shift =~ m/^(\d+)$/;
+		if( shift =~ m/^(\d+)$/ ) {
+			my $handler =  DB::reg( 'stop', 'step' );
+			$$handler->{ code } =  \&step_done;
+			$$handler->{ steps_left } =  $1;
+		}
+
 
 		# Do not stop if subcall is maden
 		my $handler =  DB::reg( 'frame', 'step_over' );

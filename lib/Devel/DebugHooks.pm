@@ -1111,6 +1111,8 @@ our %sig =  (()
 	,untrap  =>  \&untrap
 	,call    =>  \&call
 	,uncall  =>  \&uncall
+	,trace   =>  \&trace
+	,untrace =>  \&untrace
 	,stop    =>  \&stop
 	,unstop  =>  \&unstop
 	,frame   =>  \&frame
@@ -1190,6 +1192,33 @@ sub uncall {
 
 
 
+sub trace {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_trace' );
+	$subscribers =  DB::state( 'on_trace', {} )   unless $subscribers;
+
+	$DB::trace =  1;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub untrace {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_trace' );
+
+	delete $subscribers->{ $name };
+	unless( keys %$subscribers ) {
+		$DB::trace =  0;
+		DB::state( 'on_trace', undef );
+	}
+}
+
+
+
 sub stop {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_stop' );
@@ -1240,15 +1269,10 @@ sub my_DB {
 	establish_cleanup \&restore_context;
 
 	my( $p, $f, $l ) =  init();
-
-
-
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	#FIX: actions are skipped for `s 5` command
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
-	my $steps_left =  DB::state( 'steps_left' );
-	return   if $steps_left && DB::state( 'steps_left', $steps_left -1 );
 
 
 	my $stop =  0;
