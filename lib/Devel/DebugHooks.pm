@@ -1111,6 +1111,8 @@ our %sig =  (()
 	,untrap  =>  \&untrap
 	,call    =>  \&call
 	,uncall  =>  \&uncall
+	,stop    =>  \&stop
+	,unstop  =>  \&unstop
 );
 
 sub reg {
@@ -1185,6 +1187,28 @@ sub uncall {
 }
 
 
+sub stop {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_stop' );
+	$subscribers =  DB::state( 'on_stop', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub unstop {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_stop' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_stop', undef )   unless keys %$subscribers;
+}
+
+
+
 # TODO: implement: on_enter, on_leave, on_compile
 sub my_DB {
 	&save_context;
@@ -1231,10 +1255,17 @@ sub my_DB {
 	}
 	# TODO: elseif $DB::signal
 
-	return   unless $stop || $DB::single || $DB::signal;
+
+	my $confirm =  1;
+	my $ev =  DB::state( 'on_stop' ) // {};
+	for( keys %$ev ) {
+		$confirm &&=  process( $ev->{ $_ }, $p, $f, $l );
+	}
+
+	#IT: stop on breakpoint while stepping
+	return   unless $stop  ||  $DB::single && $confirm  ||  $DB::signal;
 	# Stop if required or we are in step-by-step mode
 
-	# TODO: Implement on_stop event
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
 	mcall( 'bbreak', $DB::dbg );
