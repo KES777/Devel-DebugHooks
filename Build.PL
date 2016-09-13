@@ -11,6 +11,8 @@ my $build = Module::Build->new(
 		'Sub::Metadata'  =>  0,
 		'B::Deparse'     =>  0,
 		'Data::Dump'     =>  0,
+		'PadWalker'      =>  0,
+		'Package::Stash' =>  0,
 		'perl'           =>  '5.12.0',
 	},
 	recommends         => {
