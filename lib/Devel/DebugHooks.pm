@@ -763,16 +763,9 @@ BEGIN { # Initialization goes here
 		DB::state( 'inDB', undef );
 
 
+		# Read BEWARE at DebugHooks.pod about localization of globals
 		local $^D;
-		# FIX: when we eval user's sub the main script frame is changed
-
-		# BEWARE: We should local'ize every global variable the debugger make change
-		# If we forgot that we will hurt user's context.
-		# Here we should localize only those which values are changed implicitly
-		# or indirectly: exceptions, signals...
-		# In a word those circumstances your code can not control
-		# local $_ =  $DB::context[4]; (See commit:035e182e4f )
-
+		local $_ =  $DB::context[5];
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $package;\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
@@ -1125,10 +1118,43 @@ sub reg {
 	return $DB::sig{ $sig }->( $name, @extra );
 }
 
+
+
 sub unreg {
 	my( $sig, $name, @extra ) =  @_;
 
 	return $DB::sig{ "un$sig" }->( $name, @extra );
+}
+
+
+
+sub emit {
+	my( $name, $mult ) =  ( shift, shift );
+
+	# Get subscribers for the event
+	my $ev; { no strict 'refs'; $ev =  &{ "${name}_info" }( @_ ); }
+
+	my $res;
+	#TODO: implement through reduce
+	if( $mult ) {
+		$res =  1;
+		$res &&=  process( $ev->{ $_ }, @_ )   for keys %$ev;
+	}
+	else {
+		$res =  0;
+		$res ||=  process( $ev->{ $_ }, @_ )   for keys %$ev;
+	}
+
+
+	return $res;
+}
+
+
+
+sub trap_info {
+	my( $file, $line ) =  @_;
+
+	return DB::traps( $file )->{ $line };
 }
 
 
@@ -1166,6 +1192,12 @@ sub untrap {
 	#IT: Deleting one subscriber should keep others
 
 	return;
+}
+
+
+
+sub call_info {
+	return DB::state( 'on_call' ) // {};
 }
 
 
@@ -1219,6 +1251,12 @@ sub untrace {
 
 
 
+sub stop_info {
+	return DB::state( 'on_stop' ) // {};
+}
+
+
+
 sub stop {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_stop' );
@@ -1237,6 +1275,12 @@ sub unstop {
 
 	delete $subscribers->{ $name };
 	DB::state( 'on_stop', undef )   unless keys %$subscribers;
+}
+
+
+
+sub frame_info {
+	return DB::state( 'on_frame' ) // {};
 }
 
 
@@ -1272,28 +1316,11 @@ sub DB_my {
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
-
-
-	my $stop =  0;
-	my $traps =  DB::traps();
-	my $trap =  $traps->{ state( 'line' ) };
-
-	for my $key ( keys %$trap ) {
-		next   unless $key =~ /^_/;
-
-		$stop ||=  process( $trap->{ $key } );
-	}
-	#TODO: implement through reduce
-
-
 	#TODO: $DB::signal $DB::trace
 
 
-	my $confirm =  1;
-	my $ev =  DB::state( 'on_stop' ) // {};
-	for( keys %$ev ) {
-		$confirm &&=  process( $ev->{ $_ }, $p, $f, $l );
-	}
+	my $stop    =  emit( 'trap', 0, $f, $l );
+	my $confirm =  emit( 'stop', 1, $p, $f, $l );
 
 	#IT: stop on breakpoint while stepping
 	return   unless $stop  ||  $DB::single && $confirm  ||  $DB::signal;
@@ -1532,10 +1559,7 @@ sub push_frame2 {
 		};
 
 
-		my $ev =  DB::state( 'on_frame' ) // {};
-		for( keys %$ev ) {
-			process( $ev->{ $_ }, $frame );
-		}
+		emit( 'frame', 0, $frame );
 
 		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
 		# Think about this feature: if( $confirm ) {
@@ -1547,10 +1571,7 @@ sub push_frame2 {
 	}
 
 
-	my $ev =  DB::state( 'on_call' ) // {};
-	for( keys %$ev ) {
-		process( $ev->{ $_ }, $sub );
-	}
+	emit( 'call', 0, $sub );
 
 	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
