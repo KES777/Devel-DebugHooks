@@ -763,18 +763,9 @@ BEGIN { # Initialization goes here
 		DB::state( 'inDB', undef );
 
 
+		# Read BEWARE at DebugHooks.pod about localization of globals
 		local $^D;
-
-		# BEWARE: We should local'ize every global variable the debugger make change
-		# If we forgot that we will hurt user's context.
-		# Here we should localize only those which values are changed implicitly
-		# or indirectly: exceptions, signals...
-		# In a word those circumstances your code can not control
-		# local $_ =  $DB::context[4]; (See commit:035e182e4f )
-		# NOTICE: you can not make shift of $_ when try to use short 'for' statement
-		# Q: Should we do additional localization of $_ there instead of here?
 		local $_ =  $DB::context[5];
-
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $package;\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression

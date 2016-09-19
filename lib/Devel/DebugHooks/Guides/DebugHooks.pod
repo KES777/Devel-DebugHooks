@@ -107,3 +107,13 @@ It will be not possible to debug debugger if commands use package global
 variables. Because of second debugger instance use same ::Commands package and
 its variables. Think of this like second thread visit same sub while first
 thread is paused.
+
+
+
+BEWARE:
+When you &DB::eval user code that code may change any global variables. We can
+not take care about all of them. So we localize only those the debugger make
+change. So you should be carefull when run userland code from debugger because
+this code may change global variables. And the state you return to user will
+be slightly different from that when you have stopped on breakpoint.
+See also interesting case commit:035e182e4f.

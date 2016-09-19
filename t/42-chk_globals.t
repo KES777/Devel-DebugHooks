@@ -102,9 +102,24 @@ SKIP: {
 PERL
 
 is
-    n( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` )
-    ,$files->{ '$_ not clash' }
-    ,"Debugger should show user's \@_ and \$_";
+	n( `$^X $lib -d:DbInteract='s 2;\$_;\@_;q' -e '$script'` )
+	,$files->{ '$_ not clash' }
+	,"Debugger should show user's \@_ and \$_";
+
+
+
+($script =  <<'PERL') =~ s#^\t##gm;
+	sub t0 {
+		$_ =  3;
+	}
+	$_ =  1;
+	2;
+PERL
+
+is
+	n( `$^X $lib -d:DbInteract='s;t0();\$_;q' -e '$script'` )
+	,$files->{ 'save context of $_' }
+	,"Evaluating user's code should keep globals intact";
 
 
 
@@ -114,9 +129,9 @@ is
 PERL
 
 is
-    nn( `$^X $lib -d:DbInteract='go 2;\$\@;e \$\@;s' -e '$script'` )
-    ,$files->{ 'keep $@' }
-    ,"Do not change exception message (\$@) at user's script";
+	nn( `$^X $lib -d:DbInteract='go 2;\$\@;e \$\@;s' -e '$script'` )
+	,$files->{ 'keep $@' }
+	,"Do not change exception message (\$@) at user's script";
 
 
 
@@ -136,6 +151,11 @@ __DATA__
 -e:0003  1;
 7
 1 2 3 4 5 6 7
+@@ save context of $_
+-e:0004  $_ =  1;
+-e:0005  2;
+3
+1
 @@ keep $@
 -e:0001  eval { 1/0; };
 -e:0002  print $@;
