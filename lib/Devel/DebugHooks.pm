@@ -764,7 +764,6 @@ BEGIN { # Initialization goes here
 
 
 		local $^D;
-		# FIX: when we eval user's sub the main script frame is changed
 
 		# BEWARE: We should local'ize every global variable the debugger make change
 		# If we forgot that we will hurt user's context.
