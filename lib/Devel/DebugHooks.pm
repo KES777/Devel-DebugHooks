@@ -772,6 +772,9 @@ BEGIN { # Initialization goes here
 		# or indirectly: exceptions, signals...
 		# In a word those circumstances your code can not control
 		# local $_ =  $DB::context[4]; (See commit:035e182e4f )
+		# NOTICE: you can not make shift of $_ when try to use short 'for' statement
+		# Q: Should we do additional localization of $_ there instead of here?
+		local $_ =  $DB::context[5];
 
 		local @_ =  @{ $DB::context[0] };
 		eval "$usercontext; package $package;\n#line 1\n$expr";
