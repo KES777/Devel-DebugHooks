@@ -1118,10 +1118,35 @@ sub reg {
 	return $DB::sig{ $sig }->( $name, @extra );
 }
 
+
+
 sub unreg {
 	my( $sig, $name, @extra ) =  @_;
 
 	return $DB::sig{ "un$sig" }->( $name, @extra );
+}
+
+
+
+sub emit {
+	my( $name, $mult ) =  ( shift, shift );
+
+	# Get subscribers for the event
+	my $ev =  do{ no strict 'refs'; &{ "${name}_info" }( @_ ); }
+
+	my $res;
+	#TODO: implement through reduce
+	if( $mult ) {
+		$res =  0;
+		$res ||=  process( $ev->{ $_ }, @_ )   for keys %$ev;
+	}
+	else {
+		$res =  0;
+		$res ||=  process( $ev->{ $_ }, @_ )   for keys %$ev;
+	}
+
+
+	return $res;
 }
 
 
