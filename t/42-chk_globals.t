@@ -40,11 +40,11 @@ sub nl {
 
 
 sub nn {
-    $_ =  n( @_ );
+	$_ =  n( @_ );
 
-    s#( at ).*$#$1...#gm;    # Remove file:line info
+	s#( at ).*$#$1...#gm;    # Remove file:line info
 
-    $_;
+	$_;
 }
 
 
@@ -68,12 +68,12 @@ is
 
 
 SKIP: {
-    eval { require List::Util };
-    skip "List::Util is not installed"   if $@;
+	eval { require List::Util };
+	skip "List::Util is not installed"   if $@;
 	skip "List::Util v1.29 required"
 		if $List::Util::VERSION < 1.29;
 
-    List::Util->import( qw/ pairmap / );
+	List::Util->import( qw/ pairmap / );
 
 
 	($script =  <<'	PERL') =~ s#^\t+##gm;
@@ -96,9 +96,9 @@ SKIP: {
 
 
 ($script =  <<'PERL') =~ s#^\t##gm;
-    $_ =  7;
-    @_ = ( 1..$_ );
-    1;
+	$_ =  7;
+	@_ =  ( 1..$_ );
+	1;
 PERL
 
 is
@@ -132,8 +132,8 @@ __DATA__
 4
 1 - 23 - 4
 @@ $_ not clash
--e:0001      $_ =  7;
--e:0003      1;
+-e:0001  $_ =  7;
+-e:0003  1;
 7
 1 2 3 4 5 6 7
 @@ keep $@
