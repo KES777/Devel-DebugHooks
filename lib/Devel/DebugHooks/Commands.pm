@@ -103,10 +103,10 @@ sub _list {
 
 		# Print flags
 		if( exists $traps->{ $line } ) {
-			print $DB::OUT exists $traps->{ $line }{ _action } ? 'a' : ' ';
-			print $DB::OUT exists $traps->{ $line }{ _onetime } ? '!'
-				: exists $traps->{ $line }{_breakpoint}{ disabled }? '-'
-				: exists $traps->{ $line }{_breakpoint}{ condition }? 'b' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ action } ? 'a' : ' ';
+			print $DB::OUT exists $traps->{ $line }{ onetime } ? '!'
+				: exists $traps->{ $line }{ breakpoint }{ disabled  }? '-'
+				: exists $traps->{ $line }{ breakpoint }{ condition }? 'b' : ' ';
 		}
 		else {
 			print $DB::OUT '  ';
@@ -329,11 +329,11 @@ sub watch {
 
 	unless( $expr ) {
 		for( defined $line ? ( $line ) : sort{ $a <=> $b } keys %$traps ) {
-			next   unless exists $traps->{ $_ }{ _watch };
+			next   unless exists $traps->{ $_ }{ watch };
 
 			print $DB::OUT "line $_:\n";
 			print $DB::OUT "  " .dd( $_ ) ."\n"
-				for @{ $traps->{ $_ }{ _watch } };
+				for @{ $traps->{ $_ }{ watch } };
 		}
 
 		return 1;
@@ -345,7 +345,7 @@ sub watch {
 	}
 
 
-	my $data =  DB::reg( 'trap', '_watch', $file, $line );
+	my $data =  DB::reg( 'trap', 'watch', $file, $line );
 	$$data->{ code } =  \&get_expr;
 	# We do not know $expr result until eval it
 	$$data->{ eval }{ $expr } =  undef;
@@ -447,7 +447,7 @@ sub action {
 	}
 
 
-	my $data =  DB::reg( 'trap', '_action', $file, $line );
+	my $data =  DB::reg( 'trap', 'action', $file, $line );
 	#FIX: register callback only once at some global structure
 	$$data->{ code } =  \&get_expr_a;
 	push @{ $$data->{ eval } }, $expr;
@@ -782,7 +782,7 @@ $DB::commands =  {()
 			return -1   unless exists $traps->{ $line };
 
 			# TODO: remove only one action
-			DB::unreg( 'trap', '_breakpoint', $file, $line );
+			DB::unreg( 'trap', 'breakpoint', $file, $line );
 		}
 
 
@@ -833,15 +833,15 @@ $DB::commands =  {()
 					# FIX: the trap may be in form '293 => {}' in this case
 					# we do not see it ever
 					# next   unless exists $traps->{ $_ }{_breakpoint}{ condition }
-					# 	||  exists $traps->{ $_ }{_breakpoint}{ _onetime }
-					# 	||  exists $traps->{ $_ }{_breakpoint}{ disabled }
+					# 	||  exists $traps->{ $_ }{ breakpoint }{ onetime }
+					# 	||  exists $traps->{ $_ }{ breakpoint }{ disabled }
 					# 	;
 
 					printf $DB::OUT "  %-3d%s %s\n"
 						,$_
-						,exists $traps->{ $_ }{ _onetime }      ? '!'
-							:(exists $traps->{ $_ }{_breakpoint}{ disabled } ? '-' : ':')
-						,$traps->{ $_ }{_breakpoint}{ condition }
+						,exists $traps->{ $_ }{ onetime }      ? '!'
+							:(exists $traps->{ $_ }{ breakpoint }{ disabled } ? '-' : ':')
+						,$traps->{ $_ }{ breakpoint }{ condition }
 						;
 
 					warn "The breakpoint at $_ is zero and should be deleted"
@@ -875,11 +875,11 @@ $DB::commands =  {()
 		# One time trap just exists or not.
 		# We stop on it uncoditionally, also we can not disable it
 		if( defined $tmp ) {
-			my $data =  DB::reg( 'trap', '_onetime', $file, $line );
-			$$data->{ code } =  sub{ DB::unreg( 'trap', '_onetime', $file, $line ); 1 };
+			my $data =  DB::reg( 'trap', 'onetime', $file, $line );
+			$$data->{ code } =  sub{ DB::unreg( 'trap', 'onetime', $file, $line ); 1 };
 		}
 		else {
-			my $data =  DB::reg( 'trap', '_breakpoint', $file, $line );
+			my $data =  DB::reg( 'trap', 'breakpoint', $file, $line );
 			$$data->{ code } =  \&stop_on_line;
 
 			# TODO: Move trap from/into $traps into/from $disabled_traps
@@ -1011,7 +1011,7 @@ $DB::commands =  {()
 		return -1   unless exists $traps->{ $line };
 
 		# TODO: remove only one action
-		DB::unreg( 'trap', '_action', $file, $line );
+		DB::unreg( 'trap', 'action', $file, $line );
 
 		1;
 	}
