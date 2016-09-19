@@ -1279,8 +1279,6 @@ sub DB_my {
 	my $trap =  $traps->{ state( 'line' ) };
 
 	for my $key ( keys %$trap ) {
-		next   unless $key =~ /^_/;
-
 		$stop ||=  process( $trap->{ $key } );
 	}
 	#TODO: implement through reduce
