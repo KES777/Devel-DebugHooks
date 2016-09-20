@@ -243,8 +243,7 @@ sub bbreak {
 }
 
 
-package    # hide the package from the PAUSE indexer
-	DB;
+package DB;
 
 # In theory this may break user's code because this usage cause dependencies are loaded
 # in different order under debugger
