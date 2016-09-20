@@ -215,7 +215,7 @@ sub interact {
 
 	unless( $in_progress ) {
 		warn "Interact: " .tinfo()   if $ti;
-		# DB::_all_frames();
+		# DB::orig_frames();
 		# TODO: print promt only when session is active
 		printflush $DB::OUT "\nDBG" .( @_ ? ':' : '>' );
 		$in_progress++;

@@ -253,7 +253,7 @@ use Sub::Metadata qw/ mutate_sub_is_debuggable /;
 
 
 ## Utility subs
-sub _all_frames {
+sub orig_frames {
 	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
 	my( $count, $warn ) =  @_;
 	$count //=  -1; # infinite
@@ -261,7 +261,7 @@ sub _all_frames {
 	my $lvl =  0;
 	# $x  &&  $y = 3 in this case '=' op precedence should be higher then &&
 	while( $count--  &&  (my @frame =  caller( $lvl++ )) ) {
-		$_ =  "ORIG: @frame[0..3,5]\n";
+		$_ =  "@frame[0..3,5]\n";
 		print $DB::OUT $_   unless $warn;
 		warn $_             if $warn;
 	}
@@ -812,7 +812,7 @@ BEGIN { # Initialization goes here
 		}
 
 
-		_all_frames()   if $options{ _all_frames };
+		orig_frames()   if $options{ orig_frames };
 
 
 		# For uninitialized values in frames
