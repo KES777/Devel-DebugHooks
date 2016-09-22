@@ -907,7 +907,7 @@ BEGIN { # Initialization goes here
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		my $method  =  shift;
-		my $context =  shift;
+		my $context =  DB::state( 'instance' );
 		my $sub =  $context->can( $method );
 
 		my $dd =  DB::state( 'dd' ) // 0;
@@ -936,7 +936,7 @@ BEGIN { # Initialization goes here
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
-				$sub =  "$DB::args[1]::$DB::args[0]";
+				$sub =  DB::state( 'instance' ) ."::$DB::args[0]";
 			}
 			else {
 				$sub =  $DB::_sub; #FIX: remove global
@@ -1048,7 +1048,7 @@ sub import { # NOTE: The import is called at CT yet
 	# NOTICE: it is useless to set breakpoints for not compiled files
 	# TODO: spy module loading and set breakpoints
 	#TODO: Config priority: conf, ENV, cmd_line
-	mcall( 'init', $DB::dbg );
+	mcall( 'init' );
 
 
 	# Parse cmd_line options:
@@ -1087,7 +1087,7 @@ sub postponed {
 		my $old_inDB =  DB::state( 'inDB' );
 		DB::state( 'inDB', 1 );
 		#FIX: process exceptions
-		mcall( 'trace_load', $DB::dbg, @_ );
+		mcall( 'trace_load', @_ );
 
 		# When we are in debugger and we require module the execution will be
 		# interrupted and we REENTER debugger
@@ -1315,7 +1315,7 @@ sub DB_my {
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
-	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
+	do{ mcall( 'trace_line' ); }   if $DB::trace;
 	#TODO: $DB::signal $DB::trace
 
 
@@ -1328,9 +1328,9 @@ sub DB_my {
 
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
-	mcall( 'bbreak', $DB::dbg );
+	mcall( 'bbreak' );
 	1 while( defined interact() );
-	mcall( 'abreak', $DB::dbg );
+	mcall( 'abreak' );
 }
 
 
@@ -1451,7 +1451,7 @@ sub interact {
 	# because it prevents us to turn ON debugging by command: { dd } =  1;
 	my $old =  DB::state( 'dd' );
 	DB::state( 'dd', undef );
-	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+	if( my $str =  mcall( 'interact', @_ ) ) {
 		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
@@ -1576,7 +1576,7 @@ sub push_frame2 {
 
 	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
-		mcall( 'trace_subs', $DB::dbg );
+		mcall( 'trace_subs' );
 	}
 }
 }
@@ -1586,7 +1586,7 @@ sub push_frame2 {
 sub trace_returns {
 	DB::state( 'inDB', 1 );
 	#FIX: process exceptions
-	mcall( 'trace_returns', $DB::dbg, @_ );
+	mcall( 'trace_returns', @_ );
 	DB::state( 'inDB', undef );
 }
 
