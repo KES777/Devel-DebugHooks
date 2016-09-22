@@ -428,6 +428,7 @@ sub state {
 
 
 
+	return $instance   if $name eq 'instance';
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug    =>  $debug
