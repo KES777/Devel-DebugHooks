@@ -908,11 +908,12 @@ BEGIN { # Initialization goes here
 	sub mcall {
 		my $method  =  shift;
 		my $context =  DB::state( 'instance' );
-		my $sub =  $context->can( $method );
 
 		my $dd =  DB::state( 'dd' ) // 0;
 		print "mcall ${context}->$method\n"
 			if DB::state( 'ddd' )  ||  $dd >= 2;
+
+		my $sub =  $context->can( $method );
 		scall( $sub, $context, @_ );
 	}
 
