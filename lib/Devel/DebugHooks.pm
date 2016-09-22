@@ -428,6 +428,7 @@ sub state {
 
 
 
+	return $instance   if $name eq 'instance';
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug    =>  $debug
@@ -446,14 +447,16 @@ sub _ddd {
 
 
 sub new {
+
 	# NOTICE: After creating new debugger instance we are in debugger yet
 	# So we set { inDB } flag. It allows us safely initialize new debugger
 	# instance through &DB::state ( see &DB::state ). We do not do that directly
 	# to spy which state and how it is changed when { ddd } is turned on
-	push @$DB::state, { inDB => 1, stack =>  [ {()
+	my $dbg_instance =  bless { inDB => 1, stack =>  [ {()
 		,goto_frames =>  []
 		# ,type => 'D'
-	} ], @_ };
+	} ], @_ }, $DB::dbg;
+	push @$DB::state, $dbg_instance;
 
 	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 		if _ddd;
@@ -904,12 +907,13 @@ BEGIN { # Initialization goes here
 	# TODO: implement $DB::options{ trace_internals }
 	sub mcall {
 		my $method  =  shift;
-		my $context =  shift;
-		my $sub =  $context->can( $method );
+		my $context =  DB::state( 'instance' );
 
 		my $dd =  DB::state( 'dd' ) // 0;
 		print "mcall ${context}->$method\n"
 			if DB::state( 'ddd' )  ||  $dd >= 2;
+
+		my $sub =  $context->can( $method );
 		scall( $sub, $context, @_ );
 	}
 
@@ -933,7 +937,7 @@ BEGIN { # Initialization goes here
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
-				$sub =  "$DB::args[1]::$DB::args[0]";
+				$sub =  DB::state( 'instance' ) ."::$DB::args[0]";
 			}
 			else {
 				$sub =  $DB::_sub; #FIX: remove global
@@ -1045,7 +1049,7 @@ sub import { # NOTE: The import is called at CT yet
 	# NOTICE: it is useless to set breakpoints for not compiled files
 	# TODO: spy module loading and set breakpoints
 	#TODO: Config priority: conf, ENV, cmd_line
-	$DB::dbg->init();
+	mcall( 'init' );
 
 
 	# Parse cmd_line options:
@@ -1084,7 +1088,7 @@ sub postponed {
 		my $old_inDB =  DB::state( 'inDB' );
 		DB::state( 'inDB', 1 );
 		#FIX: process exceptions
-		mcall( 'trace_load', $DB::dbg, @_ );
+		mcall( 'trace_load', @_ );
 
 		# When we are in debugger and we require module the execution will be
 		# interrupted and we REENTER debugger
@@ -1312,7 +1316,7 @@ sub DB_my {
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
-	do{ mcall( 'trace_line', $DB::dbg ); }   if $DB::trace;
+	do{ mcall( 'trace_line' ); }   if $DB::trace;
 	#TODO: $DB::signal $DB::trace
 
 
@@ -1325,9 +1329,9 @@ sub DB_my {
 
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
-	mcall( 'bbreak', $DB::dbg );
+	mcall( 'bbreak' );
 	1 while( defined interact() );
-	mcall( 'abreak', $DB::dbg );
+	mcall( 'abreak' );
 }
 
 
@@ -1379,6 +1383,7 @@ sub process {
 	#TODO: assert unless $code;
 
 	my @args =  ( $DB::dbg, $str, @_ );
+
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
 		# TRUE    : command found, keep interaction
@@ -1447,7 +1452,7 @@ sub interact {
 	# because it prevents us to turn ON debugging by command: { dd } =  1;
 	my $old =  DB::state( 'dd' );
 	DB::state( 'dd', undef );
-	if( my $str =  mcall( 'interact', $DB::dbg, @_ ) ) {
+	if( my $str =  mcall( 'interact', @_ ) ) {
 		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 		#NOTICE: we restore { dd } flag before call to &process and not after
 		# as in case of localization
@@ -1572,7 +1577,7 @@ sub push_frame2 {
 
 	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
-		$DB::dbg->trace_subs();
+		mcall( 'trace_subs' );
 	}
 }
 }
@@ -1582,7 +1587,7 @@ sub push_frame2 {
 sub trace_returns {
 	DB::state( 'inDB', 1 );
 	#FIX: process exceptions
-	mcall( 'trace_returns', $DB::dbg, @_ );
+	mcall( 'trace_returns', @_ );
 	DB::state( 'inDB', undef );
 }
 
