@@ -1045,7 +1045,7 @@ sub import { # NOTE: The import is called at CT yet
 	# NOTICE: it is useless to set breakpoints for not compiled files
 	# TODO: spy module loading and set breakpoints
 	#TODO: Config priority: conf, ENV, cmd_line
-	$DB::dbg->init();
+	mcall( 'init', $DB::dbg );
 
 
 	# Parse cmd_line options:
@@ -1379,6 +1379,7 @@ sub process {
 	#TODO: assert unless $code;
 
 	my @args =  ( $DB::dbg, $str, @_ );
+
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
 		# TRUE    : command found, keep interaction
@@ -1572,7 +1573,7 @@ sub push_frame2 {
 
 	#TODO: implement functionality using API
 	if( $options{ trace_subs } ) {
-		$DB::dbg->trace_subs();
+		mcall( 'trace_subs', $DB::dbg );
 	}
 }
 }
