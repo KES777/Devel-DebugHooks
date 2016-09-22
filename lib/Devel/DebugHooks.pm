@@ -448,7 +448,8 @@ sub _ddd {
 sub new {
 	# NOTICE: After creating new debugger instance we are in debugger yet
 	# So we set { inDB } flag. It allows us safely initialize new debugger
-	# instance through &DB::state ( see &DB::state )
+	# instance through &DB::state ( see &DB::state ). We do not do that directly
+	# to spy which state and how it is changed when { ddd } is turned on
 	push @$DB::state, { inDB => 1, stack =>  [ {()
 		,goto_frames =>  []
 		# ,type => 'D'
@@ -492,13 +493,13 @@ sub DESTROY {
 # to debug it from first OP. We can disable this feature through NonStop option.
 
 our $dbg;            # debugger object/class
-our $package;        # current package
-our $file;           # current file
-our $line;           # current line number
-our @goto_frames;    # save sequence of places where nested gotos are called
+# our $package;        # current package
+# our $file;           # current file
+# our $line;           # current line number
+# our @goto_frames;    # save sequence of places where nested gotos are called
 our $commands;       # hash of commands to interact user with debugger
-our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
-					 # This allows us to spy the DB::'s values for a given frame
+# our @stack;          # array of hashes that keeps aliases of DB::'s ours for current frame
+                       # This allows us to spy the DB::'s values for a given frame
 # our $ddlvl;          # Level of debugger debugging <= @$DB::state
 # our $dbg_call;       # keep silent at DB::sub/lsub while do external call from DB::*
 # our $inDB;           # Flag which shows we are currently in debugger
@@ -508,8 +509,6 @@ our $IN;
 our $OUT;
 our %options;
 our $interaction;    # True if we interact with dbg client
-our %stop_in_sub;    # In this hash the key is a sub name we want to stop on
-					 # maintained at 'trace_subs'
 our $variables;      # Hash which defines behaviour for values available through &DB::state
 	# There three types of variables:
 	# Debugger internal variables -- global values from DB:: package
@@ -540,7 +539,6 @@ BEGIN {
 	$OUT                       //= \*STDOUT;
 
 	#FIX: Where apply 'ddd' from command line?
-	#TODO: Describe why we do not use { inDB } flag here
 	DB::new;
 	DB::state( single =>  $DB::single );
 
