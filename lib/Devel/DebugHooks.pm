@@ -446,14 +446,16 @@ sub _ddd {
 
 
 sub new {
+
 	# NOTICE: After creating new debugger instance we are in debugger yet
 	# So we set { inDB } flag. It allows us safely initialize new debugger
 	# instance through &DB::state ( see &DB::state ). We do not do that directly
 	# to spy which state and how it is changed when { ddd } is turned on
-	push @$DB::state, { inDB => 1, stack =>  [ {()
+	my $dbg_instance =  bless { inDB => 1, stack =>  [ {()
 		,goto_frames =>  []
 		# ,type => 'D'
-	} ], @_ };
+	} ], @_ }, $DB::dbg;
+	push @$DB::state, $dbg_instance;
 
 	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 		if _ddd;
