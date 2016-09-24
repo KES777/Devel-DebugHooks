@@ -1594,6 +1594,12 @@ sub trace_returns {
 
 
 sub push_frame {
+
+	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
+	DB::state( 'inDB', 1 );
+
+	print $DB::OUT "\nCreating frame for $DB::sub\n"   if DB::state( 'ddd' );
+
 	scall( \&push_frame2, @_ );
 
 	if( DB::state( 'ddd' ) ) {
@@ -1601,6 +1607,9 @@ sub push_frame {
 		DB::state( 'stack' );
 		print $DB::OUT "Frame created for $DB::sub\n\n";
 	}
+
+	DB::state( 'inDB', undef );
+	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if _ddd;
 }
 
 
@@ -1626,20 +1635,13 @@ sub sub {
 		return &$DB::sub
 	}
 
-	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
-	sub{ DB::state( 'inDB', 1 ) }->();
-
-
 	# manual localization
-	print $DB::OUT "\nCreating frame for $DB::sub\n"   if DB::state( 'ddd' );
 	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
 	push_frame( 'C' );
 
-	sub{ DB::state( 'inDB', undef ) }->();
-	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if _ddd;
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
