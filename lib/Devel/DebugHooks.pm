@@ -60,8 +60,10 @@ sub init {
 
 
 
+# NOTICE: We do not inherit DB:: interface, we use it
 sub import {
 	DB::import( @_ );
+	# shift->SUPER::import( @_ );
 }
 
 
@@ -1632,6 +1634,8 @@ sub sub {
 		# TODO: Here we may log internall subs call chain
 
 		# sub{ DB::state( 'inDB', undef ) }->();
+		#TODO: Do not create extra frames. Speed optimization?
+		# replace return -> goto
 		return &$DB::sub
 	}
 
