@@ -1405,7 +1405,7 @@ sub process {
 			@args =  ();
 			for my $expr ( @$result ) {
 				#TODO: IT: $expr that is subcommand
-				push @args, [ process( $expr, 1 ) ];
+				push @args, [ process( $expr ) ];
 			}
 
 			redo PROCESS;
@@ -1421,7 +1421,7 @@ sub process {
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
-	elsif( !@_ ) { # Dump results if we do not require them
+	elsif( !wantarray ) { # Dump results if we do not require them
 		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
 		@result =  map{ $_ // $DB::options{ undef } } @result;
 		local $" =  $DB::options{ '"' }  //  $";
@@ -1437,8 +1437,7 @@ sub process {
 	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
 	# print $DB::OUT "\n";
 
-	return @result   if @_;
-	return 0;
+	return   wantarray? @result : 0;
 }
 
 
