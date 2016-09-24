@@ -1375,7 +1375,7 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my $str =  shift;
+	my( $str ) =  @_;
 
 	my $code =  (ref $str eq 'HASH')
 		? $str->{ code }
@@ -1384,7 +1384,7 @@ sub process {
 
 	#TODO: assert unless $code;
 
-	my @args =  ( $DB::dbg, $str, @_ );
+	my @args =  ( $DB::dbg, @_ );
 
 	PROCESS: {
 		# 0 means : no command found so 'eval( $str )' and keep interaction
