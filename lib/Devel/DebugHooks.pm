@@ -1375,10 +1375,10 @@ sub init {
 
 # Get a string and process it.
 sub process {
-	my( $str ) =  @_;
+	my( $expr ) =  @_;
 
-	my $code =  (ref $str eq 'HASH')
-		? $str->{ code }
+	my $code =  (ref $expr eq 'HASH')
+		? $expr->{ code }
 		: $DB::dbg->can( 'process' )
 	;
 
@@ -1387,7 +1387,7 @@ sub process {
 	my @args =  ( $DB::dbg, @_ );
 
 	PROCESS: {
-		# 0 means : no command found so 'eval( $str )' and keep interaction
+		# 0 means : no command found so 'eval( $expr )' and keep interaction
 		# TRUE    : command found, keep interaction
 		# HASHREF : eval given { expr } and pass results to { code }
 		# negative: something wrong happened while running the command
@@ -1396,7 +1396,7 @@ sub process {
 
 		if( ref $result eq 'HASH' ) {
 			$code =  $result->{ code };
-			@args =  DB::eval( $result->{ expr } );
+			@args =  process( $result->{ expr } );
 
 			redo PROCESS;
 		}
@@ -1412,12 +1412,12 @@ sub process {
 		}
 
 
-		return $result   unless $result == 0  &&  !ref $str;
+		return $result   unless $result == 0  &&  !ref $expr;
 	}
 
 	# else no such command exists the entered string will be evaluated
 	# in __FILE__:__LINE__ context of script we are debugging
-	my @result =  DB::eval( $str );
+	my @result =  DB::eval( $expr );
 	if( $@ ) {
 		print $DB::OUT "ERROR: $@";
 	}
@@ -1429,7 +1429,7 @@ sub process {
 	}
 
 
-	DB::state( 'db.last_eval', $str );
+	DB::state( 'db.last_eval', $expr );
 	#WARNING: NEVER STORE REFERENCE TO EVALUATION RESULT
 	# This will influence to user's script execution under debugger. Data
 	# will not be DESTROY'ed when it leaves its scope because of we refer it
