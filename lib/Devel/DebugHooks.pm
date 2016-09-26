@@ -460,6 +460,9 @@ sub new {
 	} ], @_ }, $DB::dbg;
 	push @$DB::state, $dbg_instance;
 
+	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
+		if @$DB::state > 1;
+
 	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 		if _ddd;
 
