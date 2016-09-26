@@ -206,20 +206,6 @@ sub list {
 		DB::state( 'list.line', $line );
 	}
 	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(&\d*|.+)?$/ ) {
-		my $deparse =  sub {
-			require B::Deparse;
-			my( $coderef ) =  @_;
-			return -3   unless ref $coderef eq 'CODE';
-
-			print $DB::OUT B::Deparse->new("-p", "-sC")
-				->coderef2text( $coderef )
-				,"\n"
-			;
-
-			return 1;
-		};
-
-
 		# 1.Deparse the current sub or n frames before
 		# TODO: Check is it possible to spy subs from goto_frames?
 		# If yes think about interface to access to them ( DB::frames??? )
@@ -233,7 +219,7 @@ sub list {
 			return -4   if $coderef eq ''; # The main:: namespace
 			print $DB::OUT "sub $coderef ";
 			$coderef =  \&$coderef   unless ref $coderef;
-			return $deparse->( $coderef );
+			return deparse( $coderef );
 		}
 
 		# 2. List sub by code ref in the variable
@@ -242,7 +228,7 @@ sub list {
 		# to show breakpoints, lines etc
 		$ref  &&  return {()
 			,expr =>  "\$$subname"
-			,code =>  $deparse
+			,code =>  \&deparse
 		};
 
 
@@ -266,6 +252,21 @@ sub list {
 
 
 	1;
+}
+
+
+
+sub deparse {
+	require B::Deparse;
+	my( $coderef ) =  @_;
+	return -3   unless ref $coderef eq 'CODE';
+
+	print $DB::OUT B::Deparse->new("-p", "-sC")
+		->coderef2text( $coderef )
+		,"\n"
+	;
+
+	return 1;
 }
 
 
