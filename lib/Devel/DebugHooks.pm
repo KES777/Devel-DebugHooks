@@ -1113,6 +1113,8 @@ our %sig =  (()
 	,unstop  =>  \&unstop
 	,frame   =>  \&frame
 	,unframe =>  \&unframe
+	,interact   =>  \&interact
+	,uninteract =>  \&uninteract
 );
 
 sub reg {
@@ -1306,6 +1308,34 @@ sub unframe {
 
 	delete $subscribers->{ $name };
 	DB::state( 'on_frame', undef )   unless keys %$subscribers;
+}
+
+
+
+sub interact_info {
+	return DB::state( 'on_interact' ) // {};
+}
+
+
+
+sub interact {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_interact' );
+	$subscribers =  DB::state( 'on_interact', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub uninteract {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_interact' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_interact', undef )   unless keys %$subscribers;
 }
 
 
