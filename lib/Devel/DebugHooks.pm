@@ -984,6 +984,13 @@ BEGIN { # Initialization goes here
 
 			DB::DESTROY   if DB::state( 'dd' );
 
+			# Enable debugging after current command is finished
+			if( my $debug =  DB::state( 'debug' ) ) {
+				DB::state( 'debug', undef );
+				DB::state( 'dd', $debug );
+			}
+
+
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
