@@ -53,4 +53,55 @@ sub interact {
 
 
 
+sub ninteract {
+	my @initial;
+	my $str =  get_command();
+	return   unless defined $str;
+	my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $str );
+	return   unless defined $result;
+
+	if( $result == 0 ) {
+		# No command found
+		# eval $str; print eval results; goto interact again
+		return[ sub{
+			# Devel::DebugHooks::Commands::dd( @_ );
+
+			# We got ARRAYREF if EXPR was evalutated
+			DB::state( 'db.last_eval', $str );
+
+			if( ref $_[0] eq 'SCALAR' ) {
+				print $DB::OUT "ERROR: ${ $_[0] }";
+			}
+			else {
+				print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
+				my @res =  map{ $_ // $DB::options{ undef } } @{ $_[0] };
+				local $" =  $DB::options{ '"' }  //  $";
+				print $DB::OUT "@res\n";
+			}
+
+			return[ \&ninteract, @initial ];
+		}
+			,$str
+		];
+	}
+
+	return[ \&ninteract, @initial ]   unless ref $result;
+
+	my $command_cb =  shift @$result;
+	return[sub{
+		my $result =  &$command_cb;
+		return   unless defined $result;
+
+		#TODO: implement infinit proxy
+
+		return[ \&ninteract, @initial ];
+	}
+		,@$result
+	];
+}
+
+my $handler =  DB::reg( 'interact', 'terminal' );
+$$handler->{ code } =  \&ninteract;
+
+
 1;
