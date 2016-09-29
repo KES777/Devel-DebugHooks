@@ -70,5 +70,6 @@ sub filter {
 }
 
 
+sub Devel::DebugHooks::Commands::interact { 0 }
 
 1;

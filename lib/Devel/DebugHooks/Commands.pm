@@ -272,8 +272,40 @@ sub deparse {
 
 
 sub interact {
-	1;
+	my @initial;
+	my $str =  $DB::dbg->get_command();
+	return   unless defined $str;
+	my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $str );
+	return   unless defined $result;
+
+	if( $result == 0 ) {
+		# No command found
+		# eval $str; print eval results; goto interact again
+		return[ sub{
+			# We got ARRAYREF if EXPR was evalutated
+			DB::state( 'db.last_eval', $str );
+
+			if( ref $_[0] eq 'SCALAR' ) {
+				print $DB::OUT "ERROR: ${ $_[0] }";
+			}
+			else {
+				print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
+				my @res =  map{ $_ // $DB::options{ undef } } @{ $_[0] };
+				local $" =  $DB::options{ '"' }  //  $";
+				print $DB::OUT "@res\n";
+			}
+
+			return[ \&interact, @initial ];
+		}
+			,$str
+		];
+	}
+
+
+	return[ \&interact, @initial ]   unless ref $result;
+	return $result;
 }
+
 
 
 sub dd {

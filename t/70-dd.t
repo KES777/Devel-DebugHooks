@@ -160,9 +160,9 @@ __DATA__
 @@ debug cmd sbs
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    nested();
 xxx/DbInteract.pm:XXXX    2;
@@ -174,9 +174,9 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd step over
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    nested();
 1 at -e:4
@@ -185,9 +185,9 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd return
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
 1 at -e:4
@@ -196,34 +196,34 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd quit
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
 @@ call debugger sub
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 scope
 @@ DB::state when dd
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 1 at -e:4
 xxx/DbInteract.pm:XXXX    3;
 4
 @@ prevent position when call
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 1 at -e:4
 3
@@ -231,40 +231,40 @@ xxx/DbInteract.pm:XXXX    1;
 @@ prevent position when calc
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 2
 47
 @@ outer step into
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0002    1;
 @@ outer step over
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0005  2;
 @@ wrong global vars usage
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 1
 2
 @@ global vars usage
 -e:0004  t1();
 1
-xxx/DbInteract.pm:XXXX    my @initial;
-xxx/DbInteract.pm:XXXX    my $str =  get_command();
-xxx/DbInteract.pm:XXXX    return   unless defined $str;
+xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    return   unless defined $str;
 1
 1
 @@ step into debugger
