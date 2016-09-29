@@ -226,10 +226,10 @@ sub list {
 		# TODO: findout sub name from the reference
 		# TODO: locate this sub at '_<$file' hash and do usual _list
 		# to show breakpoints, lines etc
-		$ref  &&  return {()
-			,expr =>  "\$$subname"
-			,code =>  \&deparse
-		};
+		$ref  &&  return [()
+			,sub{ deparse( @{ $_[0] } ) }
+			,"\$$subname"
+		];
 
 
 		# 3. List sub from source
@@ -279,7 +279,7 @@ sub dd {
 
 
 sub get_expr {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 	my @expr =  keys %{ $data->{ eval } };
 	# This sub is called with expressions evaluation result
 	# Additionally we pass and source data structure and corresponding keys
@@ -415,9 +415,15 @@ sub trace_variable {
 
 
 sub get_expr_a {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 
-	return [ sub{ 0 }, @{ $data->{ eval } } ];
+	my @expr =  @{ $data->{ eval } };
+	for my $expr_or_cmd ( @expr ) {
+		my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $expr_or_cmd );
+		$expr_or_cmd =  $result   if ref $result;
+	}
+
+	return [ sub{ 0 }, @expr ];
 }
 
 
@@ -461,7 +467,7 @@ sub action {
 
 # Stop on the first OP in a given subroutine
 sub stop_on_call {
-	my( undef, $data, $current_sub ) =  @_;
+	my( $data, $current_sub ) =  @_;
 	my $target_subs =  $data->{ list };
 
 	if(
@@ -483,7 +489,7 @@ sub stop_on_call {
 
 # Stop if trap is not disabled and condition evaluated to TRUE value
 sub stop_on_line {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 
 	return 0   if $data->{ disabled }  ||  !exists $data->{ condition };
 
@@ -493,7 +499,7 @@ sub stop_on_line {
 
 
 sub step_done {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 	return   if --$data->{ steps_left };
 
 	DB::unreg( 'stop', 'step' );
@@ -594,7 +600,7 @@ $DB::commands =  {()
 		# Do not stop if subcall is maden
 		my $handler =  DB::reg( 'frame', 'step_over' );
 		# FIX: move handler code to upper frames if we leave current one
-		$$handler->{ code } =  sub{ $_[2]{ single } =  0; 1 };
+		$$handler->{ code } =  sub{ $_[1]{ single } =  0; 1 };
 		$handler =  DB::reg( 'stop', 'step_over' );
 		$$handler->{ code } =  sub{
 			DB::unreg( 'stop', 'step_over' );
@@ -933,13 +939,10 @@ $DB::commands =  {()
 		1;
 	}
 	,e => sub {
-		return {
-			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
-			code => sub {
-				print $DB::OUT dd( @_ ) ."\n";
-				return 1;
-			}
-		}
+		return [()
+			,sub{ print $DB::OUT dd( @{ $_[0] } ) ."\n"; return 1; }
+			,length $_[0] ? shift : DB::state( 'db.last_eval' ) // ''
+		];
 	}
 
 	# TODO: give names to ANON

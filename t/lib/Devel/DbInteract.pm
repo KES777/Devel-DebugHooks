@@ -84,7 +84,7 @@ sub bbreak {
 
 
 
-sub interact {
+sub get_command {
 	return shift @$commands;
 }
 
@@ -112,8 +112,8 @@ use parent '-norequire', 'Devel::DebugHooks';
 use Devel::DebugHooks();
 
 #FIX: remove copy/paste
-sub ninteract {
-	my @initial =  @_;
+sub interact {
+	my @initial;
 	my $str =  get_command();
 	return   unless defined $str;
 	my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $str );
@@ -138,13 +138,13 @@ sub ninteract {
 				print $DB::OUT "@res\n";
 			}
 
-			return[ \&ninteract, @initial ];
+			return[ \&interact, @initial ];
 		}
 			,$str
 		];
 	}
 
-	return[ \&ninteract, @initial ]   unless ref $result;
+	return[ \&interact, @initial ]   unless ref $result;
 
 	my $command_cb =  shift @$result;
 	return[sub{
@@ -153,13 +153,13 @@ sub ninteract {
 
 		#TODO: implement infinit proxy
 
-		return[ \&ninteract, @initial ];
+		return[ \&interact, @initial ];
 	}
 		,@$result
 	];
 }
 
 my $handler =  DB::reg( 'interact', 'terminal' );
-$$handler->{ code } =  \&ninteract;
+$$handler->{ code } =  \&interact;
 
 1;

@@ -36,9 +36,12 @@ my $term;
 # 	$term =  Term::ReadLine->new( 'Perl' );
 # }
 my $last_input;
-sub interact {
+sub get_command {
 	my $self =  shift;
 
+	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
+	# print $DB::OUT "\n";
+	# print "DBG>";
 	my $line =  <STDIN>; #$term->readline( 'DBG> ' );
 	chomp $line;
 	if( $line ne '' ) {
@@ -53,7 +56,8 @@ sub interact {
 
 
 
-sub ninteract {
+
+sub interact {
 	my @initial;
 	my $str =  get_command();
 	return   unless defined $str;
@@ -79,13 +83,13 @@ sub ninteract {
 				print $DB::OUT "@res\n";
 			}
 
-			return[ \&ninteract, @initial ];
+			return[ \&interact, @initial ];
 		}
 			,$str
 		];
 	}
 
-	return[ \&ninteract, @initial ]   unless ref $result;
+	return[ \&interact, @initial ]   unless ref $result;
 
 	my $command_cb =  shift @$result;
 	return[sub{
@@ -94,14 +98,14 @@ sub ninteract {
 
 		#TODO: implement infinit proxy
 
-		return[ \&ninteract, @initial ];
+		return[ \&interact, @initial ];
 	}
 		,@$result
 	];
 }
 
 my $handler =  DB::reg( 'interact', 'terminal' );
-$$handler->{ code } =  \&ninteract;
+$$handler->{ code } =  \&interact;
 
 
 1;
