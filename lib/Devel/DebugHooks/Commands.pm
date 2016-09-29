@@ -227,7 +227,7 @@ sub list {
 		# TODO: locate this sub at '_<$file' hash and do usual _list
 		# to show breakpoints, lines etc
 		$ref  &&  return [()
-			,sub{ deparse( @{ $_[0] } ) }
+			,sub{ deparse( @{ $_[0] } ); return { code =>  \&interact } }
 			,"\$$subname"
 		];
 
@@ -251,7 +251,7 @@ sub list {
 	}
 
 
-	1;
+	return 1;
 }
 
 
@@ -269,6 +269,11 @@ sub deparse {
 	return 1;
 }
 
+
+
+sub interact {
+	1;
+}
 
 
 sub dd {
@@ -898,7 +903,7 @@ $DB::commands =  {()
 			$$data->{ condition } //=  1; # trap always triggered by default
 		}
 
-		1;
+		return 1;
 	}
 
 	,go => sub {
@@ -940,7 +945,10 @@ $DB::commands =  {()
 	}
 	,e => sub {
 		return [()
-			,sub{ print $DB::OUT dd( @{ $_[0] } ) ."\n"; return 1; }
+			,sub{
+				print $DB::OUT dd( @{ $_[0] } ) ."\n";
+				return { code => \&interact };
+			}
 			,length $_[0] ? shift : DB::state( 'db.last_eval' ) // ''
 		];
 	}

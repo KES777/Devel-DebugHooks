@@ -91,21 +91,12 @@ sub interact {
 
 	return[ \&interact, @initial ]   unless ref $result;
 
-	my $command_cb =  shift @$result;
-	return[sub{
-		my $result =  &$command_cb;
-		return   unless defined $result;
-
-		#TODO: implement infinit proxy
-
-		return[ \&interact, @initial ];
-	}
-		,@$result
-	];
+	return $result;
 }
 
 my $handler =  DB::reg( 'interact', 'terminal' );
 $$handler->{ code } =  \&interact;
+*Devel::DebugHooks::Commands::interact =  \&interact;
 
 
 1;
