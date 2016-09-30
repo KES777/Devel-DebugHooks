@@ -1460,7 +1460,7 @@ sub goto {
 	DB::state( 'inDB', 1 );
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
-	push_frame( 'G' );
+	push_frame( my $tmp =  $DB::sub, 'G' );
 	DB::state( 'inDB', undef )
 };
 
@@ -1513,7 +1513,7 @@ sub push_frame2 {
 		test();
 		3;
 	}
-	my $sub =  $DB::sub;
+	my $sub =  shift;
 	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n"   if DB::state( 'ddd' );
 
 	if( $_[0] ne 'G' ) {
@@ -1580,14 +1580,14 @@ sub push_frame {
 	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
 	DB::state( 'inDB', 1 );
 
-	print $DB::OUT "\nCreating frame for $DB::sub\n"   if DB::state( 'ddd' );
+	print $DB::OUT "\nCreating frame for $_[0]\n"   if DB::state( 'ddd' );
 
 	scall( \&push_frame2, @_ );
 
 	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
 		DB::state( 'stack' );
-		print $DB::OUT "Frame created for $DB::sub\n\n";
+		print $DB::OUT "Frame created for $_[0]\n\n";
 	}
 
 	DB::state( 'inDB', undef );
@@ -1624,7 +1624,7 @@ sub sub {
 	# start to guard frame before any external call
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
-	push_frame( 'C' );
+	push_frame( my $tmp =  $DB::sub, 'C' );
 
 
 	{
