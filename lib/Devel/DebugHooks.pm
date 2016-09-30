@@ -460,6 +460,9 @@ sub new {
 	} ], @_ }, $DB::dbg;
 	push @$DB::state, $dbg_instance;
 
+	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
+		if @$DB::state > 1;
+
 	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
 		if _ddd;
 
@@ -981,6 +984,13 @@ BEGIN { # Initialization goes here
 
 			DB::DESTROY   if DB::state( 'dd' );
 
+			# Enable debugging after current command is finished
+			if( my $debug =  DB::state( 'debug' ) ) {
+				DB::state( 'debug', undef );
+				DB::state( 'dd', $debug );
+			}
+
+
 			print $DB::OUT "<< scall back $from($f:$l) <-- $sub\n"   if $ddd;
 		};
 		mutate_sub_is_debuggable( $scall_cleanup, 0 );
@@ -1113,6 +1123,8 @@ our %sig =  (()
 	,unstop  =>  \&unstop
 	,frame   =>  \&frame
 	,unframe =>  \&unframe
+	,interact   =>  \&interact
+	,uninteract =>  \&uninteract
 );
 
 sub reg {
@@ -1310,6 +1322,34 @@ sub unframe {
 
 
 
+sub interact_info {
+	return DB::state( 'on_interact' ) // {};
+}
+
+
+
+sub interact {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_interact' );
+	$subscribers =  DB::state( 'on_interact', {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub uninteract {
+	my( $name ) =  @_;
+	my $subscribers =  DB::state( 'on_interact' );
+
+	delete $subscribers->{ $name };
+	DB::state( 'on_interact', undef )   unless keys %$subscribers;
+}
+
+
+
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB_my {
 	&save_context;
@@ -1331,8 +1371,9 @@ sub DB_my {
 
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
+
 	mcall( 'bbreak' );
-	1 while( defined interact() );
+	emit( 'interact' );
 	mcall( 'abreak' );
 }
 
@@ -1371,100 +1412,40 @@ sub init {
 	return( $p, $f, $l );
 }
 
-
-
-# Get a string and process it.
 sub process {
-	my( $expr ) =  @_;
+	my( $handler ) =  @_;
+	my $htype      =  ref $handler;
 
-	my $code =  (ref $expr eq 'HASH')
-		? $expr->{ code }
-		: $DB::dbg->can( 'process' )
-	;
-
-	#TODO: assert unless $code;
-
-	my @args =  ( $DB::dbg, @_ );
-
-	PROCESS: {
-		# 0 means : no command found so 'eval( $expr )' and keep interaction
-		# TRUE    : command found, keep interaction
-		# HASHREF : eval given { expr } and pass results to { code }
-		# negative: something wrong happened while running the command
-		my $result =  scall( $code, @args );
-		return   unless defined $result;
-
-		if( ref $result eq 'HASH' ) {
-			$code =  $result->{ code };
-			@args =  process( $result->{ expr } );
-
-			redo PROCESS;
-		}
-		elsif( ref $result eq 'ARRAY' ) {
-			$code =  shift @$result;
+	my( $code, @args );
+	do {
+		if( $htype eq 'ARRAY' ) {
+			$code =  shift @$handler;
 			@args =  ();
-			for my $expr ( @$result ) {
-				#TODO: IT: $expr that is subcommand
-				push @args, [ process( $expr ) ];
+			for my $expr ( @$handler ) {
+				push @args, ref $expr ? process( $expr ) : [ DB::eval( $expr ) ];
+				if( $@ ) {
+					# Pass reference to copy of error message. Value of error
+					# message (global variable) may be changed by anyone
+					my $tmp =  $@;
+					$args[-1] =  \$tmp;
+				}
 			}
-
-			redo PROCESS;
+		}
+		elsif( $htype eq 'HASH' ) {
+			$code =  $handler->{ code };
+			@args =  @_;
+		}
+		else {
+			die "Handler type should be ARRAY or HASH";
 		}
 
+		die "Handler is not defined"   unless $code;
+	} while(
+		defined( $handler =  scall( $code, @args ) )
+		&&     ( $htype   =  ref $handler          )
+	);
 
-		return $result   unless $result == 0  &&  !ref $expr;
-	}
-
-	# else no such command exists the entered string will be evaluated
-	# in __FILE__:__LINE__ context of script we are debugging
-	my @result =  DB::eval( $expr );
-	if( $@ ) {
-		print $DB::OUT "ERROR: $@";
-	}
-	elsif( !wantarray ) { # Dump results if we do not require them
-		print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
-		@result =  map{ $_ // $DB::options{ undef } } @result;
-		local $" =  $DB::options{ '"' }  //  $";
-		print $DB::OUT "@result\n";
-	}
-
-
-	DB::state( 'db.last_eval', $expr );
-	#WARNING: NEVER STORE REFERENCE TO EVALUATION RESULT
-	# This will influence to user's script execution under debugger. Data
-	# will not be DESTROY'ed when it leaves its scope because of we refer it
-
-	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
-	# print $DB::OUT "\n";
-
-	return   wantarray? @result : 0;
-}
-
-
-
-# TODO: remove clever things out of core. This modules should implement
-# only interface features
-sub interact {
-	return   if @_  &&  $DB::interaction;
-
-	local $DB::interaction =  $DB::interaction +1;
-
-	# local { dd } =  0; # Localization breaks debugger debugging
-	# because it prevents us to turn ON debugging by command: { dd } =  1;
-	my $old =  DB::state( 'dd' );
-	DB::state( 'dd', undef );
-	if( my $str =  mcall( 'interact', @_ ) ) {
-		print "\n" .(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
-		#NOTICE: we restore { dd } flag before call to &process and not after
-		# as in case of localization
-		DB::state( 'dd', $old );
-		return process( $str );
-	}
-	else {
-		DB::state( 'dd', $old );
-	}
-
-	return;
+	return $handler;
 }
 
 
