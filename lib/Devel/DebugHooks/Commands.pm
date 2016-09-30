@@ -302,6 +302,7 @@ sub interact {
 	}
 
 
+	#FIX: Implement sub to return interaction command
 	return[ \&interact, @initial ]   unless ref $result;
 	return $result;
 }
