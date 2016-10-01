@@ -430,7 +430,11 @@ sub state {
 
 
 
-	return $instance   if $name eq 'instance';
+	if( $name eq 'instance' ) {
+		print $DB::OUT " INT::instance\n"   if $debug && ( @_ >= 2 || $debug >= 2 );
+		return $instance;
+	}
+
 	$name =  '*'   unless exists $DB::variables->{ $name };
 	return $DB::variables->{ $name }({()
 			,debug    =>  $debug
