@@ -1041,6 +1041,7 @@ BEGIN { # Initialization goes here
 			}
 
 			$sub =  DB::state( 'xsub' ) // '';
+			$sub =  sub_name( $sub ) || $sub;
 
 			($f, $l) =  (caller $lvl)[1,2];
 			$f =~ s".*?([^/]+)$"$1";
@@ -1070,7 +1071,7 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
-			print $DB::OUT "Debugger command DONE\n"   if $ddd;
+			print $DB::OUT "Debugger command DONE: $sub\n"   if $ddd;
 
 			# NOTICE: Because  we are in debugger here we should setup { inDB }
 			# flag but we are leaving debugger and interesting at user's context
@@ -1187,6 +1188,31 @@ sub import { # NOTE: The import is called at CT yet
 	applyOptions();
 	DB::state( 'inDB', undef );
 }
+
+
+
+# use Sub::Identify qw/ sub_name /;
+use B qw(svref_2object);
+sub sub_name {
+    return unless ref( my $r = shift );
+    return unless my $cv = svref_2object( $r );
+    return unless $cv->isa( 'B::CV' )
+              and my $gv = $cv->GV
+              ;
+    my $name = '';
+    if ( my $st = $gv->STASH ) {
+        $name = $st->NAME . '::';
+    }
+    my $n = $gv->NAME;
+    if ( $n ) {
+        $name .= $n;
+        if ( $n eq '__ANON__' ) {
+            $name .= ' defined at ' . $gv->FILE . ':' . $gv->LINE;
+        }
+    }
+    return $name;
+}
+
 
 
 # We define posponed/sub as soon as possible to be able watch whole process
@@ -1512,6 +1538,8 @@ sub init {
 	return( $p, $f, $l );
 }
 
+
+
 sub process {
 	my( $handler ) =  @_;
 	my $htype      =  ref $handler;
@@ -1540,6 +1568,12 @@ sub process {
 		}
 
 		die "Handler is not defined"   unless $code;
+
+		if( DB::state( 'ddd' ) ) {
+			my $sub =  sub_name( $code ) || $code;
+			my @first =  ref $args[0] eq 'ARRAY' ? @{ $args[0] } : $args[0] // '';
+			print $DB::OUT "Run callback: $sub @first ( @args )\n"
+		}
 	} while(
 		defined( $handler =  scall( $code, @args ) )
 		&&     ( $htype   =  ref $handler          )
