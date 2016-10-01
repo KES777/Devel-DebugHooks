@@ -946,11 +946,9 @@ BEGIN { # Initialization goes here
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
-				$sub =  DB::state( 'instance' ) ."::$DB::args[0]";
 			}
-			else {
-				$sub =  $DB::_sub; #FIX: remove global
-			}
+
+			$sub =  $DB::_sub; #FIX: remove global
 
 			($f, $l) =  (caller $lvl)[1,2];
 			$f =~ s".*?([^/]+)$"$1";
