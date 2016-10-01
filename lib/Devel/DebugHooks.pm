@@ -973,14 +973,17 @@ BEGIN { # Initialization goes here
 		# local *DB::sub =  *DB::sub; *DB::sub =  $stub;
 		# Another: the { inDB } flag
 
+		#IT: Call other debugger commands from current command
+		my $old_cmd =  DB::state( 'cmd' );
+
 		# Manual localization
 		my $scall_cleanup =  sub {
 			print $DB::OUT "Debugger command DONE\n"   if $ddd;
 
-			DB::state( 'cmd', undef );
-
 			# NOTICE: Because  we are in debugger here we should setup { inDB }
 			# flag but we are leaving debugger and interesting at user's context
+
+			DB::state( 'cmd', $old_cmd );
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) );
 
