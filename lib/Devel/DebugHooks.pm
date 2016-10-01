@@ -1031,7 +1031,7 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
-		print $DB::OUT "\nTRAPPED IN: " .@$DB::state ."\n\n"   if _ddd;
+		print_state '', "\nTRAPPED IN: " .@$DB::state ."\n\n"   if _ddd;
 		DB::state( 'inDB', 1 );
 	}
 
@@ -1358,7 +1358,7 @@ sub DB_my {
 	establish_cleanup \&restore_context;
 
 	my( $p, $f, $l ) =  init();
-	print_state( "DB::DB  ", sprintf "    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
+	print_state( "DB::DB  ", sprintf "\n    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
 	do{ mcall( 'trace_line' ); }   if $DB::trace;
 	#TODO: $DB::signal $DB::trace
@@ -1529,7 +1529,7 @@ sub push_frame2 {
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
-			printf $DB::OUT "    cursor(PF) => $p, $f, $l\n"   if DB::state( 'ddd' );
+			print_state( "", sprintf "\n    cursor(PF) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 		}
 
 		my $stack =  DB::state( 'stack' );
