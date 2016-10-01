@@ -5,14 +5,14 @@ package Devel::DebugHooks::CmdProcessor;
 
 
 sub process {
-	my( $dbg ) =  shift;
+	my( $dbg, $str ) =  @_;
 
-	my( $cmd, $args_str ) =  shift =~ m/^([\w.]+)(?:\s+(.*))?$/;
+	my( $cmd, $args_str ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
 	$args_str //=  '';
 
 
 	unless(  $cmd  &&  exists $DB::commands->{ $cmd } ) {
-		print $DB::OUT "No such command: '$cmd'\n"   if DB::state( 'ddd' );
+		print $DB::OUT "No such command: '$str'\n"   if DB::state( 'ddd' );
 		return 0;
 	}
 
