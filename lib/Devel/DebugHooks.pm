@@ -55,6 +55,31 @@ BEGIN {
 
 
 
+sub pop_frame {
+	#NOTICE: We will fall into infinite loop if something dies inside this sub
+	#because this sub is called when flow run out of scope.
+	#TODO: Put this code into eval block
+
+	my $stack =  DB::state( 'stack' );
+	my $last =  pop @$stack;
+	DB::print_state( "POP  FRAME <<<< ",
+		"  --  $last->{ sub }\@". @$stack ."\n"
+		."    $last->{ file }:$last->{ line }\n\n"
+	) if DB::state( 'ddd' );
+
+	if( @{ DB::state( 'stack' ) } ) {
+		# Restore $DB::single for upper frame
+		DB::state( 'single', DB::state( 'single' ) );
+	} else {
+		# Something nasty happened at &push_frame, because of we are at
+		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
+		print $DB::OUT "Error happen while &pop_frame. Pay attention to this!\n";
+		$DB::single =  0;
+	}
+}
+
+
+
 sub test {
 	1;
 	2;
@@ -1554,22 +1579,7 @@ sub pop_frame {
 	#TODO: Put this code into eval block
 
 	DB::state( 'inDB', 1 );
-	my $stack =  DB::state( 'stack' );
-	my $last =  pop @$stack;
-	print_state "POP  FRAME <<<< ",
-			"  --  $last->{ sub }\@". @$stack ."\n"
-			."    $last->{ file }:$last->{ line }\n\n"
-		if DB::state( 'ddd' );
-
-	if( @{ DB::state( 'stack' ) } ) {
-		# Restore $DB::single for upper frame
-		DB::state( 'single', DB::state( 'single' ) );
-	} else {
-		# Something nasty happened at &push_frame, because of we are at
-		# &pop_frame already but not "push @{ state( 'stack' ) }" done yet
-		print $DB::OUT "Error happen while &pop_frame. Pay attention to this!\n";
-		$DB::single =  0;
-	}
+	mcall( 'pop_frame' );
 	DB::state( 'inDB', undef );
 }
 
