@@ -546,7 +546,23 @@ sub step_done {
 
 
 
+sub nested {
+	no warnings 'void';
+	2;
+	printf $DB::OUT "%s at %s:%s\n"
+		,DB::state( 'single' ), DB::state( 'file' ), DB::state( 'line' );
+	3;
+}
+
+
+
 $DB::commands =  {()
+	,debug => sub {
+		no warnings 'void';
+		1;
+		nested();
+		4;
+	}
 	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
