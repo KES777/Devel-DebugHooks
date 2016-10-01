@@ -983,9 +983,9 @@ BEGIN { # Initialization goes here
 			# NOTICE: Because  we are in debugger here we should setup { inDB }
 			# flag but we are leaving debugger and interesting at user's context
 
-			DB::state( 'cmd', $old_cmd );
+			DB::state( 'cmd', $old_cmd ); DB::state( 'single', 0, 1 )   if $old_cmd;
 			# $DB::single =  DB::state( 'single' );
-			DB::state( 'single', DB::state( 'single' ) );
+			DB::state( 'single', DB::state( 'single' ) ) unless $old_cmd;
 
 			DB::DESTROY   if DB::state( 'dd' );
 
