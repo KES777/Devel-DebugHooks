@@ -55,6 +55,73 @@ BEGIN {
 
 
 
+sub test {
+	1;
+	2;
+}
+
+
+
+sub push_frame {
+	my $self =  shift;
+	{ # these lines exists for testing purpose
+		no warnings 'void';
+		test();
+		3;
+	}
+	my $sub =  shift;
+	DB::print_state( "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n" )   if DB::state( 'ddd' );
+
+	if( $_[0] ne 'G' ) {
+		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
+		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
+		# Most actual info we get when we trace script step-by-step at this case
+		# those vars have sharp last opcode location.
+		if( !DB::state( 'eval' ) ) {
+			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
+			my( $p, $f, $l ) =  caller 4;
+			DB::state( 'package', $p );
+			DB::state( 'file',    $f );
+			DB::state( 'line',    $l );
+			DB::print_state( "", sprintf "\n    cursor(PF) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
+		}
+
+		my $stack =  DB::state( 'stack' );
+		my $frame =  {()
+			# Until we stop at a callee last known cursor position is the caller position
+			,package     =>  $stack->[-1]{ package }
+			,file        =>  $stack->[-1]{ file    }
+			,line        =>  $stack->[-1]{ line    }
+			,single      =>  $stack->[-1]{ single  }
+			,sub         =>  $sub
+			,goto_frames =>  []
+			,type        =>  $_[0]
+		};
+
+
+		DB::emit( 'frame', 0, $frame );
+
+		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
+		# Think about this feature: if( $confirm ) {
+		push @{ $stack }, $frame;
+	}
+	else {
+		push @{ DB::state( 'goto_frames' ) },
+			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $sub, $_[0] ]
+	}
+
+
+	DB::emit( 'call', 0, $sub );
+
+	#TODO: implement functionality using API
+	if( $DB::options{ trace_subs } ) {
+		DB::mcall( 'trace_subs' );
+	}
+}
+
+
+
+
 sub init {
 }
 
@@ -1478,13 +1545,6 @@ sub goto {
 #package DB::Tools;
 # my $x = 0;
 # use Data::Dump qw/ pp /;
-sub test {
-	1;
-	2;
-}
-
-
-
 #Q: Why &DB::sub is called for &pop_frame despite on it is compiled at DB:: package
 # when Scope::Cleanup?
 mutate_sub_is_debuggable( \&pop_frame, 0 );
@@ -1513,63 +1573,6 @@ sub pop_frame {
 	DB::state( 'inDB', undef );
 }
 
-
-
-sub push_frame2 {
-	{ # these lines exists for testing purpose
-		no warnings 'void';
-		test();
-		3;
-	}
-	my $sub =  shift;
-	print_state "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n"   if DB::state( 'ddd' );
-
-	if( $_[0] ne 'G' ) {
-		# http://stackoverflow.com/questions/34595192/how-to-fix-the-dbgoto-frame
-		# WORKAROUND: for broken frame. Here we are trying to be closer to goto call
-		# Most actual info we get when we trace script step-by-step at this case
-		# those vars have sharp last opcode location.
-		if( !DB::state( 'eval' ) ) {
-			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
-			my( $p, $f, $l ) =  caller 3;
-			DB::state( 'package', $p );
-			DB::state( 'file',    $f );
-			DB::state( 'line',    $l );
-			print_state( "", sprintf "\n    cursor(PF) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
-		}
-
-		my $stack =  DB::state( 'stack' );
-		my $frame =  {()
-			# Until we stop at a callee last known cursor position is the caller position
-			,package     =>  $stack->[-1]{ package }
-			,file        =>  $stack->[-1]{ file    }
-			,line        =>  $stack->[-1]{ line    }
-			,single      =>  $stack->[-1]{ single  }
-			,sub         =>  $sub
-			,goto_frames =>  []
-			,type        =>  $_[0]
-		};
-
-
-		emit( 'frame', 0, $frame );
-
-		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
-		# Think about this feature: if( $confirm ) {
-		push @{ $stack }, $frame;
-	}
-	else {
-		push @{ DB::state( 'goto_frames' ) },
-			[ DB::state( 'package' ), DB::state( 'file' ), DB::state( 'line' ), $sub, $_[0] ]
-	}
-
-
-	emit( 'call', 0, $sub );
-
-	#TODO: implement functionality using API
-	if( $options{ trace_subs } ) {
-		mcall( 'trace_subs' );
-	}
-}
 }
 
 
@@ -1590,7 +1593,7 @@ sub push_frame {
 
 	print $DB::OUT "\nCreating frame for $_[0]\n"   if DB::state( 'ddd' );
 
-	scall( \&push_frame2, @_ );
+	mcall( 'push_frame', @_ );
 
 	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
