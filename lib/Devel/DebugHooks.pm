@@ -948,13 +948,13 @@ BEGIN { # Initialization goes here
 				$lvl++;
 			}
 
-			$sub =  $DB::_sub; #FIX: remove global
+			$sub =  DB::state( 'xsub' ) // '';
 
 			($f, $l) =  (caller $lvl)[1,2];
 			$f =~ s".*?([^/]+)$"$1";
 			$from =  (caller $lvl+1)[3];
 
-			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n"
+			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n";
 		}
 
 		die "You can make debugger call only from debugger"
@@ -1604,7 +1604,7 @@ sub push_frame {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	#FIX: where to setup 'inDB' state?
-	$DB::_sub =  $DB::sub;
+	DB::state( 'xsub', $DB::sub );
 	print_state "DB::sub  ", "  --  "
 		.sub{
 			(ref $DB::sub ? ref $DB::sub : $DB::sub)
