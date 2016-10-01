@@ -1531,7 +1531,7 @@ sub push_frame2 {
 		# those vars have sharp last opcode location.
 		if( !DB::state( 'eval' ) ) {
 			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
-			my( $p, $f, $l ) =  caller 2;
+			my( $p, $f, $l ) =  caller 3;
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
@@ -1632,7 +1632,7 @@ sub sub {
 	# start to guard frame before any external call
 
 	#FIX: do not call &pop_frame when &push_frame FAILED
-	push_frame( my $tmp =  $DB::sub, 'C' );
+	sub{ push_frame( my $tmp =  $DB::sub, 'C' ) }->();
 
 
 	{
