@@ -1151,6 +1151,8 @@ sub unreg {
 sub emit {
 	my( $name, $mult ) =  ( shift, shift );
 
+	print $DB::OUT "Emit event '$name' from ", (caller)[1,2], "\n"   if DB::state( 'ddd' );
+
 	# Get subscribers for the event
 	my $ev; { no strict 'refs'; $ev =  &{ "${name}_info" }( @_ ); }
 
@@ -1165,6 +1167,7 @@ sub emit {
 		$res ||=  process( $ev->{ $_ }, @_ )   for keys %$ev;
 	}
 
+	print $DB::OUT "Event '$name' DONE\n"   if DB::state( 'ddd' );
 
 	return $res;
 }
