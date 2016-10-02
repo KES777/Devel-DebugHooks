@@ -194,18 +194,6 @@ sub interact {
 
 
 
-# Q: May this unit pull other units so we will not be able to see loading process?
-# A: No, this will be done at run time. Until that trace_load will be visible
-eval 'require ' .$DB::options{ cmd_processor }; die $@   if $@;
-sub process {
-	BEGIN{ 'strict'->unimport( 'refs' )   if $DB::options{ s } }
-	# TODO: if we set trap on sub that loaded at CT, this will FAIL
-	# move require here
-	&{ $DB::options{ cmd_processor } .'::process' }( @_ );
-}
-
-
-
 # NOTICE: &DB::sub is not called because of DB::namespace
 sub abreak {
 }
@@ -661,8 +649,6 @@ BEGIN {
 	$options{ trace_load }     //=  0;         # compile time option
 	$options{ trace_subs }     //=  0;         # compile time & runtime option
 	$options{ trace_returns }  //=  0;
-
-	$options{ cmd_processor }  //=  'Devel::DebugHooks::CmdProcessor';
 
 	#options{ save_path } # TODO: save code path for displaying by graphviz
 	$DB::postponed{ 'DB::DB' } =  1;

@@ -22,7 +22,8 @@ sub bbreak {
 	my $self =  shift;
 
 	# print " -- $DB::file:$DB::line\n  " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
-	$self->process( 'l .' );
+
+	Devel::DebugHooks::Commands->process( 'l .' );
 }
 
 

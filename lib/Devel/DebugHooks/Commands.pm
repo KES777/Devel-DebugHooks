@@ -277,7 +277,7 @@ sub interact {
 	return   unless defined $str;
 	print +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 
-	my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $str );
+	my $result =  process( undef, $str );
 	return   unless defined $result;
 
 	if( $result == 0 ) {
@@ -459,7 +459,7 @@ sub get_expr_a {
 
 	my @expr =  @{ $data->{ eval } };
 	for my $expr_or_cmd ( @expr ) {
-		my $result =  Devel::DebugHooks::CmdProcessor::process( undef, $expr_or_cmd );
+		my $result =  process( undef, $expr_or_cmd );
 		$expr_or_cmd =  $result   if ref $result;
 	}
 
@@ -1115,6 +1115,31 @@ $DB::commands =  {()
 		}
 	}
 };
+
+
+
+sub process {
+	my( $dbg, $str ) =  @_;
+
+	my( $cmd, $args_str ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
+	$args_str //=  '';
+
+
+	unless(  $cmd  &&  exists $DB::commands->{ $cmd } ) {
+		print $DB::OUT "No such command: '$str'\n"   if DB::state( 'ddd' );
+		return 0;
+	}
+
+	# The command also should return defined value to keep interaction
+	print $DB::OUT "Start to process '$cmd' command\n"   if DB::state( 'ddd' );
+	my $result =  eval { $DB::commands->{ $cmd }( $args_str ) };
+	print $DB::OUT "Command '$cmd' processed\n"   if DB::state( 'ddd' );
+	do{ print $DB::OUT "'$cmd' command died: $@"; return -1; }   if $@;
+
+	return $result;
+}
+
+
 
 1;
 
