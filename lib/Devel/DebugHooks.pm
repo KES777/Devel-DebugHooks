@@ -1007,6 +1007,8 @@ BEGIN { # Initialization goes here
 
 
 	sub scall {
+		my $sub =  sub_name( $_[0] ) || $_[0];
+
 		# When we start debugger debugging with verbose output
 		# { dd } >= 2 the user frame may have not { ddd } but
 		# we should not lose any output info
@@ -1019,14 +1021,13 @@ BEGIN { # Initialization goes here
 
 		# TODO: implement debugger debugging
 		# local $^D |= (1<<30);
-		my( $from, $f, $l, $sub );
+		my( $from, $f, $l );
 		if( $ddd ) {
 			my $lvl =  0;
 			if( (caller 1)[3] eq 'DB::mcall' ) {
 				$lvl++;
 			}
 
-			$sub =  sub_name( $_[0] ) || $_[0];
 			{ local $" =  ', '; $sub .=  "( @_[ 1..$#_ ] )"; }
 
 			($f, $l) =  (caller $lvl)[1,2];
