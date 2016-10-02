@@ -1026,8 +1026,8 @@ BEGIN { # Initialization goes here
 				$lvl++;
 			}
 
-			$sub =  DB::state( 'xsub' ) // '';
-			$sub =  sub_name( $sub ) || $sub;
+			$sub =  sub_name( $_[0] ) || $_[0];
+			{ local $" =  ', '; $sub .=  "( @_[ 1..$#_ ] )"; }
 
 			($f, $l) =  (caller $lvl)[1,2];
 			$f =~ s".*?([^/]+)$"$1";
@@ -1101,7 +1101,7 @@ BEGIN { # Initialization goes here
 			DB::state( 'cmd', 1 );
 		}
 
-		print $DB::OUT "Call debugger command\n"   if $ddd;
+		print $DB::OUT "Call debugger command: $sub\n"   if $ddd;
 		return shift->( @_[ 1..$#_ ] );
 
 		# my $method =  shift;
@@ -1640,7 +1640,6 @@ sub push_frame {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	#FIX: where to setup 'inDB' state?
-	DB::state( 'xsub', $DB::sub );
 	print_state "DB::sub  ", "  --  "
 		.sub{
 			(ref $DB::sub ? ref $DB::sub : $DB::sub)
