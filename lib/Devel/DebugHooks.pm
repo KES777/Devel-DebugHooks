@@ -558,6 +558,7 @@ sub new {
 sub DESTROY {
 	# Clear { dd } flag to prevent debugging for next command
 	DB::state( 'dd', undef );
+	DB::state( 'debug', undef );
 
 	print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
 		if _ddd;
@@ -996,9 +997,8 @@ BEGIN { # Initialization goes here
 		my $method  =  shift;
 		my $context =  DB::state( 'instance' );
 
-		my $dd =  DB::state( 'dd' ) // 0;
 		print "mcall ${context}->$method\n"
-			if DB::state( 'ddd' )  ||  $dd >= 2;
+			if DB::state( 'ddd' );
 
 		my $sub =  $context->can( $method );
 		scall( $sub, $context, @_ );
@@ -1008,19 +1008,7 @@ BEGIN { # Initialization goes here
 
 	sub scall {
 		my $sub =  sub_name( $_[0] ) || $_[0];
-
-		# When we start debugger debugging with verbose output
-		# { dd } >= 2 the user frame may have not { ddd } but
-		# we should not lose any output info
-		# until we setup initial state for new debugger instance
-		# See "Create new debugger's state instance" below
-		my $dd =  DB::state( 'dd' ) // 0;
-		my $ddd =  DB::state( 'ddd' )  #||  { dd } >= 2
-			# HACK: Always return level of debugging output
-			||  $dd && ($dd -1);
-
-		# TODO: implement debugger debugging
-		# local $^D |= (1<<30);
+		my $ddd =  DB::state( 'ddd' );
 		my( $from, $f, $l );
 		if( $ddd ) {
 			my $lvl =  0;
@@ -1067,12 +1055,20 @@ BEGIN { # Initialization goes here
 			# $DB::single =  DB::state( 'single' );
 			DB::state( 'single', DB::state( 'single' ) ) unless $old_cmd;
 
-			DB::DESTROY   if DB::state( 'dd' );
+			my $dd;
+			DB::DESTROY   if ($dd =  DB::state( 'dd' ))  &&  $sub =~ /$dd/;
 
 			# Enable debugging after current command is finished
 			if( my $debug =  DB::state( 'debug' ) ) {
-				DB::state( 'debug', undef );
-				DB::state( 'dd', $debug );
+				my( $verbose, $sub ) =  $debug =~ /^(\d*)(?:@(.*))?$/;
+				if( defined $sub ) {
+					DB::state( 'debug', $verbose || undef );
+					DB::state( 'dd',    $sub );
+				} else {
+					DB::state( 'debug', undef );
+					DB::state( 'ddd',  $debug );
+				}
+
 			}
 
 
@@ -1085,13 +1081,14 @@ BEGIN { # Initialization goes here
 
 
 		# Create new debugger's state instance
-		if( my $dd =  DB::state( 'dd' ) ) {
+		my $dd;
+		if( ($dd =  DB::state( 'dd' ))  &&  $sub =~ /$dd/ ) {
 			# NOTICE: We should not set debugger states directly when create
 			# new state instance. We will not see changes at debug output
 			# So we use &DB::state after instance initialization
 			DB::new(()
 				# A new debugger instance has its own { ddd } flag
-				,( $dd >= 2 ? (ddd => $dd -1) : () )
+				,ddd =>  DB::state( 'debug' )
 			);
 			DB::state( 'single', 1 );
 			DB::state( 'inDB', undef );
