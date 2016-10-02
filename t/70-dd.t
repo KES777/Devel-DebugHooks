@@ -53,49 +53,49 @@ my $files =  get_data_section();
 PERL
 
 # FIX: we should not require last 's' to see '-e:0002    1;'
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;s;s;s;s;s;r 3;s;q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;s;s;s;s;s;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd sbs' }
 	,"Debug command step-by-step";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;s;n;r 3;s;q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;s;n;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd step over' }
 	,"Debug command with step over";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;s 2;r;r 3;s;q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;s 2;r;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd return' }
 	,"Debug command with return";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;s 2;q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;s 2;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;right();q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;right();q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'call debugger sub' }
 	,"Subroutine call from debugger scope when debug debugger command";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 13;DB::state( "line" );q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 14;DB::state( "line" );q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'DB::state when dd' }
 	,"Get debugger state while debugger debugging";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;nested;$DB::state->[-1]{stack}[-1]{line};q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;nested;$DB::state->[-1]{stack}[-1]{line};q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'prevent position when call' }
 	,"Position should not be updated when we call sub while { dd }";
 
-$cmds =  'DB::state( debug => 1 );n;n;debug;s 9;1+1;$DB::state->[-1]{stack}[-1]{line};q';
+$cmds =  'DB::state( debug => 1 );n;n;debug;s 10;1+1;$DB::state->[-1]{stack}[-1]{line};q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'prevent position when calc' }
