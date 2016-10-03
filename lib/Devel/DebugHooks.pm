@@ -371,9 +371,10 @@ sub print_state {
 
 	my( undef, $f, $l ) =  caller;
 	print $DB::OUT
-		$before ."$f:$l: "
+		$before
 		."DB::state: l:" .@$DB::state ." d:" .(DB::state('inDB')//0)
 		." s:$DB::single t:$DB::trace"
+		."  $f:$l"
 		.($after // "\n")
 	;
 }
@@ -498,7 +499,7 @@ sub state {
 	if( $debug && ( @_ >= 2 || $debug >= 2 ) ) {
 		my($file, $line) =  (caller 0)[1,2];
 		$file =~ s'.*?([^/]+)$'$1'e;
-		print $DB::OUT -$level ." $file:$line: ";
+			print $DB::OUT "    " .-$level ." $file:$line: ";
 	}
 
 	unless( $instance ) {
@@ -1111,7 +1112,7 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
-		print_state '', "\nTRAPPED IN: " .@$DB::state ."\n\n"   if _ddd;
+		print_state "\nTRAPPED IN \@" .@$DB::state ."  "   if _ddd;
 		DB::state( 'inDB', 1 );
 	}
 
@@ -1122,7 +1123,7 @@ BEGIN { # Initialization goes here
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
 		DB::state( 'inDB', undef );
-		print_state '', "\nTRAPPED OUT: " .@$DB::state ."\n\n"   if _ddd;
+		print_state "\nTRAPPED OUT \@" .@$DB::state ."  "   if _ddd;
 		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
@@ -1638,11 +1639,7 @@ sub push_frame {
 # The sub is installed at compile time as soon as the body has been parsed
 sub sub {
 	#FIX: where to setup 'inDB' state?
-	print_state "DB::sub  ", "  --  "
-		.sub{
-			(ref $DB::sub ? ref $DB::sub : $DB::sub)
-			."<-- @{[ map{ s#.*?([^/]+)$#$1#; $_ } ((caller 0)[1,2]) ]}\n"
-		}->()
+	print_state "DB::sub  ", "  -->  " .(sub_name( $DB::sub ) // $DB::sub) ."\n"
 		if sub{ DB::state( 'ddd' ) }->() && $DB::sub ne 'DB::can_break';
 		#TODO: We could use { trace_internals } flag to see debugger calls
 
