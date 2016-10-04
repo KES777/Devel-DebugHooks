@@ -127,33 +127,30 @@ is
 	,"Debugger globals per instance";
 
 
-TODO: {
-	local $TODO =  'Implemented debugging for push/pop frame';
+$cmds =  'DB::state( debug => "\@push_frame" );s;n;s;s 2;r;q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'step into at debugger' }
+	,"Step into at debugger";
 
-	$cmds =  'DB::state( debug => "\@interact" );n;s;s 2;q';
-	is
-		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
-		,$files->{ 'step into debugger' }
-		,"Step into debugger";
+$cmds =  'DB::state( debug => "\@push_frame" );s;n;n;r;q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'step over at debugger' }
+	,"Step over at debugger";
 
-	$cmds =  'DB::state( debug => "\@interact" );n;n;q';
-	is
-		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
-		,$files->{ 'step over' }
-		,"Step over at debugger";
+$cmds =  'DB::state( debug => "\@push_frame" );s;n;s;r;r;q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'return s' }
+	,"Return from debugger. 's' command";
 
-	$cmds =  'DB::state( debug => "\@interact" );s;s;r;r;q';
-	is
-		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
-		,$files->{ 'return s' }
-		,"Return from debugger. 's' command";
+$cmds =  'DB::state( debug => "\@push_frame" );n;n;s;r;r;q';
+is
+	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
+	,$files->{ 'return n' }
+	,"Return from debugger. 'n' command";
 
-	$cmds =  'DB::state( debug => "\@interact" );n;s;r;r;q';
-	is
-		nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
-		,$files->{ 'return n' }
-		,"Return from debugger. 'n' command";
-}
 
 
 __DATA__
@@ -267,28 +264,34 @@ xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1
 1
-@@ step into debugger
+@@ step into at debugger
 -e:0004  t1();
-@interact
-xxx/DebugHooks.pm:XXXX    test();
+@push_frame
+xxx/DebugHooks.pm:XXXX      no warnings 'void';
+xxx/DebugHooks.pm:XXXX      test();
 xxx/DebugHooks.pm:XXXX    1;
-xxx/DebugHooks.pm:XXXX    3;
-@@ step over
+xxx/DebugHooks.pm:XXXX      3;
+-e:0002    1;
+@@ step over at debugger
 -e:0004  t1();
-@interact
-xxx/DebugHooks.pm:XXXX    test();
-xxx/DebugHooks.pm:XXXX    3;
+@push_frame
+xxx/DebugHooks.pm:XXXX      no warnings 'void';
+xxx/DebugHooks.pm:XXXX      test();
+xxx/DebugHooks.pm:XXXX      3;
+-e:0002    1;
 @@ return s
 -e:0004  t1();
-@interact
-xxx/DebugHooks.pm:XXXX    test();
+@push_frame
+xxx/DebugHooks.pm:XXXX      no warnings 'void';
+xxx/DebugHooks.pm:XXXX      test();
 xxx/DebugHooks.pm:XXXX    1;
-xxx/DebugHooks.pm:XXXX    3;
+xxx/DebugHooks.pm:XXXX      3;
 -e:0002    1;
 @@ return n
 -e:0004  t1();
-@interact
-xxx/DebugHooks.pm:XXXX    test();
+@push_frame
+xxx/DebugHooks.pm:XXXX      no warnings 'void';
+xxx/DebugHooks.pm:XXXX      test();
 xxx/DebugHooks.pm:XXXX    1;
-xxx/DebugHooks.pm:XXXX    3;
+xxx/DebugHooks.pm:XXXX      3;
 -e:0005  2;

@@ -88,12 +88,12 @@ sub test {
 
 
 sub push_frame {
-	my $self =  shift;
 	{ # these lines exists for testing purpose
 		no warnings 'void';
 		test();
 		3;
 	}
+	my $self =  shift;
 	my $sub =  shift;
 	DB::print_state( "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n" )   if DB::state( 'ddd' );
 
