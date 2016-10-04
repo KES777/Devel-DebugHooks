@@ -59,7 +59,7 @@ is
 	n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` )
 	,$files->{ 'action & steps' }
 	,"Do not skip action when we do K steps";
-print n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` );
+# print n( `$^X $lib -d:DbInteract='a 2 print "YES\\n";s 2;q' -e '$script'` );
 
 
 

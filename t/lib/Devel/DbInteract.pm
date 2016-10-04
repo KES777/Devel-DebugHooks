@@ -84,7 +84,7 @@ sub bbreak {
 
 
 
-sub interact {
+sub get_command {
 	return shift @$commands;
 }
 
@@ -110,5 +110,10 @@ sub trace_returns {
 
 use parent '-norequire', 'Devel::DebugHooks';
 use Devel::DebugHooks();
+
+
+
+my $handler =  DB::reg( 'interact', 'terminal' );
+$$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
 
 1;

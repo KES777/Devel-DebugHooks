@@ -22,7 +22,8 @@ sub bbreak {
 	my $self =  shift;
 
 	# print " -- $DB::file:$DB::line\n  " .(DB::source()->[ $DB::line ] =~ s/^(\s+)//r); #/
-	$self->process( 'l .' );
+
+	Devel::DebugHooks::Commands->process( 'l .' );
 }
 
 
@@ -36,9 +37,12 @@ my $term;
 # 	$term =  Term::ReadLine->new( 'Perl' );
 # }
 my $last_input;
-sub interact {
+sub get_command {
 	my $self =  shift;
 
+	# WORKAROUND: https://rt.cpan.org/Public/Bug/Display.html?id=110847
+	# print $DB::OUT "\n";
+	# print "DBG>";
 	my $line =  <STDIN>; #$term->readline( 'DBG> ' );
 	chomp $line;
 	if( $line ne '' ) {
@@ -51,6 +55,10 @@ sub interact {
 	return $line;
 }
 
+
+
+my $handler =  DB::reg( 'interact', 'terminal' );
+$$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
 
 
 1;

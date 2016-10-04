@@ -3,7 +3,6 @@ bin/dclient.pl
 Build.PL
 Changes
 lib/Devel/DebugHooks.pm
-lib/Devel/DebugHooks/CmdProcessor.pm
 lib/Devel/DebugHooks/Commands.pm
 lib/Devel/DebugHooks/Guides/DebugHooks.pod
 lib/Devel/DebugHooks/KillPrint.pm

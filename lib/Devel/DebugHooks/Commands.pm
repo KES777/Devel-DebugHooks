@@ -206,20 +206,6 @@ sub list {
 		DB::state( 'list.line', $line );
 	}
 	elsif( my( $ref, $subname ) =   $args =~ m/^(\$?)(&\d*|.+)?$/ ) {
-		my $deparse =  sub {
-			require B::Deparse;
-			my( $coderef ) =  @_;
-			return -3   unless ref $coderef eq 'CODE';
-
-			print $DB::OUT B::Deparse->new("-p", "-sC")
-				->coderef2text( $coderef )
-				,"\n"
-			;
-
-			return 1;
-		};
-
-
 		# 1.Deparse the current sub or n frames before
 		# TODO: Check is it possible to spy subs from goto_frames?
 		# If yes think about interface to access to them ( DB::frames??? )
@@ -233,17 +219,17 @@ sub list {
 			return -4   if $coderef eq ''; # The main:: namespace
 			print $DB::OUT "sub $coderef ";
 			$coderef =  \&$coderef   unless ref $coderef;
-			return $deparse->( $coderef );
+			return deparse( $coderef );
 		}
 
 		# 2. List sub by code ref in the variable
 		# TODO: findout sub name from the reference
 		# TODO: locate this sub at '_<$file' hash and do usual _list
 		# to show breakpoints, lines etc
-		$ref  &&  return {()
-			,expr =>  "\$$subname"
-			,code =>  $deparse
-		};
+		$ref  &&  return [()
+			,sub{ deparse( @{ $_[0] } ); return { code =>  \&interact } }
+			,"\$$subname"
+		];
 
 
 		# 3. List sub from source
@@ -265,7 +251,62 @@ sub list {
 	}
 
 
-	1;
+	return 1;
+}
+
+
+
+sub deparse {
+	require B::Deparse;
+	my( $coderef ) =  @_;
+	return -3   unless ref $coderef eq 'CODE';
+
+	print $DB::OUT B::Deparse->new("-p", "-sC")
+		->coderef2text( $coderef )
+		,"\n"
+	;
+
+	return 1;
+}
+
+
+
+sub interact {
+	my @initial;
+	my $str =  $DB::dbg->get_command();
+	return   unless defined $str;
+	print +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
+
+	my $result =  process( undef, $str );
+	return   unless defined $result;
+
+	if( $result == 0 ) {
+		# No command found
+		# eval $str; print eval results; goto interact again
+		return[ sub{
+			# We got ARRAYREF if EXPR was evalutated
+			DB::state( 'db.last_eval', $str );
+
+			if( ref $_[0] eq 'SCALAR' ) {
+				print $DB::OUT "ERROR: ${ $_[0] }";
+			}
+			else {
+				print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
+				my @res =  map{ $_ // $DB::options{ undef } } @{ $_[0] };
+				local $" =  $DB::options{ '"' }  //  $";
+				print $DB::OUT "@res\n";
+			}
+
+			return[ \&interact, @initial ];
+		}
+			,$str
+		];
+	}
+
+
+	#FIX: Implement sub to return interaction command
+	return[ \&interact, @initial ]   unless ref $result;
+	return $result;
 }
 
 
@@ -278,7 +319,7 @@ sub dd {
 
 
 sub get_expr {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 	my @expr =  keys %{ $data->{ eval } };
 	# This sub is called with expressions evaluation result
 	# Additionally we pass and source data structure and corresponding keys
@@ -414,9 +455,15 @@ sub trace_variable {
 
 
 sub get_expr_a {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 
-	return [ sub{ 0 }, @{ $data->{ eval } } ];
+	my @expr =  @{ $data->{ eval } };
+	for my $expr_or_cmd ( @expr ) {
+		my $result =  process( undef, $expr_or_cmd );
+		$expr_or_cmd =  $result   if ref $result;
+	}
+
+	return [ sub{ 0 }, @expr ];
 }
 
 
@@ -460,7 +507,7 @@ sub action {
 
 # Stop on the first OP in a given subroutine
 sub stop_on_call {
-	my( undef, $data, $current_sub ) =  @_;
+	my( $data, $current_sub ) =  @_;
 	my $target_subs =  $data->{ list };
 
 	if(
@@ -482,7 +529,7 @@ sub stop_on_call {
 
 # Stop if trap is not disabled and condition evaluated to TRUE value
 sub stop_on_line {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 
 	return 0   if $data->{ disabled }  ||  !exists $data->{ condition };
 
@@ -492,7 +539,7 @@ sub stop_on_line {
 
 
 sub step_done {
-	my( undef, $data ) =  @_;
+	my( $data ) =  @_;
 	return   if --$data->{ steps_left };
 
 	DB::unreg( 'stop', 'step' );
@@ -501,7 +548,23 @@ sub step_done {
 
 
 
+sub nested {
+	no warnings 'void';
+	2;
+	printf $DB::OUT "%s at %s:%s\n"
+		,DB::state( 'single' ), DB::state( 'file' ), DB::state( 'line' );
+	3;
+}
+
+
+
 $DB::commands =  {()
+	,debug => sub {
+		no warnings 'void';
+		1;
+		nested();
+		4;
+	}
 	,'.' => sub {
 		$curr_file   =  DB::state( 'file' );
 		$line_cursor =  DB::state( 'line' );
@@ -593,7 +656,7 @@ $DB::commands =  {()
 		# Do not stop if subcall is maden
 		my $handler =  DB::reg( 'frame', 'step_over' );
 		# FIX: move handler code to upper frames if we leave current one
-		$$handler->{ code } =  sub{ $_[2]{ single } =  0; 1 };
+		$$handler->{ code } =  sub{ $_[1]{ single } =  0; 1 };
 		$handler =  DB::reg( 'stop', 'step_over' );
 		$$handler->{ code } =  sub{
 			DB::unreg( 'stop', 'step_over' );
@@ -891,7 +954,7 @@ $DB::commands =  {()
 			$$data->{ condition } //=  1; # trap always triggered by default
 		}
 
-		1;
+		return 1;
 	}
 
 	,go => sub {
@@ -932,13 +995,13 @@ $DB::commands =  {()
 		1;
 	}
 	,e => sub {
-		return {
-			expr => length $_[0] ? shift : DB::state( 'db.last_eval' ) // '',
-			code => sub {
-				print $DB::OUT dd( @_ ) ."\n";
-				return 1;
+		return [()
+			,sub{
+				print $DB::OUT dd( @{ $_[0] } ) ."\n";
+				return { code => \&interact };
 			}
-		}
+			,length $_[0] ? shift : DB::state( 'db.last_eval' ) // ''
+		];
 	}
 
 	# TODO: give names to ANON
@@ -1052,6 +1115,31 @@ $DB::commands =  {()
 		}
 	}
 };
+
+
+
+sub process {
+	my( $dbg, $str ) =  @_;
+
+	my( $cmd, $args_str ) =  $str =~ m/^([\w.]+)(?:\s+(.*))?$/;
+	$args_str //=  '';
+
+
+	unless(  $cmd  &&  exists $DB::commands->{ $cmd } ) {
+		print $DB::OUT "No such command: '$str'\n"   if DB::state( 'ddd' );
+		return 0;
+	}
+
+	# The command also should return defined value to keep interaction
+	print $DB::OUT "Start to process '$cmd' command\n"   if DB::state( 'ddd' );
+	my $result =  eval { $DB::commands->{ $cmd }( $args_str ) };
+	print $DB::OUT "Command '$cmd' processed\n"   if DB::state( 'ddd' );
+	do{ print $DB::OUT "'$cmd' command died: $@"; return -1; }   if $@;
+
+	return $result;
+}
+
+
 
 1;
 
