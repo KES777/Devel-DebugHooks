@@ -1032,8 +1032,8 @@ BEGIN { # Initialization goes here
 			print $DB::OUT ">> scall from $from($f:$l) --> $sub\n";
 		}
 
-		die "You can make debugger call only from debugger"
-			unless DB::state( 'inDB' );
+		# die "You can make debugger call only from debugger"
+		# 	unless DB::state( 'inDB' );
 
 
 		# FIX: http://perldoc.perl.org/perldebguts.html#Debugger-Internals
