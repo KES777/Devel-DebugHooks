@@ -1068,7 +1068,7 @@ BEGIN { # Initialization goes here
 			# Enable debugging after current command is finished
 			if( my $debug =  DB::state( 'debug' ) ) {
 				DB::state( 'debug', undef );
-				my( $verbose, $sub ) =  $debug =~ /^(\d*)(?:@(.*))?$/;
+				my( $verbose, $sub ) =  $debug =~ /^(\d+)?(?:@(.*))?$/;
 				# Set or flush debug flags depending on user's input
 				DB::state( 'ddd', $verbose // undef );
 				DB::state( 'dd',  $sub     // undef );
