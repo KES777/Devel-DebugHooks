@@ -1576,11 +1576,12 @@ sub goto {
 	return   unless $options{ trace_goto };
 	return   if DB::state( 'inDB' );
 
+	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
 	push_frame( my $tmp =  $DB::sub, 'G' );
-	DB::state( 'inDB', undef )
+	DB::state( 'inDB', $old_inDB )
 };
 
 
@@ -1597,9 +1598,10 @@ sub pop_frame {
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
 
+	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
 	mcall( 'pop_frame' );
-	DB::state( 'inDB', undef );
+	DB::state( 'inDB', $old_inDB );
 }
 
 }
@@ -1618,6 +1620,7 @@ sub trace_returns {
 sub push_frame {
 
 	print_state "BEFORE CALL: $_[0]  "   if _ddd;
+	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
 
 	mcall( 'push_frame', @_ );
@@ -1627,7 +1630,7 @@ sub push_frame {
 		DB::state( 'stack' );
 	}
 
-	DB::state( 'inDB', undef );
+	DB::state( 'inDB', $old_inDB );
 	print_state "BEFORE CALL DONE: $_[0]  "   if _ddd;
 }
 
