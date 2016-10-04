@@ -464,7 +464,7 @@ sub state {
 	# Show full stack only when verbose mode ON and only before changes
 	# or before implicit changes: when debugger command take whole 'stack'
 	# and manipulate data directly
-	if( $debug  &&  $debug >= 3  && ( @_ >= 2 || $name eq 'stack' ) ) {
+	if( $debug  &&  (($debug >= 3  &&  @_ >= 2)  ||  $name eq 'stack' ) ) {
 		print_state "\n    ";
 
 		for( @$DB::state ) {
