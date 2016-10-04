@@ -536,6 +536,7 @@ sub _ddd {
 
 
 sub new {
+	my $ddd =  DB::state( 'ddd' );
 
 	# NOTICE: After creating new debugger instance we are in debugger yet
 	# So we set { inDB } flag. It allows us safely initialize new debugger
@@ -547,11 +548,14 @@ sub new {
 	} ], @_ }, $DB::dbg;
 	push @$DB::state, $dbg_instance;
 
+	# New debugger instance should have same { ddd } flag
+	# DB::state( 'ddd', $ddd )   if defined $ddd;
+
 	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
 		if @$DB::state > 1;
 
 	print $DB::OUT "\nIN DEBUGGER  >>>>>>>>>>>>>>>>>>>>>>\n\n"
-		if _ddd;
+		if DB::state( 'ddd' );
 
 	my $self;
 }
@@ -1089,10 +1093,7 @@ BEGIN { # Initialization goes here
 			# NOTICE: We should not set debugger states directly when create
 			# new state instance. We will not see changes at debug output
 			# So we use &DB::state after instance initialization
-			DB::new(()
-				# A new debugger instance has its own { ddd } flag
-				,ddd =>  DB::state( 'debug' )
-			);
+			DB::new();
 			DB::state( 'single', 1 );
 			DB::state( 'inDB', undef );
 			$^D |=  1<<30;
