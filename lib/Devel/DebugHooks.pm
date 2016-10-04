@@ -453,6 +453,8 @@ sub frm_vrbl {
 
 mutate_sub_is_debuggable( \&state, 0 );
 sub state {
+	return   unless $DB::state  &&  @$DB::state;
+
 	my( $name, $value ) =  @_;
 
 	# Do not debug access into 'ddd' flag
