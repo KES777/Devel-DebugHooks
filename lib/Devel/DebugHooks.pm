@@ -548,7 +548,7 @@ sub new {
 	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
 		if @$DB::state > 1;
 
-	print $DB::OUT "IN  DEBUGGER  >>>>>>>>>>>>>>>>>>>>>> \n"
+	print $DB::OUT "\nIN DEBUGGER  >>>>>>>>>>>>>>>>>>>>>>\n\n"
 		if _ddd;
 
 	my $self;
@@ -561,7 +561,7 @@ sub DESTROY {
 	DB::state( 'dd', undef );
 	DB::state( 'debug', undef );
 
-	print $DB::OUT "OUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<< \n"
+	print $DB::OUT "\nOUT DEBUGGER  <<<<<<<<<<<<<<<<<<<<<<\n\n"
 		if _ddd;
 	pop @$DB::state;
 	# NOTICE: previous frame is always have { inDB } flag on because there is
@@ -1047,7 +1047,7 @@ BEGIN { # Initialization goes here
 
 		# Manual localization
 		my $scall_cleanup =  sub {
-			print $DB::OUT "Debugger command DONE: $sub\n"   if $ddd;
+			print_state "Debugger command DONE: $sub  "   if $ddd;
 
 			# NOTICE: Because  we are in debugger here we should setup { inDB }
 			# flag but we are leaving debugger and interesting at user's context
@@ -1112,7 +1112,7 @@ BEGIN { # Initialization goes here
 
 	sub save_context {
 		@DB::context =  ( \@_, (caller 2)[8..10], $@, $_ );
-		print_state "\nTRAPPED IN \@" .@$DB::state ."  "   if _ddd;
+		print_state "\nTRAPPED IN  ", "\n\n"   if _ddd;
 		DB::state( 'inDB', 1 );
 	}
 
@@ -1123,7 +1123,7 @@ BEGIN { # Initialization goes here
 	mutate_sub_is_debuggable( \&restore_context, 0 );
 	sub restore_context {
 		DB::state( 'inDB', undef );
-		print_state "\nTRAPPED OUT \@" .@$DB::state ."  "   if _ddd;
+		print_state "\nTRAPPED OUT  ", "\n\n"   if _ddd;
 		$@ =  $DB::context[ 4 ];
 	}
 } # end of provided DB::API
@@ -1617,21 +1617,18 @@ sub trace_returns {
 
 sub push_frame {
 
-	print $DB::OUT "SUB IN: " .@$DB::state ."\n"   if _ddd;
+	print_state "BEFORE CALL: $_[0]  "   if _ddd;
 	DB::state( 'inDB', 1 );
-
-	print $DB::OUT "\nCreating frame for $_[0]\n"   if DB::state( 'ddd' );
 
 	mcall( 'push_frame', @_ );
 
 	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
 		DB::state( 'stack' );
-		print $DB::OUT "Frame created for $_[0]\n\n";
 	}
 
 	DB::state( 'inDB', undef );
-	print $DB::OUT "SUB OUT: " .@$DB::state ."\n"   if _ddd;
+	print_state "BEFORE CALL DONE: $_[0]  "   if _ddd;
 }
 
 
