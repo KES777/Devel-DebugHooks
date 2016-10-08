@@ -141,12 +141,6 @@ sub push_frame {
 
 
 
-
-sub init {
-}
-
-
-
 # NOTICE: We do not inherit DB:: interface, we use it
 sub import {
 	DB::import( @_ );
@@ -1139,7 +1133,6 @@ sub import { # NOTE: The import is called at CT yet
 	# NOTICE: it is useless to set breakpoints for not compiled files
 	# TODO: spy module loading and set breakpoints
 	#TODO: Config priority: conf, ENV, cmd_line
-	mcall( 'init' );
 
 
 	# Parse cmd_line options:
