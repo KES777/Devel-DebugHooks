@@ -1539,6 +1539,7 @@ sub process {
 		elsif( $htype eq 'HASH' ) {
 			$code =  $handler->{ code };
 			@args =  @_;
+			unshift @args, $handler->{ context }   if $handler->{ context };
 		}
 		else {
 			die "Handler type should be ARRAY or HASH";
