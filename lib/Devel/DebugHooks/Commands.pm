@@ -275,7 +275,7 @@ sub interact {
 	my @initial;
 	my $str =  $DB::dbg->get_command();
 	return   unless defined $str;
-	print +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
+	print $DB::OUT +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 
 	my $result =  process( undef, $str );
 	return   unless defined $result;
