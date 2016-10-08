@@ -124,7 +124,7 @@ sub push_frame {
 		};
 
 
-		DB::emit( 'frame', 0, $frame );
+		DB::emit( 'frame', $frame );
 
 		#TODO: Now we push always. Q: How to skip coresopnding &pop_frame?
 		# Think about this feature: if( $confirm ) {
@@ -136,7 +136,7 @@ sub push_frame {
 	}
 
 
-	DB::emit( 'call', 0, $sub );
+	DB::emit( 'call', $sub );
 
 	#TODO: implement functionality using API
 	if( $DB::options{ trace_subs } ) {
@@ -331,6 +331,7 @@ package DB;
 # in different order under debugger
 use Scope::Cleanup qw/ establish_cleanup /;
 use Sub::Metadata qw/ mutate_sub_is_debuggable /;
+use List::Util;
 
 
 
@@ -1251,23 +1252,15 @@ sub unreg {
 
 
 sub emit {
-	my( $name, $mult ) =  ( shift, shift );
+	my( $name ) =  ( shift );
 
 	print $DB::OUT "Emit event '$name' from ", (caller)[1,2], "\n"   if DB::state( 'ddd' );
 
 	# Get subscribers for the event
 	my $ev; { no strict 'refs'; $ev =  &{ "${name}_info" }( @_ ); }
 
-	my $res;
-	#TODO: implement through reduce
-	if( $mult ) {
-		$res =  1;
-		$res &&=  process( $ev->{ $_ }, @_ )   for keys %$ev;
-	}
-	else {
-		$res =  0;
-		$res ||=  process( $ev->{ $_ }, @_ )   for keys %$ev;
-	}
+	my $res =  [];
+	push @$res, process( $ev->{ $_ }, @_ )   for keys %$ev;
 
 	print $DB::OUT "Event '$name' DONE\n"   if DB::state( 'ddd' );
 
@@ -1472,8 +1465,8 @@ sub DB_my {
 	#TODO: $DB::signal $DB::trace
 
 
-	my $stop    =  emit( 'trap', 0, $f, $l );
-	my $confirm =  emit( 'stop', 1, $p, $f, $l );
+	my $stop    =  List::Util::any { $_ } @{ emit( 'trap', $f, $l )     };
+	my $confirm =  List::Util::all { $_ } @{ emit( 'stop', $p, $f, $l ) };
 
 	#IT: stop on breakpoint while stepping
 	return   unless $stop  ||  $DB::single && $confirm  ||  $DB::signal;
