@@ -16,6 +16,15 @@ sub import {
 	$commands =  [ split $endline, $commands ];
 
 	$class->SUPER::import( @_ );
+
+	DB::state( 'inDB', 1 );
+	if( $DB::options{ trace_subs } ) {
+		my $handler =  DB::reg( 'call', 'DbInteract' );
+		$$handler->{ context } =  $DB::dbg;
+		$$handler->{ code }    =  \&trace_subs;
+	}
+
+	DB::state( 'inDB', undef );
 }
 
 

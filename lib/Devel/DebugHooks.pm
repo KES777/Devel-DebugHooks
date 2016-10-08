@@ -137,11 +137,6 @@ sub push_frame {
 
 
 	DB::emit( 'call', $sub );
-
-	#TODO: implement functionality using API
-	if( $DB::options{ trace_subs } ) {
-		DB::mcall( 'trace_subs' );
-	}
 }
 
 
