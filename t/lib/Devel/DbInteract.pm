@@ -24,6 +24,12 @@ sub import {
 		$$handler->{ code }    =  \&trace_subs;
 	}
 
+	if( $DB::options{ trace_returns } ) {
+		my $handler =  DB::reg( 'trace_returns', 'DbInteract' );
+		$$handler->{ context } =  $DB::dbg;
+		$$handler->{ code }    =  \&trace_returns;
+	}
+
 	DB::state( 'inDB', undef );
 }
 

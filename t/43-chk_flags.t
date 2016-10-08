@@ -55,7 +55,7 @@ is
 	,"Stop on first script OP";
 
 is
-	nl( `$^X $lib -d:DbInteract='s 3;scalar\@{ DB::state( "stack" ) };q,Stop' -e '$script'` )
+	nl( `$^X $lib -d:DbInteract='s 4;scalar\@{ DB::state( "stack" ) };q,Stop' -e '$script'` )
 	,$files->{ 'BEGIN' }
 	,"Stop at BEGIN block OP";
 

@@ -1528,7 +1528,7 @@ sub pop_frame {
 sub trace_returns {
 	DB::state( 'inDB', 1 );
 	#FIX: process exceptions
-	mcall( 'trace_returns', @_ );
+	emit( 'trace_returns', @_ );
 	DB::state( 'inDB', undef );
 }
 
