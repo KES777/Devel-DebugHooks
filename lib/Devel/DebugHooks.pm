@@ -1223,22 +1223,22 @@ sub postponed {
 our %sig =  (()
 	,trap    =>  \&trap
 	,untrap  =>  \&untrap
-	,call    =>  \&call
 	,uncall  =>  \&uncall
-	,trace   =>  \&trace
 	,untrace =>  \&untrace
-	,stop    =>  \&stop
 	,unstop  =>  \&unstop
-	,frame   =>  \&frame
 	,unframe =>  \&unframe
-	,interact   =>  \&interact
 	,uninteract =>  \&uninteract
 );
 
 sub reg {
 	my( $sig, $name, @extra ) =  @_;
 
-	return $DB::sig{ $sig }->( $name, @extra );
+	if( exists $DB::sig{ $sig } ) {
+		return $DB::sig{ $sig }->( $name, @extra );
+	}
+	else {
+		return default_handler( $sig, $name, @extra );
+	}
 }
 
 
@@ -1257,7 +1257,13 @@ sub emit {
 	print $DB::OUT "Emit event '$name' from ", (caller)[1,2], "\n"   if DB::state( 'ddd' );
 
 	# Get subscribers for the event
-	my $ev; { no strict 'refs'; $ev =  &{ "${name}_info" }( @_ ); }
+	my $ev; {
+		no strict 'refs';
+		$ev =  defined &{ "${name}_info" }
+			? &{ "${name}_info" }( @_ )
+			: default_handler_info( $name )
+		;
+	}
 
 	my $res =  [];
 	push @$res, process( $ev->{ $_ }, @_ )   for keys %$ev;
@@ -1265,6 +1271,24 @@ sub emit {
 	print $DB::OUT "Event '$name' DONE\n"   if DB::state( 'ddd' );
 
 	return $res;
+}
+
+
+
+sub default_handler_info {
+	return DB::state( "on_$_[0]" ) // {};
+}
+
+
+
+sub default_handler {
+	my( $sig, $name ) =  @_;
+	my $subscribers =  DB::state( "on_$sig" );
+	$subscribers =  DB::state( "on_$sig", {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
 }
 
 
@@ -1314,44 +1338,12 @@ sub untrap {
 
 
 
-sub call_info {
-	return DB::state( 'on_call' ) // {};
-}
-
-
-
-sub call {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_call' );
-	$subscribers =  DB::state( 'on_call', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
 sub uncall {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_call' );
 
 	delete $subscribers->{ $name };
 	DB::state( 'on_call', undef )   unless keys %$subscribers;
-}
-
-
-
-sub trace {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_trace' );
-	$subscribers =  DB::state( 'on_trace', {} )   unless $subscribers;
-
-	$DB::trace =  1;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
 }
 
 
@@ -1369,24 +1361,6 @@ sub untrace {
 
 
 
-sub stop_info {
-	return DB::state( 'on_stop' ) // {};
-}
-
-
-
-sub stop {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_stop' );
-	$subscribers =  DB::state( 'on_stop', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
 sub unstop {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_stop' );
@@ -1397,48 +1371,12 @@ sub unstop {
 
 
 
-sub frame_info {
-	return DB::state( 'on_frame' ) // {};
-}
-
-
-
-sub frame {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_frame' );
-	$subscribers =  DB::state( 'on_frame', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
 sub unframe {
 	my( $name ) =  @_;
 	my $subscribers =  DB::state( 'on_frame' );
 
 	delete $subscribers->{ $name };
 	DB::state( 'on_frame', undef )   unless keys %$subscribers;
-}
-
-
-
-sub interact_info {
-	return DB::state( 'on_interact' ) // {};
-}
-
-
-
-sub interact {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_interact' );
-	$subscribers =  DB::state( 'on_interact', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
 }
 
 
