@@ -157,13 +157,6 @@ sub trace_load {
 
 
 
-# This sub is called for each DB::DB call when $DB::trace is true
-sub trace_line {
-	print DB::state( 'line' ) ."\n";
-}
-
-
-
 sub bbreak {
 	my $info =  "\n" .' =' x30 .DB::state( 'inDB' ) ."\n";
 
@@ -1340,7 +1333,7 @@ sub DB_my {
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "\n    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
-	do{ mcall( 'trace_line' ); }   if $DB::trace;
+	emit( 'trace_line' )   if $DB::trace;
 	#TODO: $DB::signal $DB::trace
 
 
