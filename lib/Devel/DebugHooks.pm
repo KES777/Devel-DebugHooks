@@ -94,6 +94,7 @@ sub push_frame {
 		3;
 	}
 	my $self =  shift;
+	shift; #Turf event context
 	my $sub =  shift;
 	DB::print_state( "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n" )   if DB::state( 'ddd' );
 
@@ -104,7 +105,7 @@ sub push_frame {
 		# those vars have sharp last opcode location.
 		if( !DB::state( 'eval' ) ) {
 			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
-			my( $p, $f, $l ) =  caller 4;
+			my( $p, $f, $l ) =  caller 5;
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
@@ -137,6 +138,15 @@ sub push_frame {
 
 
 	DB::emit( 'call', $sub );
+	1;
+}
+
+
+
+{
+	my $handler =  DB::reg( 'push_frame', 'DebugHooks' );
+	$$handler->{ context } =  $DB::dbg;
+	$$handler->{ code }    =  \&push_frame;
 }
 
 
@@ -1488,7 +1498,7 @@ sub push_frame {
 	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
 
-	mcall( 'push_frame', @_ );
+	emit( 'push_frame', @_ );
 
 	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";
