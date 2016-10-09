@@ -80,6 +80,15 @@ sub pop_frame {
 
 
 
+{
+	my $handler =  DB::reg( 'pop_frame', 'DebugHooks' );
+	$$handler->{ context } =  $DB::dbg;
+	$$handler->{ code }    =  \&pop_frame;
+}
+
+
+
+
 sub test {
 	1;
 	2;
@@ -94,6 +103,7 @@ sub push_frame {
 		3;
 	}
 	my $self =  shift;
+	shift; #Turf event context
 	my $sub =  shift;
 	DB::print_state( "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n" )   if DB::state( 'ddd' );
 
@@ -104,7 +114,7 @@ sub push_frame {
 		# those vars have sharp last opcode location.
 		if( !DB::state( 'eval' ) ) {
 			#TODO: If $DB::single == 1 we can skip this because cursor is updated at DB::DB
-			my( $p, $f, $l ) =  caller 4;
+			my( $p, $f, $l ) =  caller 5;
 			DB::state( 'package', $p );
 			DB::state( 'file',    $f );
 			DB::state( 'line',    $l );
@@ -137,17 +147,15 @@ sub push_frame {
 
 
 	DB::emit( 'call', $sub );
-
-	#TODO: implement functionality using API
-	if( $DB::options{ trace_subs } ) {
-		DB::mcall( 'trace_subs' );
-	}
+	1;
 }
 
 
 
-
-sub init {
+{
+	my $handler =  DB::reg( 'push_frame', 'DebugHooks' );
+	$$handler->{ context } =  $DB::dbg;
+	$$handler->{ code }    =  \&push_frame;
 }
 
 
@@ -164,13 +172,6 @@ sub trace_load {
 	my $self =  shift;
 
 	return "Loaded '@_'\n"
-}
-
-
-
-# This sub is called for each DB::DB call when $DB::trace is true
-sub trace_line {
-	print DB::state( 'line' ) ."\n";
 }
 
 
@@ -194,12 +195,6 @@ sub interact {
 
 
 
-# NOTICE: &DB::sub is not called because of DB::namespace
-sub abreak {
-}
-
-
-
 my %frame_name;
 BEGIN {
 	%frame_name =  (
@@ -208,6 +203,8 @@ BEGIN {
 		C => 'FROM',
 	);
 }
+
+
 
 sub trace_subs {
 	my( $self ) =  @_;
@@ -552,8 +549,10 @@ sub new {
 	# New debugger instance should have same { ddd } flag
 	# DB::state( 'ddd', $ddd )   if defined $ddd;
 
-	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
-		if @$DB::state > 1;
+	if( @$DB::state > 1 ) {
+		my @events =  grep{ /^on_/ } keys %{ $DB::state->[-2] };
+		@{ $DB::state->[-1] }{ @events } =  @{ $DB::state->[-2] }{ @events };
+	}
 
 	print $DB::OUT "\nIN DEBUGGER  >>>>>>>>>>>>>>>>>>>>>>\n\n"
 		if DB::state( 'ddd' );
@@ -1144,7 +1143,6 @@ sub import { # NOTE: The import is called at CT yet
 	# NOTICE: it is useless to set breakpoints for not compiled files
 	# TODO: spy module loading and set breakpoints
 	#TODO: Config priority: conf, ENV, cmd_line
-	mcall( 'init' );
 
 
 	# Parse cmd_line options:
@@ -1203,19 +1201,17 @@ sub sub_name {
 # We define posponed/sub as soon as possible to be able watch whole process
 # NOTICE: At this sub we reenter debugger
 sub postponed {
-	if( $options{ trace_load } ) {
-		#TODO: implement local_state to localize debugger state values
-		my $old_inDB =  DB::state( 'inDB' );
-		DB::state( 'inDB', 1 );
-		#FIX: process exceptions
-		mcall( 'trace_load', @_ );
+	#TODO: implement local_state to localize debugger state values
+	my $old_inDB =  DB::state( 'inDB' );
+	DB::state( 'inDB', 1 );
+	#FIX: process exceptions
+	emit( 'trace_load', @_ );
 
-		# When we are in debugger and we require module the execution will be
-		# interrupted and we REENTER debugger
-		# TODO: study this case and IT:
-		# T: We are { dd } and run command that 'require'
-		DB::state( 'inDB', $old_inDB );
-	}
+	# When we are in debugger and we require module the execution will be
+	# interrupted and we REENTER debugger
+	# TODO: study this case and IT:
+	# T: We are { dd } and run command that 'require'
+	DB::state( 'inDB', $old_inDB );
 }
 
 
@@ -1223,22 +1219,17 @@ sub postponed {
 our %sig =  (()
 	,trap    =>  \&trap
 	,untrap  =>  \&untrap
-	,call    =>  \&call
-	,uncall  =>  \&uncall
-	,trace   =>  \&trace
-	,untrace =>  \&untrace
-	,stop    =>  \&stop
-	,unstop  =>  \&unstop
-	,frame   =>  \&frame
-	,unframe =>  \&unframe
-	,interact   =>  \&interact
-	,uninteract =>  \&uninteract
 );
 
 sub reg {
 	my( $sig, $name, @extra ) =  @_;
 
-	return $DB::sig{ $sig }->( $name, @extra );
+	if( exists $DB::sig{ $sig } ) {
+		return $DB::sig{ $sig }->( $name, @extra );
+	}
+	else {
+		return default_handler( $sig, $name, @extra );
+	}
 }
 
 
@@ -1246,7 +1237,12 @@ sub reg {
 sub unreg {
 	my( $sig, $name, @extra ) =  @_;
 
-	return $DB::sig{ "un$sig" }->( $name, @extra );
+	if( exists $DB::sig{ $sig } ) {
+		return $DB::sig{ "un$sig" }->( $name, @extra );
+	}
+	else {
+		return default_unhandler( $sig, $name, @extra );
+	}
 }
 
 
@@ -1257,7 +1253,13 @@ sub emit {
 	print $DB::OUT "Emit event '$name' from ", (caller)[1,2], "\n"   if DB::state( 'ddd' );
 
 	# Get subscribers for the event
-	my $ev; { no strict 'refs'; $ev =  &{ "${name}_info" }( @_ ); }
+	my $ev; {
+		no strict 'refs';
+		$ev =  defined &{ "${name}_info" }
+			? &{ "${name}_info" }( @_ )
+			: default_handler_info( $name )
+		;
+	}
 
 	my $res =  [];
 	push @$res, process( $ev->{ $_ }, @_ )   for keys %$ev;
@@ -1265,6 +1267,34 @@ sub emit {
 	print $DB::OUT "Event '$name' DONE\n"   if DB::state( 'ddd' );
 
 	return $res;
+}
+
+
+
+sub default_handler_info {
+	return DB::state( "on_$_[0]" ) // {};
+}
+
+
+
+sub default_handler {
+	my( $sig, $name ) =  @_;
+	my $subscribers =  DB::state( "on_$sig" );
+	$subscribers =  DB::state( "on_$sig", {} )   unless $subscribers;
+
+	# HACK: Autovivify subscriber if it does not exists yet
+	# Glory Perl. I love it!
+	return \$subscribers->{ $name };
+}
+
+
+
+sub default_unhandler {
+	my( $sig, $name ) =  @_;
+	my $subscribers =  DB::state( "on_$sig" );
+
+	delete $subscribers->{ $name };
+	DB::state( "on_$sig", undef )   unless keys %$subscribers;
 }
 
 
@@ -1314,145 +1344,6 @@ sub untrap {
 
 
 
-sub call_info {
-	return DB::state( 'on_call' ) // {};
-}
-
-
-
-sub call {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_call' );
-	$subscribers =  DB::state( 'on_call', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
-sub uncall {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_call' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_call', undef )   unless keys %$subscribers;
-}
-
-
-
-sub trace {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_trace' );
-	$subscribers =  DB::state( 'on_trace', {} )   unless $subscribers;
-
-	$DB::trace =  1;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
-sub untrace {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_trace' );
-
-	delete $subscribers->{ $name };
-	unless( keys %$subscribers ) {
-		$DB::trace =  0;
-		DB::state( 'on_trace', undef );
-	}
-}
-
-
-
-sub stop_info {
-	return DB::state( 'on_stop' ) // {};
-}
-
-
-
-sub stop {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_stop' );
-	$subscribers =  DB::state( 'on_stop', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
-sub unstop {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_stop' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_stop', undef )   unless keys %$subscribers;
-}
-
-
-
-sub frame_info {
-	return DB::state( 'on_frame' ) // {};
-}
-
-
-
-sub frame {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_frame' );
-	$subscribers =  DB::state( 'on_frame', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
-sub unframe {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_frame' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_frame', undef )   unless keys %$subscribers;
-}
-
-
-
-sub interact_info {
-	return DB::state( 'on_interact' ) // {};
-}
-
-
-
-sub interact {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_interact' );
-	$subscribers =  DB::state( 'on_interact', {} )   unless $subscribers;
-
-	# HACK: Autovivify subscriber if it does not exists yet
-	# Glory Perl. I love it!
-	return \$subscribers->{ $name };
-}
-
-
-
-sub uninteract {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_interact' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_interact', undef )   unless keys %$subscribers;
-}
-
-
-
 # TODO: implement: on_enter, on_leave, on_compile
 sub DB_my {
 	&save_context;
@@ -1461,7 +1352,7 @@ sub DB_my {
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "\n    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
-	do{ mcall( 'trace_line' ); }   if $DB::trace;
+	emit( 'trace_line' )   if $DB::trace;
 	#TODO: $DB::signal $DB::trace
 
 
@@ -1475,9 +1366,9 @@ sub DB_my {
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
 
-	mcall( 'bbreak' );
+	emit( 'bbreak'   );
 	emit( 'interact' );
-	mcall( 'abreak' );
+	emit( 'abreak'   );
 }
 
 
@@ -1593,7 +1484,7 @@ sub pop_frame {
 
 	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
-	mcall( 'pop_frame' );
+	emit( 'pop_frame' );
 	DB::state( 'inDB', $old_inDB );
 }
 
@@ -1604,7 +1495,7 @@ sub pop_frame {
 sub trace_returns {
 	DB::state( 'inDB', 1 );
 	#FIX: process exceptions
-	mcall( 'trace_returns', @_ );
+	emit( 'trace_returns', @_ );
 	DB::state( 'inDB', undef );
 }
 
@@ -1616,7 +1507,7 @@ sub push_frame {
 	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
 
-	mcall( 'push_frame', @_ );
+	emit( 'push_frame', @_ );
 
 	if( DB::state( 'ddd' ) ) {
 		print $DB::OUT "STACK:\n";

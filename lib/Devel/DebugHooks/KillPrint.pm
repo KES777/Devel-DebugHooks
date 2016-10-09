@@ -10,7 +10,7 @@ my @profiles =  ();
 sub trace_load {
 	my( $self ) =  shift;
 
-	if( $_[0] eq "*main::_<$0" ) { #<-- This is tricky
+	if( $_[1] eq "*main::_<$0" ) { #<-- This is tricky
 		while( my( $key, $value ) =  each %$actions ) {
 			#TODO: call process here
 			$DB::commands->{ a }->( "$key $value" );
@@ -22,11 +22,13 @@ sub trace_load {
 
 
 
-BEGIN{
-	$DB::options{ trace_load } =  1;
-	push @ISA, 'Devel::DebugHooks';
-}
 use Devel::DebugHooks();
+BEGIN{
+	push @ISA, 'Devel::DebugHooks';
+	my $handler =  DB::reg( 'trace_load', 'kill_print' );
+	$$handler->{ context } =  $DB::dbg;
+	$$handler->{ code }    =  $DB::dbg->can( 'trace_load' );
+}
 use Filter::Util::Call;
 
 
