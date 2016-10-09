@@ -1209,11 +1209,6 @@ sub postponed {
 our %sig =  (()
 	,trap    =>  \&trap
 	,untrap  =>  \&untrap
-	,uncall  =>  \&uncall
-	,untrace =>  \&untrace
-	,unstop  =>  \&unstop
-	,unframe =>  \&unframe
-	,uninteract =>  \&uninteract
 );
 
 sub reg {
@@ -1232,7 +1227,12 @@ sub reg {
 sub unreg {
 	my( $sig, $name, @extra ) =  @_;
 
-	return $DB::sig{ "un$sig" }->( $name, @extra );
+	if( exists $DB::sig{ $sig } ) {
+		return $DB::sig{ "un$sig" }->( $name, @extra );
+	}
+	else {
+		return default_unhandler( $sig, $name, @extra );
+	}
 }
 
 
@@ -1279,6 +1279,16 @@ sub default_handler {
 
 
 
+sub default_unhandler {
+	my( $sig, $name ) =  @_;
+	my $subscribers =  DB::state( "on_$sig" );
+
+	delete $subscribers->{ $name };
+	DB::state( "on_$sig", undef )   unless keys %$subscribers;
+}
+
+
+
 sub trap_info {
 	my( $file, $line ) =  @_;
 
@@ -1320,59 +1330,6 @@ sub untrap {
 	#IT: Deleting one subscriber should keep others
 
 	return;
-}
-
-
-
-sub uncall {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_call' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_call', undef )   unless keys %$subscribers;
-}
-
-
-
-sub untrace {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_trace' );
-
-	delete $subscribers->{ $name };
-	unless( keys %$subscribers ) {
-		$DB::trace =  0;
-		DB::state( 'on_trace', undef );
-	}
-}
-
-
-
-sub unstop {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_stop' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_stop', undef )   unless keys %$subscribers;
-}
-
-
-
-sub unframe {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_frame' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_frame', undef )   unless keys %$subscribers;
-}
-
-
-
-sub uninteract {
-	my( $name ) =  @_;
-	my $subscribers =  DB::state( 'on_interact' );
-
-	delete $subscribers->{ $name };
-	DB::state( 'on_interact', undef )   unless keys %$subscribers;
 }
 
 
