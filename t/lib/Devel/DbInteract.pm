@@ -131,4 +131,8 @@ use Devel::DebugHooks();
 my $handler =  DB::reg( 'interact', 'terminal' );
 $$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
 
+$handler =  DB::reg( 'bbreak', 'DbInteract' );
+$$handler->{ context } =  $DB::dbg;
+$$handler->{ code }    =  \&bbreak;
+
 1;

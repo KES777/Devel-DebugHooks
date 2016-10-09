@@ -6,17 +6,20 @@ BEGIN {
         $DB::options{ trace_load }  //=  0;
         $DB::options{ trace_subs }  //=  0;
         $DB::options{ trace_returns }  //=  0;
-        $DB::options{ _debug }      //=  0;
         $DB::options{ dbg_frames }  //=  0;
         @DB::options{ qw/ w s / } = ( 1, 1 );
         push @ISA, 'Devel::DebugHooks';
 }
+
+
 
 sub import {
 	my $class =  shift;
 
 	$class->SUPER::import( @_ );
 }
+
+
 
 sub bbreak {
 	my $self =  shift;
@@ -59,6 +62,11 @@ sub get_command {
 
 my $handler =  DB::reg( 'interact', 'terminal' );
 $$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
+
+#FIX: Decide where to complete subscribtion: from &import of from RT of module
+$handler =  DB::reg( 'bbreak', 'Terminal' );
+$$handler->{ context } =  $DB::dbg;
+$$handler->{ code }    =  \&bbreak;
 
 
 1;

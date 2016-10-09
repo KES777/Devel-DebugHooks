@@ -183,12 +183,6 @@ sub interact {
 
 
 
-# NOTICE: &DB::sub is not called because of DB::namespace
-sub abreak {
-}
-
-
-
 my %frame_name;
 BEGIN {
 	%frame_name =  (
@@ -197,6 +191,8 @@ BEGIN {
 		C => 'FROM',
 	);
 }
+
+
 
 sub trace_subs {
 	my( $self ) =  @_;
@@ -1358,9 +1354,9 @@ sub DB_my {
 
 	print_state "\n\nStart to interact with user\n", "\n\n"   if DB::state( 'ddd' );
 
-	mcall( 'bbreak' );
+	emit( 'bbreak'   );
 	emit( 'interact' );
-	mcall( 'abreak' );
+	emit( 'abreak'   );
 }
 
 
