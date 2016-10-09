@@ -541,8 +541,10 @@ sub new {
 	# New debugger instance should have same { ddd } flag
 	# DB::state( 'ddd', $ddd )   if defined $ddd;
 
-	$DB::state->[-1]{ on_interact } =  $DB::state->[-2]{ on_interact }
-		if @$DB::state > 1;
+	if( @$DB::state > 1 ) {
+		my @events =  grep{ /^on_/ } keys %{ $DB::state->[-2] };
+		@{ $DB::state->[-1] }{ @events } =  @{ $DB::state->[-2] }{ @events };
+	}
 
 	print $DB::OUT "\nIN DEBUGGER  >>>>>>>>>>>>>>>>>>>>>>\n\n"
 		if DB::state( 'ddd' );
