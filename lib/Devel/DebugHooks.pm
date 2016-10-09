@@ -80,6 +80,15 @@ sub pop_frame {
 
 
 
+{
+	my $handler =  DB::reg( 'pop_frame', 'DebugHooks' );
+	$$handler->{ context } =  $DB::dbg;
+	$$handler->{ code }    =  \&pop_frame;
+}
+
+
+
+
 sub test {
 	1;
 	2;
@@ -1475,7 +1484,7 @@ sub pop_frame {
 
 	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
-	mcall( 'pop_frame' );
+	emit( 'pop_frame' );
 	DB::state( 'inDB', $old_inDB );
 }
 
