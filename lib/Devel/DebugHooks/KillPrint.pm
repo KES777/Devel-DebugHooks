@@ -16,8 +16,6 @@ sub trace_load {
 			$DB::commands->{ a }->( "$key $value" );
 		}
 	}
-
-	return $self->SUPER::trace_load( @_ );
 }
 
 
