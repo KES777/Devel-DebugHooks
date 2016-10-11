@@ -41,6 +41,9 @@ BEGIN {
 		while( my $frame =  caller($level++) ) {
 			$DB::dbg =  $frame   if $frame =~ /^Devel::/;
 		}
+
+		$DB::dbg //=  __PACKAGE__;
+
 		# ISSUE: We can not make 'main' package as descendant of 'Devel::DebugHooks'
 		# because of broken info from 'caller', so I restrict pkg_names to 'Devel::'
 		# TODO: Ask #p5p about that 'caller' shows strange file:line for (eval)
