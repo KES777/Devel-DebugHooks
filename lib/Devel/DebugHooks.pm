@@ -38,8 +38,8 @@ C<Devel::DebugHooks> - Hooks for perl debugger
 BEGIN {
 	unless( defined $DB::dbg ) {
 		my $level =  0;
-		while( my @frame =  caller($level++) ) {
-			$DB::dbg =  $frame[0]   if $frame[0] =~ /^Devel::/;
+		while( my $frame =  caller($level++) ) {
+			$DB::dbg =  $frame   if $frame =~ /^Devel::/;
 		}
 		# ISSUE: We can not make 'main' package as descendant of 'Devel::DebugHooks'
 		# because of broken info from 'caller', so I restrict pkg_names to 'Devel::'
