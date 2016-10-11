@@ -1550,7 +1550,6 @@ sub sub {
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		return &$DB::sub   if !$options{ trace_returns };
 
 
 		if( wantarray ) {                             # list context
