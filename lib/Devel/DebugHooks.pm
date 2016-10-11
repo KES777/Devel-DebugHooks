@@ -38,18 +38,16 @@ C<Devel::DebugHooks> - Hooks for perl debugger
 BEGIN {
 	unless( defined $DB::dbg ) {
 		my $level =  0;
-		while( my @frame =  caller($level++) ) {
-			$DB::dbg =  $frame[0]   if $frame[0] =~ /^Devel::/;
+		while( my $frame =  caller($level++) ) {
+			$DB::dbg =  $frame   if $frame =~ /^Devel::/;
 		}
+
+		$DB::dbg //=  __PACKAGE__;
+
 		# ISSUE: We can not make 'main' package as descendant of 'Devel::DebugHooks'
 		# because of broken info from 'caller', so I restrict pkg_names to 'Devel::'
 		# TODO: Ask #p5p about that 'caller' shows strange file:line for (eval)
 		# https://rt.perl.org/Public/Bug/Display.html?id=127083
-
-		unless( defined $DB::dbg ) {
-			$DB::dbg =  'Devel::DebugHooks::Verbose';
-			@DB::options{ qw/ trace_load trace_subs trace_returns / } = ( 1, 1, 1 );
-		}
 	}
 }
 
@@ -162,109 +160,23 @@ sub push_frame {
 
 # NOTICE: We do not inherit DB:: interface, we use it
 sub import {
-	DB::import( @_ );
+	if( $_[0] eq 'Devel::DebugHooks' ) {
+		shift;
+		for my $module ( @_ ) {
+			my( $package, $args ) =  $module =~ m/^([^=]+)=?(.*)$/;
+			$DB::dbg =  "Devel::DebugHooks::$package";
+			$package  =~ s/::/\//;
+			require "Devel/DebugHooks/$package.pm";
+			$DB::dbg->import( split ':', $args );
+		}
+	}
+	else {
+		DB::import( @_ );
+	}
 	# shift->SUPER::import( @_ );
 }
 
 
-
-sub trace_load {
-	my $self =  shift;
-
-	return "Loaded '@_'\n"
-}
-
-
-
-sub bbreak {
-	my $info =  "\n" .' =' x30 .DB::state( 'inDB' ) ."\n";
-
-	$info .=  sprintf "%s:%s    %s"
-		,DB::state( 'file' )
-		,DB::state( 'line' )
-		,DB::source()->[ DB::state( 'line' ) ]
-	;
-
-	return $info;
-}
-
-
-
-sub interact {
-}
-
-
-
-my %frame_name;
-BEGIN {
-	%frame_name =  (
-		G => 'GOTO',
-		D => 'DBGF',
-		C => 'FROM',
-	);
-}
-
-
-
-sub trace_subs {
-	my( $self ) =  @_;
-
-	BEGIN{ 'warnings'->unimport( 'uninitialized' )   if $DB::options{ w } }
-
-
-	my $info = '';
-	local $" =  ' -';
-	my( $orig_frame, $last_frame );
-	for my $frame ( DB::frames() ) {
-		$last_frame //=  $frame   if $frame->[0] ne 'D';
-		$orig_frame //=  $frame   if $frame->[0] ne 'D'  &&  $frame->[0] ne 'G';
-
-		$info .=  $frame_name{ $frame->[0] } .": @$frame[2..5]\n";
-	}
-
-	my $context = $orig_frame->[7] ? 'list'
-			: defined $orig_frame->[7] ? 'scalar' : 'void';
-
-	$" =  ', ';
-	my @args =  map { !defined $_ ? '&undef' : $_ } @{ $orig_frame->[1] };
-	$info =
-		"\n" .' =' x15 ."\n"
-		."DEEP: ". @{ DB::state( 'stack' ) } ."\n"
-		."CNTX: $context\n"
-		.$last_frame->[0] ."SUB: " .$last_frame->[5] ."( @args )\n"
-		# print "TEXT: " .DB::location( $DB::sub ) ."\n";
-		# NOTICE: even before function call $DB::sub changes its value to DB::location
-		# A: Because @_ keep the reference to args. So
-		# 1. The reference to $DB::sub is saved into @_
-		# 2. The DB::location is called
-		# 3. The value of $DB::sub is changed to DB::location
-		# 4. my( $sub ) =  @_; # Here is too late to get the orig value of $DB::sub
-		."TEXT: " .DB::location( $last_frame->[5] ) ."\n\n"
-		.$info;
-
-	$info .=  ' =' x15 ."\n";
-
-	return $info;
-}
-
-
-
-sub trace_returns {
-	my $self =  shift;
-
-	my $info;
-	$info =  $DB::options{ trace_subs } ? '' : "\n" .' =' x15 ."\n";
-	# FIX: uninitializind value while 'n'
-	# A: Can not reproduce...
-	$info .= join '->', map { $_->[3] } @{ DB::state( 'goto_frames' ) };
-	$info .= " RETURNS:\n";
-
-	$info .=  @_ ?
-		'  ' .join "\n  ", map { defined $_ ? $_ : '&undef' } @_:
-		'>>NOTHING<<';
-
-	return $info ."\n" .' =' x15 ."\n";
-}
 
 package
 	x;
@@ -286,40 +198,6 @@ sub X {
 	1;
 }
 
-
-
-package    # hide the package from the PAUSE indexer
-	Devel::DebugHooks::Verbose;
-
-our @ISA;
-
-BEGIN {
-	push @ISA, 'Devel::DebugHooks';
-}
-
-sub trace_load {
-	my $self =  shift;
-
-	print $DB::OUT $self->SUPER::trace_load( @_ );
-}
-
-sub trace_subs {
-	my $self =  shift;
-
-	print $DB::OUT $self->SUPER::trace_subs( @_ );
-}
-
-sub trace_returns {
-	my $self =  shift;
-
-	print $DB::OUT $self->SUPER::trace_returns( @_ );
-}
-
-sub bbreak {
-	my $self =  shift;
-
-	print $DB::OUT $self->SUPER::bbreak( @_ );
-}
 
 
 package DB;
@@ -652,11 +530,6 @@ BEGIN {
 	# TODO: camelize options. Q: Why?
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
-	# The differece when we set option at compile time, we see module loadings
-	# and compilation order whereas setting up it at run time we lack that info
-	$options{ trace_load }     //=  0;         # compile time option
-	$options{ trace_subs }     //=  0;         # compile time & runtime option
-	$options{ trace_returns }  //=  0;
 
 	#options{ save_path } # TODO: save code path for displaying by graphviz
 	$DB::postponed{ 'DB::DB' } =  1;
@@ -1221,6 +1094,8 @@ our %sig =  (()
 	,untrap  =>  \&untrap
 );
 
+
+mutate_sub_is_debuggable( \&reg, 0 );
 sub reg {
 	my( $sig, $name, @extra ) =  @_;
 
@@ -1548,7 +1423,6 @@ sub sub {
 
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
-		return &$DB::sub   if !$options{ trace_returns };
 
 
 		if( wantarray ) {                             # list context
