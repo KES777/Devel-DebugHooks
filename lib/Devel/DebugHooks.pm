@@ -1221,6 +1221,8 @@ our %sig =  (()
 	,untrap  =>  \&untrap
 );
 
+
+mutate_sub_is_debuggable( \&reg, 0 );
 sub reg {
 	my( $sig, $name, @extra ) =  @_;
 
