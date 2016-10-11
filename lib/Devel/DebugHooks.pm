@@ -160,7 +160,19 @@ sub push_frame {
 
 # NOTICE: We do not inherit DB:: interface, we use it
 sub import {
-	DB::import( @_ );
+	if( $_[0] eq 'Devel::DebugHooks' ) {
+		shift;
+		for my $module ( @_ ) {
+			my( $package, $args ) =  $module =~ m/^([^=]+)=?(.*)$/;
+			$DB::dbg =  "Devel::DebugHooks::$package";
+			$package  =~ s/::/\//;
+			require "Devel/DebugHooks/$package.pm";
+			$DB::dbg->import( split ':', $args );
+		}
+	}
+	else {
+		DB::import( @_ );
+	}
 	# shift->SUPER::import( @_ );
 }
 
