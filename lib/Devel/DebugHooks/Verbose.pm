@@ -111,8 +111,10 @@ sub import {
 	$class->SUPER::import( @_ );
 
 	# Enabled by default
-	$DB::options{ trace_load } //=  1;
-	$DB::options{ trace_subs } //=  1;
+	# The differece when we set option at compile time, we see module loadings
+	# and compilation order whereas setting up it at run time we lack that info
+	$DB::options{ trace_load } //=  1;           # compile time option
+	$DB::options{ trace_subs } //=  1;           # compile time & runtime option
 	$DB::options{ trace_returns } //=  1;
 
 

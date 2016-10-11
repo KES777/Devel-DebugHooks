@@ -530,11 +530,6 @@ BEGIN {
 	# TODO: camelize options. Q: Why?
 	$options{ frames }         //=  -1;        # compile time & runtime option
 	$options{ dbg_frames }     //=  0;         # compile time & runtime option
-	# The differece when we set option at compile time, we see module loadings
-	# and compilation order whereas setting up it at run time we lack that info
-	# $options{ trace_load }     //=  0;         # compile time option
-	# $options{ trace_subs }     //=  0;         # compile time & runtime option
-	# $options{ trace_returns }  //=  0;
 
 	#options{ save_path } # TODO: save code path for displaying by graphviz
 	$DB::postponed{ 'DB::DB' } =  1;
