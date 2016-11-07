@@ -8,8 +8,6 @@ my @profiles =  ();
 
 #FIX: Do this after script is compiled. Look for some hook...
 sub trace_load {
-	my( $self ) =  shift;
-
 	if( $_[1] eq "*main::_<$0" ) { #<-- This is tricky
 		while( my( $key, $value ) =  each %$actions ) {
 			#TODO: call process here

@@ -53,74 +53,74 @@ my $files =  get_data_section();
 PERL
 
 # FIX: we should not require last 's' to see '-e:0002    1;'
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;s;s;s;s;s;r 3;s;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;s;s;s;s;s;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd sbs' }
 	,"Debug command step-by-step";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;s;n;r 3;s;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;s;n;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd step over' }
 	,"Debug command with step over";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;s 2;r;r 3;s;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;s 2;r;r 3;s;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd return' }
 	,"Debug command with return";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;s 2;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;s 2;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'debug cmd quit' }
 	,"Quit from debug debugger command process";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;right();q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;right();q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'call debugger sub' }
 	,"Subroutine call from debugger scope when debug debugger command";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 14;DB::state( "line" );q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 14;DB::state( "line" );q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'DB::state when dd' }
 	,"Get debugger state while debugger debugging";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;nested;$DB::state->[-1]{stack}[-1]{line};q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;nested;$DB::state->[-1]{stack}[-1]{line};q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'prevent position when call' }
 	,"Position should not be updated when we call sub while { dd }";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;debug;s 10;1+1;$DB::state->[-1]{stack}[-1]{line};q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;debug;s 10;1+1;$DB::state->[-1]{stack}[-1]{line};q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'prevent position when calc' }
 	,"Position should not be updated when we calcs while { dd }";
 
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;s;r;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;s;r;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step into' }
 	,"Step into at client's scipt after debugger debugging";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;n;r;q';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;n;r;q';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'outer step over' }
 	,"Step over at client's scipt after debugger debugging";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;global;global;r;q;';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;global;global;r;q;';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'wrong global vars usage' }
 	,"Debugger commands should not use any global variables";
 
-$cmds =  'DB::state( debug => "\@interact" );n;n;right_global;right_global;r;q;';
+$cmds =  'DB::state( debug => "\@interact" );n;n;n;right_global;right_global;r;q;';
 is
 	nl( `$^X $lib -d:DbInteract='$cmds' -e '$script'` )
 	,$files->{ 'global vars usage' }
@@ -157,8 +157,9 @@ __DATA__
 @@ debug cmd sbs
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    nested();
@@ -171,8 +172,9 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd step over
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    nested();
@@ -182,8 +184,9 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd return
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
@@ -193,24 +196,27 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd quit
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 xxx/DbInteract.pm:XXXX    2;
 @@ call debugger sub
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 scope
 @@ DB::state when dd
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1 at -e:4
 xxx/DbInteract.pm:XXXX    3;
@@ -218,8 +224,9 @@ xxx/DbInteract.pm:XXXX    3;
 @@ prevent position when call
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 1 at -e:4
@@ -228,8 +235,9 @@ xxx/DbInteract.pm:XXXX    1;
 @@ prevent position when calc
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
 2
@@ -237,30 +245,34 @@ xxx/DbInteract.pm:XXXX    1;
 @@ outer step into
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0002    1;
 @@ outer step over
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0005  2;
 @@ wrong global vars usage
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1
 2
 @@ global vars usage
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my( $handler ) =  @_;
-xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
+xxx/Commands.pm:XXXX    my $handler =  shift;
+xxx/Commands.pm:XXXX    my $dbg =  $handler->{ context }; # This is better
+xxx/Commands.pm:XXXX    my $str =  $dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1
 1

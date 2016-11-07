@@ -100,7 +100,7 @@ sub push_frame {
 		test();
 		3;
 	}
-	my $self =  shift;
+
 	shift; #Turf event context
 	my $sub =  shift;
 	DB::print_state( "PUSH FRAME $_[0] >>>>  ", "  --  $sub\n" )   if DB::state( 'ddd' );
@@ -1311,8 +1311,6 @@ sub process {
 		elsif( $htype eq 'HASH' ) {
 			$code =  $handler->{ code };
 			@args =  @_;
-			#FIX: It seems this more confusing than helping
-			unshift @args, $handler->{ context }   if $handler->{ context };
 		}
 		else {
 			die "Handler type should be ARRAY or HASH";

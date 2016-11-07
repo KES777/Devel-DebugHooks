@@ -250,7 +250,13 @@ sub import {
 
 use Devel::DebugHooks();
 
+#TODO: Think about this syntax:
+# $handler =  DB::reg( 'interact', 'Server', $sub, $context, @other args );
+# Here we may pass or silent $context. All will depends on our need
 my $handler =  DB::reg( 'interact', 'Server' );
+$$handler->{ context } =  $DB::dbg;
+##FIX: We may pass context as first argument
+# $$handler->{ args } =  [ $DB::dbg ]
 $$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
 
 #FIX: Decide where to complete subscribtion: from &import of from RT of module

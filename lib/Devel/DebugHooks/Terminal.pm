@@ -61,6 +61,7 @@ sub get_command {
 
 
 my $handler =  DB::reg( 'interact', 'terminal' );
+$$handler->{ context } =  $DB::dbg;
 $$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
 
 #FIX: Decide where to complete subscribtion: from &import of from RT of module

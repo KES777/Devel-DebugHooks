@@ -272,8 +272,9 @@ sub deparse {
 
 
 sub interact {
-	my( $handler ) =  @_;
-	my $str =  $DB::dbg->get_command();
+	my $handler =  shift;
+	my $dbg =  $handler->{ context }; # This is better
+	my $str =  $dbg->get_command();
 	return   unless defined $str;
 	print $DB::OUT +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
 
