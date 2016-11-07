@@ -157,7 +157,7 @@ __DATA__
 @@ debug cmd sbs
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -171,7 +171,7 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd step over
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -182,7 +182,7 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd return
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -193,7 +193,7 @@ xxx/DbInteract.pm:XXXX    4;
 @@ debug cmd quit
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -201,7 +201,7 @@ xxx/DbInteract.pm:XXXX    2;
 @@ call debugger sub
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -209,7 +209,7 @@ scope
 @@ DB::state when dd
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1 at -e:4
@@ -218,7 +218,7 @@ xxx/DbInteract.pm:XXXX    3;
 @@ prevent position when call
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -228,7 +228,7 @@ xxx/DbInteract.pm:XXXX    1;
 @@ prevent position when calc
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 xxx/DbInteract.pm:XXXX    1;
@@ -237,21 +237,21 @@ xxx/DbInteract.pm:XXXX    1;
 @@ outer step into
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0002    1;
 @@ outer step over
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 -e:0005  2;
 @@ wrong global vars usage
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1
@@ -259,7 +259,7 @@ xxx/Commands.pm:XXXX    return   unless defined $str;
 @@ global vars usage
 -e:0004  t1();
 @interact
-xxx/Commands.pm:XXXX    my @initial;
+xxx/Commands.pm:XXXX    my( $handler ) =  @_;
 xxx/Commands.pm:XXXX    my $str =  $DB::dbg->get_command();
 xxx/Commands.pm:XXXX    return   unless defined $str;
 1

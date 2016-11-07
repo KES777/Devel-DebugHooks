@@ -272,7 +272,7 @@ sub deparse {
 
 
 sub interact {
-	my @initial;
+	my( $handler ) =  @_;
 	my $str =  $DB::dbg->get_command();
 	return   unless defined $str;
 	print $DB::OUT +(" "x60 ."*"x20 ."\n")x10   if DB::state( 'ddd' );
@@ -297,7 +297,7 @@ sub interact {
 				print $DB::OUT "@res\n";
 			}
 
-			return[ \&interact, @initial ];
+			return $handler;
 		}
 			,$str
 		];
@@ -305,7 +305,7 @@ sub interact {
 
 
 	#FIX: Implement sub to return interaction command
-	return[ \&interact, @initial ]   unless ref $result;
+	return $handler   unless ref $result;
 	return $result;
 }
 
