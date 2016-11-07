@@ -203,25 +203,14 @@ sub readline {
 sub bbreak {
 	my $self =  shift;
 
-	$DB::commands->{ l }->( '.' );
+	Devel::DebugHooks::Commands->process( 'l .' );
 }
 
 
 # ... define another utilities that can be called at CT
 my $last_input =  's';
-my $in_progress =  0;
-sub interact {
+sub get_command {
 	my $self =  shift;
-
-	unless( $in_progress ) {
-		warn "Interact: " .tinfo()   if $ti;
-		# DB::orig_frames();
-		# TODO: print promt only when session is active
-		printflush $DB::OUT "\nDBG" .( @_ ? ':' : '>' );
-		$in_progress++;
-	}
-
-	return   if @_  &&  !defined $dbg_buffer;
 
 	my $line =  &readline();
 	chomp $line;
@@ -232,11 +221,8 @@ sub interact {
 		$line =  $last_input;
 	}
 
-
-	$in_progress--;
 	return $line;
 }
-
 
 
 # ... now we can use DebugHooks
@@ -250,7 +236,7 @@ BEGIN {
 	$DB::options{ dbg_frames }  //=  0;
 	$DB::options{ NonStop    }  //=  0;
 	@DB::options{ qw/ w s / } = ( 1, 1 );
-	push @ISA, 'Devel::DebugHooks::Verbose';
+	push @ISA, 'Devel::DebugHooks';
 }
 
 
@@ -262,8 +248,16 @@ sub import {
 }
 
 
-
 use Devel::DebugHooks();
+
+my $handler =  DB::reg( 'interact', 'Server' );
+$$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
+
+#FIX: Decide where to complete subscribtion: from &import of from RT of module
+$handler =  DB::reg( 'bbreak', 'Server' );
+$$handler->{ context } =  $DB::dbg;
+$$handler->{ code }    =  \&bbreak;
+
 
 &listen( $loop );
 $loop->loop_once( 0 );
