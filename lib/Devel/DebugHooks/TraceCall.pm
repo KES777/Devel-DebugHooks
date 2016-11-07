@@ -23,11 +23,11 @@ sub log_call {
 	my( $from, $to ) =  @{ DB::state( 'stack' ) }[ -2, -1 ];
 
 	my $extra =  '';
-	$extra =  "$to->{ file }:$to->{ line }"   if $to->{ sub } =~ /^CODE/;
+	$extra =  "$to->{ file }:$to->{ line }:"   if $to->{ sub } =~ /^CODE/;
 
 	$from =  $from &&( $from->{ sub } // $from->{ package }.'::' )   //  '';
 	$to   =  $to   && $to->{ sub }    //  '';
-	print $flow_fh "$from -> $extra:$to\n";
+	print $flow_fh "$from -> $extra$to\n";
 
 
 	1;
