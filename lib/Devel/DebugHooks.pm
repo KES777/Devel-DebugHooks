@@ -1137,6 +1137,8 @@ sub emit {
 	}
 
 	my $res =  [];
+	# Events are emitted in context of handler. Event handler should be at least
+	# HASHREF with key 'code' having CODEREF to sub which will process event
 	push @$res, process( $ev->{ $_ }, @_ )   for keys %$ev;
 
 	print $DB::OUT "Event '$name' DONE\n"   if DB::state( 'ddd' );
@@ -1283,6 +1285,10 @@ sub init {
 
 
 
+# When handler returns itself (HASHREF) as result it will keep processing (like 'redo'):
+# specified handler at 'code' key will be reinvoked
+# When handler returns ARRAYREF specified handler also will be reinvoked with
+# evaluated results for each returned item in that array
 sub process {
 	my( $handler ) =  @_;
 	my $htype      =  ref $handler;
@@ -1305,6 +1311,7 @@ sub process {
 		elsif( $htype eq 'HASH' ) {
 			$code =  $handler->{ code };
 			@args =  @_;
+			#FIX: It seems this more confusing than helping
 			unshift @args, $handler->{ context }   if $handler->{ context };
 		}
 		else {
