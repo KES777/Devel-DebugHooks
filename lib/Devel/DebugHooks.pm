@@ -208,6 +208,13 @@ use Scope::Cleanup qw/ establish_cleanup /;
 use Sub::Metadata qw/ mutate_sub_is_debuggable /;
 use List::Util;
 
+use Time::HiRes qw/ gettimeofday tv_interval /;
+my $MEASURE; BEGIN{
+	mutate_sub_is_debuggable( \&gettimeofday, 0 );
+	mutate_sub_is_debuggable( \&tv_interval, 0 );
+	open $MEASURE, '>DB_time'
+}
+
 
 
 ## Utility subs
@@ -1074,6 +1081,8 @@ sub sub_name {
 # We define posponed/sub as soon as possible to be able watch whole process
 # NOTICE: At this sub we reenter debugger
 sub postponed {
+	my $time =  [ gettimeofday ];
+
 	#TODO: implement local_state to localize debugger state values
 	my $old_inDB =  DB::state( 'inDB' );
 	DB::state( 'inDB', 1 );
@@ -1085,6 +1094,9 @@ sub postponed {
 	# TODO: study this case and IT:
 	# T: We are { dd } and run command that 'require'
 	DB::state( 'inDB', $old_inDB );
+
+	$time =  tv_interval( $time );
+	printf $MEASURE "LOAD %.6f: @_\n", $time;
 }
 
 
@@ -1226,6 +1238,8 @@ sub DB_my {
 	&save_context;
 	establish_cleanup \&restore_context;
 
+	my $time =  [ gettimeofday ];
+
 	my( $p, $f, $l ) =  init();
 	print_state( "DB::DB  ", sprintf "\n    cursor(DB) => %s, %s, %s\n" ,$p ,$f, $l )   if DB::state( 'ddd' );
 
@@ -1246,6 +1260,9 @@ sub DB_my {
 	emit( 'bbreak'   );
 	emit( 'interact' );
 	emit( 'abreak'   );
+
+	$time =  tv_interval( $time );
+	printf $MEASURE "DB %.6f: $f:$l\n", $time;
 }
 
 
@@ -1336,6 +1353,8 @@ sub process {
 # TODO: Before run the programm we could deparse sources and insert some code
 # in the place of 'goto'. This code may save __FILE__:__LINE__ into DB::
 sub goto {
+	# my $time =  [ gettimeofday ];
+
 	#FIX: IT: when trace_goto disabled we can not step over goto
 	return   unless $options{ trace_goto };
 	return   if DB::state( 'inDB' );
@@ -1345,7 +1364,10 @@ sub goto {
 
 	DB::state( 'single', 0 )   if DB::state( 'single' ) & 2;
 	push_frame( my $tmp =  $DB::sub, 'G' );
-	DB::state( 'inDB', $old_inDB )
+	DB::state( 'inDB', $old_inDB );
+
+	# $time =  tv_interval( $time );
+	# print $MEASURE "GOTO: $time\n";
 };
 
 
@@ -1358,6 +1380,8 @@ sub goto {
 # when Scope::Cleanup?
 mutate_sub_is_debuggable( \&pop_frame, 0 );
 sub pop_frame {
+	# my $time =  [ gettimeofday ];
+
 	#NOTICE: We will fall into infinite loop if something dies inside this sub
 	#because this sub is called when flow run out of scope.
 	#TODO: Put this code into eval block
@@ -1366,6 +1390,9 @@ sub pop_frame {
 	DB::state( 'inDB', 1 );
 	emit( 'pop_frame' );
 	DB::state( 'inDB', $old_inDB );
+
+	# $time =  tv_interval( $time );
+	# print $MEASURE "RET: $time\n";
 }
 
 }
@@ -1374,8 +1401,11 @@ sub pop_frame {
 
 sub trace_returns {
 	DB::state( 'inDB', 1 );
+	my $time =  [ gettimeofday ];
 	#FIX: process exceptions
 	emit( 'trace_returns', @_ );
+	$time =  tv_interval( $time );
+	printf $MEASURE "RET %.6f\n", $time;
 	DB::state( 'inDB', undef );
 }
 
@@ -1418,6 +1448,8 @@ sub sub {
 		return &$DB::sub
 	}
 
+	my $time =  [ gettimeofday ];
+
 	# manual localization
 	establish_cleanup \&DB::pop_frame; # This should be first because we should
 	# start to guard frame before any external call
@@ -1429,6 +1461,8 @@ sub sub {
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
+		$time =  tv_interval( $time );
+		printf $MEASURE "SUB %.6f: $DB::sub\n", $time;
 
 		if( wantarray ) {                             # list context
 			my @ret =  &$DB::sub;
