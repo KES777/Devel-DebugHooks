@@ -274,7 +274,7 @@ sub log_access {
 		# Also this makes life happy when we compare diff for two debugger output
 		$old_value =  ref $old_value ? ref $old_value : $old_value;
 		$new_value =  ref $new_value ? ref $new_value : $new_value;
-		print $DB::OUT " $context::$name: $old_value$new_value\n";
+		print $DB::OUT " ${context}::$name: $old_value$new_value\n";
 	}
 
 
@@ -613,6 +613,13 @@ BEGIN { # Initialization goes here
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
+		sub dd {
+			eval "use Data::Dump";
+			Data::Dump::pp( @_ );
+		}
+
+
+
 		# Returns TRUE if $filename was compiled/evaled
 		# The file is evaled if it looks like (eval 34)
 		# But this may be changed by #file:line. See ??? for info
@@ -738,6 +745,9 @@ BEGIN { # Initialization goes here
 		eval "$usercontext; package $package;\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
+		#
+		# print $DB::OUT "Error occur while evaluating: $@"   if $@
+		# But if we do this we return wrong value
 	}
 
 
@@ -1296,9 +1306,12 @@ sub process {
 	my( $code, @args );
 	do {
 		if( $htype eq 'ARRAY' ) {
+			print $DB::OUT "Got list of expressions to evaluate in usercontext\n"
+				if DB::state( 'ddd' );
 			$code =  shift @$handler;
 			@args =  ();
 			for my $expr ( @$handler ) {
+				# $expr should be simple string. If it is not it is special
 				push @args, ref $expr ? process( $expr ) : [ DB::eval( $expr ) ];
 				if( $@ ) {
 					# Pass reference to copy of error message. Value of error

@@ -998,7 +998,12 @@ $DB::commands =  {()
 	,e => sub {
 		return [()
 			,sub{
-				print $DB::OUT dd( @{ $_[0] } ) ."\n";
+				if( ref $_[0] eq 'SCALAR' ) {
+					print $DB::OUT "ERROR: ${ $_[0] }";
+				}
+				else {
+					print $DB::OUT dd( @{ $_[0] } ) ."\n";
+				}
 				return { code => \&interact };
 			}
 			,length $_[0] ? shift : DB::state( 'db.last_eval' ) // ''
