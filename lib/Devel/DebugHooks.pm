@@ -745,6 +745,9 @@ BEGIN { # Initialization goes here
 		eval "$usercontext; package $package;\n#line 1\n$expr";
 		#NOTICE: perl implicitly add semicolon at the end of expression
 		#HOWTO reproduce. Run command: X::X;1+2
+		#
+		# print $DB::OUT "Error occur while evaluating: $@"   if $@
+		# But if we do this we return wrong value
 	}
 
 
@@ -1303,9 +1306,12 @@ sub process {
 	my( $code, @args );
 	do {
 		if( $htype eq 'ARRAY' ) {
+			print $DB::OUT "Got list of expressions to evaluate in usercontext\n"
+				if DB::state( 'ddd' );
 			$code =  shift @$handler;
 			@args =  ();
 			for my $expr ( @$handler ) {
+				# $expr should be simple string. If it is not it is special
 				push @args, ref $expr ? process( $expr ) : [ DB::eval( $expr ) ];
 				if( $@ ) {
 					# Pass reference to copy of error message. Value of error
