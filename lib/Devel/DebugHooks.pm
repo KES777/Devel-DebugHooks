@@ -274,7 +274,7 @@ sub log_access {
 		# Also this makes life happy when we compare diff for two debugger output
 		$old_value =  ref $old_value ? ref $old_value : $old_value;
 		$new_value =  ref $new_value ? ref $new_value : $new_value;
-		print $DB::OUT " $context::$name: $old_value$new_value\n";
+		print $DB::OUT " ${context}::$name: $old_value$new_value\n";
 	}
 
 
