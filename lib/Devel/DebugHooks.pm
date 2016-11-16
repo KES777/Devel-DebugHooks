@@ -613,6 +613,13 @@ BEGIN { # Initialization goes here
 	{
 		BEGIN{ 'strict'->unimport( 'refs' )   if $options{ s } }
 
+		sub dd {
+			eval "use Data::Dump";
+			Data::Dump::pp( @_ );
+		}
+
+
+
 		# Returns TRUE if $filename was compiled/evaled
 		# The file is evaled if it looks like (eval 34)
 		# But this may be changed by #file:line. See ??? for info
