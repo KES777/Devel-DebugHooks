@@ -106,6 +106,13 @@ is
 	,$files->{ 'pragma and warnings' }
 	,'pragma and warnings from client\'s current scope should be applyed';
 
+$cmd =  'n;e $y';
+$tmp =  nn( `$^X $lib -d:DbInteract='$cmd' -e '$script' 2>&1` );
+is
+	+( $tmp =~ s#^ERROR: ##m )."\n"
+	,$files->{ 'catch' }
+	,'Catch error when expression evaluation dies';
+
 
 
 __DATA__
@@ -153,3 +160,5 @@ undef
 -e:0003  2;
 4
 ERROR: Global symbol "$x" requires explicit package name at ...
+@@ catch
+1
