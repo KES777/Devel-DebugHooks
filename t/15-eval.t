@@ -83,7 +83,7 @@ is
 is
 	nl( `$^X $lib -d:DbInteract='die "test";q' -e '$script'` )
 	,$files->{ 'die' }
-	,"Die when eval";
+	,"Catch error when EXPR evaluation dies";
 
 is
 	nl( `$^X $lib -d:DbInteract='2+2;DB::state( "db.last_eval" );q' -e '$script'` )

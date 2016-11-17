@@ -200,6 +200,14 @@ sub X {
 
 
 
+package DB::Error;
+use overload bool => sub {1}, '""' => sub { shift->error }, fallback => 1;
+
+sub error {
+	return shift->{ error };
+}
+
+
 package DB;
 
 # In theory this may break user's code because this usage cause dependencies are loaded
@@ -1316,8 +1324,7 @@ sub process {
 				if( $@ ) {
 					# Pass reference to copy of error message. Value of error
 					# message (global variable) may be changed by anyone
-					my $tmp =  $@;
-					$args[-1] =  \$tmp;
+					$args[-1] =  bless { error => $@ }, 'DB::Error';
 				}
 			}
 		}
