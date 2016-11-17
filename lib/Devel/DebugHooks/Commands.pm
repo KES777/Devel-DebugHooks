@@ -288,8 +288,8 @@ sub interact {
 			# We got ARRAYREF if EXPR was evalutated
 			DB::state( 'db.last_eval', $str );
 
-			if( ref $_[0] eq 'SCALAR' ) {
-				print $DB::OUT "ERROR: ${ $_[0] }";
+			if( ref $_[0] eq 'DB::Error' ) {
+				print $DB::OUT "ERROR: $_[0]";
 			}
 			else {
 				print $DB::OUT "\nEvaluation result:\n"   if DB::state( 'ddd' );
@@ -300,6 +300,7 @@ sub interact {
 
 			return $handler;
 		}
+			# EXPRessions to evaluate in user context
 			,$str
 		];
 	}
@@ -998,8 +999,8 @@ $DB::commands =  {()
 	,e => sub {
 		return [()
 			,sub{
-				if( ref $_[0] eq 'SCALAR' ) {
-					print $DB::OUT "ERROR: ${ $_[0] }";
+				if( ref $_[0] eq 'DB::Error' ) {
+					print $DB::OUT "ERROR: $_[0]";
 				}
 				else {
 					print $DB::OUT dd( @{ $_[0] } ) ."\n";
@@ -1009,6 +1010,7 @@ $DB::commands =  {()
 			,length $_[0] ? shift : DB::state( 'db.last_eval' ) // ''
 		];
 	}
+
 
 	# TODO: give names to ANON
 	,T => sub {
@@ -1163,3 +1165,5 @@ FIX:
  if we 'n' from last expression of _check we do not stop on _save
 
 FIX: do not create new trap if it not exists before 'b +...' command
+
+FIX: терминал клинит при выводе большой русской и
