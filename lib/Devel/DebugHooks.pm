@@ -1015,6 +1015,9 @@ BEGIN { # Initialization goes here
 		DB::state( 'inDB', undef );
 		print_state "\nTRAPPED OUT  ", "\n\n"   if _ddd;
 		$@ =  $DB::context[ 4 ];
+		# WARNING: Do not keep any references to user's data, in other case we postpone
+		# object desctruction process.
+		@DB::context =  (); # TODO: IT
 	}
 } # end of provided DB::API
 
