@@ -446,12 +446,10 @@ sub trace_variable {
 
 	require Devel::DebugHooks::TraceAccess;
 
-	return {()
-		,expr =>  "tie $var, 'Devel::DebugHooks::TraceAccess', \\$var, desc => '$var'"
-		,code =>  sub {
-			return 1;
-		}
-	}
+	return [()
+		,sub { return { code =>  \&interact } }
+		,"tie $var, 'Devel::DebugHooks::TraceAccess', \\$var, desc => '$var'"
+	]
 }
 
 
@@ -1113,14 +1111,13 @@ $DB::commands =  {()
 		`killall uwsgi`;
 	}
 	,d => sub {
-		return {
-			expr => "\$DB::single =  0; \$^D |= (1<<30);"
-				.DB::state( 'db.last_eval', shift ),
-			code => sub {
+		return [()
+			,sub {
 				print $DB::OUT "\n@_\n";
-				return 1;
+				return { code =>  \&interact };
 			}
-		}
+			,"\$DB::single =  0; \$^D |= (1<<30);".DB::state( 'db.last_eval', shift )
+		]
 	}
 };
 
