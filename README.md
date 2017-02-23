@@ -7,10 +7,12 @@
 	## Debug remotely
 	# FIX harcoded server:port at
 	# Devel::DebugHooks::Server.pm:107
-	# on remote
+	# on remote server with IP 1.2.3.4
 	perl -d:DebugHooks::Server script.pl
 	# on local
-	./dclient.pl 1.2.3.4 9000
+	dclient.pl 1.2.3.4 9000
+	# if server on same machine
+	dclient.pl
 
 
 
