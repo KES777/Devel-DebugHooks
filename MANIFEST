@@ -18,7 +18,8 @@ MANIFEST			This list of files
 META.json
 META.yml
 README.md
-t/00-common
+t/00-report-prereqs.t
+t/01-common
 t/15-eval.t
 t/20-no_cmd.t
 t/21-cmd_q.t

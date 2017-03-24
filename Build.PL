@@ -22,6 +22,7 @@ my $build = Module::Build->new(
 	test_requires      => {
 		'Test::More'            =>  0,
 		'Test::Output'          =>  0,
+		'Test::CheckDeps'       =>  0,
 		'Test::Differences'     =>  0,
 		'Data::Section::Simple' =>  0,
 	},
