@@ -29,7 +29,7 @@ my $build = Module::Build->new(
 		'Module::Build'         =>  0,
 	},
 	license            => 'perl',
-	create_makefile_pl => 'traditional',
+	# create_makefile_pl => 'traditional',
 	create_license     => 1,
 	meta_merge         => {
 		resources => {
