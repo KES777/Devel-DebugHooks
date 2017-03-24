@@ -1740,3 +1740,5 @@ POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
 }
 
 Maybe because DESTROY is called at first OP after closing block
+
+TODO: Allow to eval: 'shift @_' in debugger
