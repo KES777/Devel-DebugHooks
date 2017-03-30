@@ -16,6 +16,21 @@ sub import {
 	$commands =  [ split $endline, $commands ];
 
 	$class->SUPER::import( @_ );
+
+	DB::state( 'inDB', 1 );
+	if( $DB::options{ trace_subs } ) {
+		my $handler =  DB::reg( 'call', 'DbInteract' );
+		$$handler->{ context } =  $DB::dbg;
+		$$handler->{ code }    =  \&trace_subs;
+	}
+
+	if( $DB::options{ trace_returns } ) {
+		my $handler =  DB::reg( 'trace_returns', 'DbInteract' );
+		$$handler->{ context } =  $DB::dbg;
+		$$handler->{ code }    =  \&trace_returns;
+	}
+
+	DB::state( 'inDB', undef );
 }
 
 
@@ -84,7 +99,7 @@ sub bbreak {
 
 
 
-sub interact {
+sub get_command {
 	return shift @$commands;
 }
 
@@ -110,5 +125,15 @@ sub trace_returns {
 
 use parent '-norequire', 'Devel::DebugHooks';
 use Devel::DebugHooks();
+
+
+
+my $handler =  DB::reg( 'interact', 'terminal' );
+$$handler->{ context } =  $DB::dbg;
+$$handler->{ code } =  \&Devel::DebugHooks::Commands::interact;
+
+$handler =  DB::reg( 'bbreak', 'DbInteract' );
+$$handler->{ context } =  $DB::dbg;
+$$handler->{ code }    =  \&bbreak;
 
 1;
