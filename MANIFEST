@@ -2,6 +2,7 @@
 bin/dclient.pl
 Build.PL
 Changes
+lib/Apache/DB.pm
 lib/Devel/DebugHooks.pm
 lib/Devel/DebugHooks/Commands.pm
 lib/Devel/DebugHooks/Guides/DebugHooks.pod
@@ -9,6 +10,7 @@ lib/Devel/DebugHooks/KillPrint.pm
 lib/Devel/DebugHooks/Server.pm
 lib/Devel/DebugHooks/Terminal.pm
 lib/Devel/DebugHooks/TraceAccess.pm
+lib/Devel/DebugHooks/TraceCall.pm
 lib/Devel/DebugHooks/Verbose.pm
 LICENSE
 Makefile.PL
@@ -16,7 +18,8 @@ MANIFEST			This list of files
 META.json
 META.yml
 README.md
-t/00-common
+t/00-report-prereqs.t
+t/01-common
 t/15-eval.t
 t/20-no_cmd.t
 t/21-cmd_q.t
@@ -31,6 +34,7 @@ t/29-cmd_l.t
 t/40-chk_frames.t
 t/41-chk_position.t
 t/42-chk_globals.t
+t/43-chk_flags.t
 t/70-dd.t
 t/KP-05-options.t
 t/lib/Devel/AutoInit.pm

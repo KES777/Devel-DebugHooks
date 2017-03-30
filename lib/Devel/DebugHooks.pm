@@ -7,7 +7,7 @@ BEGIN {
 }
 
 
-our $VERSION =  '0.03';
+our $VERSION =  '0.04';
 
 =head1 NAME
 
@@ -215,6 +215,15 @@ package DB;
 use Scope::Cleanup qw/ establish_cleanup /;
 use Sub::Metadata qw/ mutate_sub_is_debuggable /;
 use List::Util;
+
+BEGIN {
+	# https://metacpan.org/pod/release/PEVANS/Scalar-List-Utils-1.27/lib/List/Util.pm#SUGGESTED-ADDITIONS
+	# Perl <=5.18 have List::Utils 1.27 which have not next functions:
+	$List::Util::VERSION <= 1.27  &&  eval '
+		sub List::Util::any(&@) { my $sub =  shift;	$sub->() && return 1 for @_; 0 }
+		sub List::Util::all(&@) { my $sub =  shift; $sub->() || return 0 for @_; 1 }
+	';
+}
 
 
 
@@ -1740,3 +1749,5 @@ POP  FRAME <<<< l:0 b:0:0 e:1 s:1 t:1  --  Apache::DB::handler@1
 }
 
 Maybe because DESTROY is called at first OP after closing block
+
+TODO: Allow to eval: 'shift @_' in debugger
