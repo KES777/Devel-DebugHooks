@@ -1550,7 +1550,7 @@ channel.
 
 =head1 AUTHOR
 
-Eugen Konkov <kes-kes@yandex.ru>
+Eugen Konkov <cpan@konkov.top>
 
 =head1 COPYRIGHT
 

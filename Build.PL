@@ -5,7 +5,7 @@ use Module::Build;
 
 my $build = Module::Build->new(
 	module_name => 'Devel::DebugHooks',
-	dist_author => 'Eugen Konkov <kes-kes@yandex.ru>',
+	dist_author => 'Eugen Konkov <cpan@konkov.top>',
 	requires => {
 		'Scope::Cleanup' =>  0,
 		'Sub::Metadata'  =>  0,

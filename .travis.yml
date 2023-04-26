@@ -21,7 +21,7 @@ script: "perl Build.PL && ./Build test"
 
 notifications:
   recipients:
-    - kes-kes@yandex.ru
+    - cpan@konkov.top
   email:
     on_success: change
     on_failure: always
