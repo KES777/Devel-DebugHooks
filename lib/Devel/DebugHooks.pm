@@ -1541,9 +1541,9 @@ __END__
 
 =head1 SUPPORT
 
-Bugs may be reported via RT at
+Bugs may be reported via GitHub at
 
- https://rt.cpan.org/Public/Dist/Display.html?Name=Devel-DebugHooks
+    https://github.com/KES777/Devel-DebugHooks/issues
 
 Support by IRC may also be found on F<irc.perl.org> in the F<#debughooks>
 channel.
