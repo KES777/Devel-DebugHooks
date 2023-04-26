@@ -1558,7 +1558,7 @@ The following copyright notice applies to all the files provided in
 this distribution, including binary files, unless explicitly noted
 otherwise.
 
-Copyright 2016 Eugen Konkov
+Copyright 2023 Eugen Konkov
 
 =head1 LICENSE
 
