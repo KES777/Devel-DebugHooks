@@ -37,6 +37,7 @@ my $build = Module::Build->new(
 			# Need help? Feel free to ask questions on:
 			x_IRC      =>  "irc://irc.perl.org/#debughooks",
 			repository =>  'https://github.com/KES777/Devel-DebugHooks',
+			bugtracker =>  'https://github.com/KES777/Devel-DebugHooks/issues',
 		},
 	},
 );
