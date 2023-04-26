@@ -200,7 +200,8 @@ sub X {
 
 
 
-package DB::Error;
+package # hide the package from the PAUSE indexer
+	DB::Error;
 use overload bool => sub {1}, '""' => sub { shift->error }, fallback => 1;
 
 sub error {
