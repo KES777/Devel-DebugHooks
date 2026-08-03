@@ -1,5 +1,7 @@
 # Perl debugger [![Build Status](https://travis-ci.org/KES777/Devel-DebugHooks.svg?branch=master)](https://travis-ci.org/KES777/Devel-DebugHooks) [![Flattr Button](https://button.flattr.com/flattr-badge-large.png "Flattr This!")](https://flattr.com/submit/auto?fid=6637xn&url=https%3A%2F%2Fgithub.com%2FKES777%2FDevel-DebugHooks)
 
+> **Deprecated:** This repository is no longer actively maintained. For the modern debugger, use [DB-Hooks](https://github.com/KES777/DB-Hooks). You may continue using this version, but it will not receive further updates.
+
 ## How to run:
 
 	perl -d:DebugHooks::Terminal script.pl
